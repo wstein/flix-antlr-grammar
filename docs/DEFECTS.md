@@ -110,6 +110,31 @@ The build job pinned a `java:21-bookworm` container while running a 21/25 JDK ma
 legs built on the image's JDK 21 and the JDK 25 leg proved nothing. The container is gone and
 `actions/setup-java` now supplies the matrix JDK.
 
+## D11 — The antlr-ng target cannot consume the shared grammar
+
+`grammars/` is described as canonical for both targets, but only the JVM target can generate
+from it today. Two independent obstacles:
+
+1. **Embedded actions are Java syntax.** The lexer's actions and predicates call
+   `isNameCharFollow()`, `enterBrace()` and `_input.LA(1)` unqualified. TypeScript requires
+   `this.` on every one, and Java forbids nothing — so no single spelling satisfies both.
+   ANTLR has no target-portable action syntax.
+2. **antlr-ng ignores `options { superClass }` for TypeScript.** The generated lexer extends
+   nothing, so every helper call is unresolved and `override` is rejected
+   (`TS4112`).
+
+Generation itself succeeds and is kept as `npm run generate:experimental`; its output is not
+committed and does not type-check. CI type-checks only the hand-written `FlixLexerBase.ts`.
+
+Closing this needs a small pre-processing step that emits a TypeScript-adapted copy of the
+grammars — qualifying action calls with `this.` and injecting the superclass import — rather
+than pointing antlr-ng at `grammars/` directly.
+
+Note also that `antlr4ng-cli` never had a 3.x release, so the declared `^3.0.0` could not
+install at all; the target had therefore never been built. `FlixLexerBase.ts` did not compile
+either, using the Java field `_input` instead of antlr4ng's `inputStream`, calling `reset()` on
+a plain array, and reading `charIndex`. All three are fixed.
+
 ---
 
 ## How these were found

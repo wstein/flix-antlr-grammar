@@ -99,7 +99,7 @@ export abstract class FlixLexerBase extends Lexer {
     }
 
     protected isNameCharFollow(): boolean {
-        const c = this._input.LA(1);
+        const c = this.inputStream.LA(1);
         if (c === -1) {
             return false;
         }
@@ -108,7 +108,7 @@ export abstract class FlixLexerBase extends Lexer {
     }
 
     private isWhitespaceBefore(): boolean {
-        const index = this.charIndex - this.text.length - 1;
+        const index = this.tokenStartCharIndex - 1;
         if (index < 0) {
             return true;
         }
@@ -116,19 +116,19 @@ export abstract class FlixLexerBase extends Lexer {
     }
 
     private isWhitespaceAfter(): boolean {
-        const next = this._input.LA(1);
+        const next = this.inputStream.LA(1);
         return next === -1 || this.isFlixWhitespace(next);
     }
 
     private charAt(index: number): number {
-        const marker = this._input.mark();
-        const saved = this._input.index;
+        const marker = this.inputStream.mark();
+        const saved = this.inputStream.index;
         try {
-            this._input.seek(index);
-            return this._input.LA(1);
+            this.inputStream.seek(index);
+            return this.inputStream.LA(1);
         } finally {
-            this._input.seek(saved);
-            this._input.release(marker);
+            this.inputStream.seek(saved);
+            this.inputStream.release(marker);
         }
     }
 
@@ -141,7 +141,7 @@ export abstract class FlixLexerBase extends Lexer {
     public override emitEOF(): any {
         this.interpolationBraceDepth = [];
         this.mode = Lexer.DEFAULT_MODE;
-        this.modeStack.reset();
+        this.modeStack.length = 0;
         return super.emitEOF();
     }
 }

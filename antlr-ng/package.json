@@ -1,19 +1,19 @@
 {
   "name": "@wstein/flix-antlr-ng",
   "version": "0.1.0",
-  "description": "Flix ANTLR-NG (TypeScript) grammar target and structural parser",
+  "description": "Flix antlr-ng (TypeScript) grammar target",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "generate": "antlr4ng -Dlanguage=TypeScript -visitor ../grammars/FlixLexer.g4 ../grammars/FlixParser.g4 -o src/generated",
+    "generate:experimental": "antlr-ng -o src/generated -D language=TypeScript --generate-visitor --generate-listener false ../grammars/FlixLexer.g4 ../grammars/FlixParser.g4",
     "build": "tsc",
     "test": "vitest run"
   },
   "dependencies": {
-    "antlr4ng": "^3.0.0"
+    "antlr4ng": "^3.0.16"
   },
   "devDependencies": {
-    "antlr4ng-cli": "^3.0.0",
+    "antlr-ng": "^1.0.10",
     "typescript": "^5.4.0",
     "vitest": "^1.5.0"
   }

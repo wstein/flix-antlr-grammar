@@ -50,8 +50,10 @@ fixtures/          positive and negative sources, CST snapshots, keyword and cor
 docs/              design debates, defect log
 ```
 
-Both targets generate from the same files in `grammars/`. A change there that breaks the
-TypeScript target fails CI in the `antlr-ng` job rather than at release time.
+Only the JVM target generates from `grammars/` today. The antlr-ng target ships the
+hand-written runtime support and is type-checked in CI, but cannot yet generate from the
+shared grammars: the embedded actions are Java syntax and antlr-ng's TypeScript target ignores
+`options { superClass }`. See [docs/DEFECTS.md](docs/DEFECTS.md) D11.
 
 ## Build
 
@@ -62,7 +64,7 @@ Requires JDK 21 or newer; the Gradle wrapper is checked in and pinned by checksu
 ./gradlew ktlintFormat     # apply the formatter
 ./gradlew ktlintCheck      # verify formatting and lint
 
-cd antlr-ng && npm install && npm run generate && npm run build
+cd antlr-ng && npm install && npm run build
 ```
 
 ## Verification

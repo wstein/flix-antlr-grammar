@@ -17,3 +17,8 @@ bin/
 
 # Local, machine-specific corpus checkout used by the coverage gate.
 /corpus/
+
+# Build outputs
+node_modules/
+dist/
+generated/
