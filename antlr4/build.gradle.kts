@@ -3,7 +3,7 @@ plugins {
     antlr
     jacoco
     application
-    id("org.jlleitschuh.gradle.ktlint") version "13.1.0"
+    id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
 }
 
 val antlrVersion = "4.13.2"
