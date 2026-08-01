@@ -1,5 +1,5 @@
 {
-  "_comment": "Ratcheting parse-rate floor over a real Flix checkout. Raise it when the grammar improves; never lower it. Regenerate with -Dflix.corpus.update=true.",
+  "_comment": "Ratcheting parse-rate floor over a real Flix checkout. Raise it when the grammar improves; never lower it. The gate prints the new rate when it improves; edit this file to lock it in.",
   "corpus": "wstein/flix-fork@debf7df (Flix 0.75.1)",
   "files": 692,
   "parsed": 663,

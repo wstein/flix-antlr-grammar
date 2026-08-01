@@ -38,11 +38,16 @@ fun parseFile(file: File): ParseResult {
             }
         }
 
+    // The lexer needs the listener too. Without it an unrecognized character is
+    // reported to the console and dropped, and a file that lost source text still
+    // counted as successfully validated.
+    lexer.removeErrorListeners()
+    lexer.addErrorListener(listener)
     parser.removeErrorListeners()
     parser.addErrorListener(listener)
     parser.compilationUnit()
 
-    val totalErrors = parser.numberOfSyntaxErrors.coerceAtLeast(errors.size)
+    val totalErrors = errors.size.coerceAtLeast(parser.numberOfSyntaxErrors)
     return ParseResult(file, totalErrors == 0, totalErrors, errors)
 }
 

@@ -1,9 +1,14 @@
 package io.github.wstein.flix.antlr
 
+import org.antlr.v4.runtime.BaseErrorListener
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
+import org.antlr.v4.runtime.RecognitionException
+import org.antlr.v4.runtime.Recognizer
+import org.antlr.v4.runtime.Token
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
@@ -14,9 +19,45 @@ import org.junit.jupiter.api.Test
  * unmatched declaration retry as a constraint and report the constraint's expected set.
  */
 class FlixParserDatalogAndEffectsTest {
+    /**
+     * Parses an expression and requires a clean, complete parse.
+     *
+     * Asserting only `ctx.exception == null` is too weak: ANTLR recovers from errors and still
+     * returns a context with no exception attached. It also accepts a prefix, so a rule that
+     * consumed half the input would pass. Collect diagnostics from both the lexer and the
+     * parser, require none, and require that the whole input was consumed.
+     */
     private fun parseExpr(input: String): FlixParser.ExprContext {
-        val parser = FlixParser(CommonTokenStream(FlixLexer(CharStreams.fromString(input))))
-        return parser.expr()
+        val errors = mutableListOf<String>()
+        val listener =
+            object : BaseErrorListener() {
+                override fun syntaxError(
+                    recognizer: Recognizer<*, *>?,
+                    offendingSymbol: Any?,
+                    line: Int,
+                    charPositionInLine: Int,
+                    msg: String?,
+                    e: RecognitionException?,
+                ) {
+                    errors += "$line:$charPositionInLine $msg"
+                }
+            }
+        val lexer = FlixLexer(CharStreams.fromString(input))
+        lexer.removeErrorListeners()
+        lexer.addErrorListener(listener)
+        val tokens = CommonTokenStream(lexer)
+        val parser = FlixParser(tokens)
+        parser.removeErrorListeners()
+        parser.addErrorListener(listener)
+
+        val ctx = parser.expr()
+        assertTrue(errors.isEmpty(), "'$input' produced diagnostics: $errors")
+        assertEquals(
+            Token.EOF,
+            tokens.LA(1),
+            "'$input' parsed only a prefix, stopping at '${tokens.LT(1)?.text}'",
+        )
+        return ctx
     }
 
     @Test

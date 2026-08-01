@@ -63,6 +63,12 @@ class GrammarFixtureAndSnapshotTest {
             // Regeneration is opt-in via -Dsnapshots.update=true. Writing whenever the file is
             // merely absent would let a deleted snapshot silently accept any tree shape.
             val update = System.getProperty("snapshots.update") == "true"
+            assertTrue(
+                snapFile.exists() || update,
+                "Missing snapshot ${snapFile.name}. A deleted snapshot must not be regenerated " +
+                    "silently, or structural-regression protection is bypassed. " +
+                    "Re-run with -Dsnapshots.update=true to create it deliberately.",
+            )
             if (snapFile.exists() && !update) {
                 assertEquals(
                     snapFile.readText().trim(),
@@ -74,6 +80,25 @@ class GrammarFixtureAndSnapshotTest {
                 snapFile.writeText(treeString)
             }
         }
+    }
+
+    @Test
+    fun snapshotsHaveNoOrphans() {
+        // An orphan snapshot means a fixture was renamed or removed and the stale tree shape
+        // is still being carried around as if it were covered.
+        val fixtures =
+            positiveDir
+                .listFiles { _, n -> n.endsWith(".flix") }
+                .orEmpty()
+                .map { it.nameWithoutExtension }
+                .toSet()
+        val snapshots =
+            snapshotsDir
+                .listFiles { _, n -> n.endsWith(".snap") }
+                .orEmpty()
+                .map { it.nameWithoutExtension }
+                .toSet()
+        assertEquals(emptySet<String>(), snapshots - fixtures, "orphan snapshots")
     }
 
     @Test
