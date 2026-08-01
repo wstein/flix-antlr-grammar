@@ -1,12 +1,12 @@
 # Flix syntax reference
 
 **Generated from `grammars/FlixLexer.g4` and `grammars/FlixParser.g4`.**
-Do not edit by hand; run `python3 tools/gen-syntax-reference.py`.
+Do not edit by hand; run `node tools/gen-docs.mjs`.
 
 This is the grammar as implemented, which is deliberately a *superset* of legal Flix.
-Constraints such as duplicate modifiers, non-linear patterns and unknown annotation
-names parse here and are rejected by a later validation pass, mirroring how the
-reference compiler separates `Parser2` from `Weeder2`.
+Constraints such as duplicate modifiers, non-linear patterns and unknown annotation names
+parse here and are rejected by a later validation pass, mirroring how the reference
+compiler separates `Parser2` from `Weeder2`.
 
 Parser rules: 82 · lexer rules: 136
 
