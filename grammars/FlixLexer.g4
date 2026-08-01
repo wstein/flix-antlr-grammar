@@ -35,8 +35,11 @@ tokens {
     BACKSLASH,
     GENERIC_OPERATOR,
 
-    // String interpolation token emitted when closing brace closes interpolation
-    INTERPOLATION_END
+    // String interpolation token emitted when a closing brace closes an interpolation
+    INTERPOLATION_END,
+
+    // Emitted when a raw newline terminates a string, which the reference rejects
+    UNTERMINATED_STRING
 }
 
 channels {
@@ -45,70 +48,68 @@ channels {
 }
 
 // ---------------------------------------------------------------------
-// Keywords (86 keywords, each with !isNameCharFollow() tail guard)
+// Keywords
+//
+// The 84 keywords of Flix 0.75.1, transcribed from Lexer.scala:49-139 and
+// pinned by fixtures/keywords.txt. Each carries a !isNameCharFollow() tail
+// guard because `!` and `$` are name characters, so `let!` is one identifier
+// rather than a keyword followed by an operator.
+//
+// Do not add a keyword without adding it to fixtures/keywords.txt; the
+// bidirectional set-equality test in FlixKeywordTableTest will fail.
 // ---------------------------------------------------------------------
 
-ALIAS            : 'alias' { !isNameCharFollow() }? ;
-AND              : 'and' { !isNameCharFollow() }? ;
-AS               : 'as' { !isNameCharFollow() }? ;
-ASSERT           : 'assert' { !isNameCharFollow() }? ;
 ARRAY_HASH       : 'Array#' { !isNameCharFollow() }? ;
 LIST_HASH        : 'List#' { !isNameCharFollow() }? ;
 MAP_HASH         : 'Map#' { !isNameCharFollow() }? ;
 SET_HASH         : 'Set#' { !isNameCharFollow() }? ;
 VECTOR_HASH      : 'Vector#' { !isNameCharFollow() }? ;
-BOOL             : 'bool' { !isNameCharFollow() }? ;
-BUILT_IN         : 'built_in' { !isNameCharFollow() }? ;
+STATIC_UPPER     : 'Static' { !isNameCharFollow() }? ;
+UNIV             : 'Univ' { !isNameCharFollow() }? ;
+
+ALIAS            : 'alias' { !isNameCharFollow() }? ;
+AND              : 'and' { !isNameCharFollow() }? ;
+AS               : 'as' { !isNameCharFollow() }? ;
 CASE             : 'case' { !isNameCharFollow() }? ;
 CATCH            : 'catch' { !isNameCharFollow() }? ;
-CHAN             : 'chan' { !isNameCharFollow() }? ;
-CHAR             : 'char' { !isNameCharFollow() }? ;
-CHOOSE           : 'choose' { !isNameCharFollow() }? ;
+CHECKED_CAST     : 'checked_cast' { !isNameCharFollow() }? ;
+CHECKED_ECAST    : 'checked_ecast' { !isNameCharFollow() }? ;
 CHOOSE_STAR      : 'choose*' { !isNameCharFollow() }? ;
-CLASS            : 'class' { !isNameCharFollow() }? ;
+CHOOSE           : 'choose' { !isNameCharFollow() }? ;
 DEF              : 'def' { !isNameCharFollow() }? ;
-DEREF            : 'deref' { !isNameCharFollow() }? ;
 DISCARD          : 'discard' { !isNameCharFollow() }? ;
-DO               : 'do' { !isNameCharFollow() }? ;
 EFF              : 'eff' { !isNameCharFollow() }? ;
 ELSE             : 'else' { !isNameCharFollow() }? ;
+EMATCH           : 'ematch' { !isNameCharFollow() }? ;
 ENUM             : 'enum' { !isNameCharFollow() }? ;
 FALSE            : 'false' { !isNameCharFollow() }? ;
 FIX              : 'fix' { !isNameCharFollow() }? ;
-FLOAT32          : 'float32' { !isNameCharFollow() }? ;
-FLOAT64          : 'float64' { !isNameCharFollow() }? ;
-FOR              : 'for' { !isNameCharFollow() }? ;
+FORA             : 'forA' { !isNameCharFollow() }? ;
+FORM             : 'forM' { !isNameCharFollow() }? ;
 FORALL           : 'forall' { !isNameCharFollow() }? ;
 FORCE            : 'force' { !isNameCharFollow() }? ;
+FOREACH          : 'foreach' { !isNameCharFollow() }? ;
 FROM             : 'from' { !isNameCharFollow() }? ;
-GET              : 'get' { !isNameCharFollow() }? ;
+HANDLER          : 'handler' { !isNameCharFollow() }? ;
 IF               : 'if' { !isNameCharFollow() }? ;
 IMPORT           : 'import' { !isNameCharFollow() }? ;
-IN               : 'in' { !isNameCharFollow() }? ;
 INJECT           : 'inject' { !isNameCharFollow() }? ;
-INSTANCE         : 'instance' { !isNameCharFollow() }? ;
-INT8             : 'int8' { !isNameCharFollow() }? ;
-INT16            : 'int16' { !isNameCharFollow() }? ;
-INT32            : 'int32' { !isNameCharFollow() }? ;
-INT64            : 'int64' { !isNameCharFollow() }? ;
 INSTANCEOF       : 'instanceof' { !isNameCharFollow() }? ;
+INSTANCE         : 'instance' { !isNameCharFollow() }? ;
 INTO             : 'into' { !isNameCharFollow() }? ;
 LAW              : 'law' { !isNameCharFollow() }? ;
+LAWFUL           : 'lawful' { !isNameCharFollow() }? ;
 LAZY             : 'lazy' { !isNameCharFollow() }? ;
 LET              : 'let' { !isNameCharFollow() }? ;
 MATCH            : 'match' { !isNameCharFollow() }? ;
 MOD              : 'mod' { !isNameCharFollow() }? ;
-NAMESPACE        : 'namespace' { !isNameCharFollow() }? ;
 MUT              : 'mut' { !isNameCharFollow() }? ;
 NEW              : 'new' { !isNameCharFollow() }? ;
 NOT              : 'not' { !isNameCharFollow() }? ;
 NULL             : 'null' { !isNameCharFollow() }? ;
-OP               : 'op' { !isNameCharFollow() }? ;
-OPEN             : 'open' { !isNameCharFollow() }? ;
-OPEN_VARIANT     : 'open_variant' { !isNameCharFollow() }? ;
 OPEN_VARIANT_AS  : 'open_variant_as' { !isNameCharFollow() }? ;
+OPEN_VARIANT     : 'open_variant' { !isNameCharFollow() }? ;
 OR               : 'or' { !isNameCharFollow() }? ;
-OVERRIDE         : 'override' { !isNameCharFollow() }? ;
 PAR              : 'par' { !isNameCharFollow() }? ;
 PQUERY           : 'pquery' { !isNameCharFollow() }? ;
 PROJECT          : 'project' { !isNameCharFollow() }? ;
@@ -117,28 +118,41 @@ PUB              : 'pub' { !isNameCharFollow() }? ;
 QUERY            : 'query' { !isNameCharFollow() }? ;
 REDEF            : 'redef' { !isNameCharFollow() }? ;
 REGION           : 'region' { !isNameCharFollow() }? ;
-REF              : 'ref' { !isNameCharFollow() }? ;
 RESTRICTABLE     : 'restrictable' { !isNameCharFollow() }? ;
 RUN              : 'run' { !isNameCharFollow() }? ;
+RVADD            : 'rvadd' { !isNameCharFollow() }? ;
+RVAND            : 'rvand' { !isNameCharFollow() }? ;
+RVNOT            : 'rvnot' { !isNameCharFollow() }? ;
+RVSUB            : 'rvsub' { !isNameCharFollow() }? ;
 SEALED           : 'sealed' { !isNameCharFollow() }? ;
 SELECT           : 'select' { !isNameCharFollow() }? ;
-SET              : 'set' { !isNameCharFollow() }? ;
 SOLVE            : 'solve' { !isNameCharFollow() }? ;
 SPAWN            : 'spawn' { !isNameCharFollow() }? ;
-STRING           : 'string' { !isNameCharFollow() }? ;
+STATIC_LOWER     : 'static' { !isNameCharFollow() }? ;
 STRUCT           : 'struct' { !isNameCharFollow() }? ;
+SUPER            : 'super' { !isNameCharFollow() }? ;
+THROW            : 'throw' { !isNameCharFollow() }? ;
+TRAIT            : 'trait' { !isNameCharFollow() }? ;
 TRUE             : 'true' { !isNameCharFollow() }? ;
 TRY              : 'try' { !isNameCharFollow() }? ;
 TYPE             : 'type' { !isNameCharFollow() }? ;
+UNCHECKED_CAST   : 'unchecked_cast' { !isNameCharFollow() }? ;
+UNSAFE           : 'unsafe' { !isNameCharFollow() }? ;
 USE              : 'use' { !isNameCharFollow() }? ;
 WHERE            : 'where' { !isNameCharFollow() }? ;
 WITH             : 'with' { !isNameCharFollow() }? ;
-WITHOUT          : 'without' { !isNameCharFollow() }? ;
+XOR              : 'xor' { !isNameCharFollow() }? ;
+XVAR             : 'xvar' { !isNameCharFollow() }? ;
 YIELD            : 'yield' { !isNameCharFollow() }? ;
 
 // ---------------------------------------------------------------------
-// Delimiters & Punctuation
+// Delimiters & punctuation
 // ---------------------------------------------------------------------
+
+HASH_LBRACE      : '#{' ;
+HASH_LPAREN      : '#(' ;
+HASH_BAR         : '#|' ;
+BAR_HASH         : '|#' ;
 
 LPAREN           : '(' ;
 RPAREN           : ')' ;
@@ -148,73 +162,112 @@ LBRACE           : '{' { enterBrace(); } ;
 RBRACE           : '}' { if (exitBrace()) { popMode(); setType(INTERPOLATION_END); } } ;
 COMMA            : ',' ;
 SEMI             : ';' ;
-COLON            : ':' ;
-COLON_COLON      : '::' ;
 COLON_COLON_COLON: ':::' ;
+COLON_COLON      : '::' ;
 COLON_MINUS      : ':-' ;
-AT               : '@' ;
+COLON            : ':' ;
 HASH             : '#' ;
-PERCENT_PERCENT  : '%%' ;
-QUESTION         : '?' ;
 TILDE            : '~' ;
-SLASH            : '/' ;
-BACKSLASH        : '\\' ;
 BACKTICK         : '`' ;
 
+// `/` is excluded from the user-operator character set purely so that `//` can
+// start a comment, so it needs a rule of its own. `\` is the effect separator
+// in `def f(): t \ ef`, never a lambda introducer.
+SLASH_TOKEN      : '/' -> type(SLASH) ;
+BACKSLASH_TOKEN  : '\\' -> type(BACKSLASH) ;
+
 // ---------------------------------------------------------------------
-// Whitespace-sensitive Tokens & Operator Runs
+// Whitespace-sensitive tokens & operator runs
+//
+// `->` and `.` are classified from the surrounding characters. The operator
+// run reproduces the reference's "maximal run, then exact match": a run that
+// is exactly a reserved spelling becomes that token, anything else becomes a
+// user-defined operator. `<--` is therefore one token, not `<-` then `-`.
 // ---------------------------------------------------------------------
 
 ARROW            : '->' { classifyArrow(); } ;
 DOT_TOKEN        : '.' { classifyDot(); } ;
-OP_RUN           : ( [+\-*<>=!&|^$]+ | '_' [+\-*<>=!&|^$]+ ) { classifyOperator(); } ;
+OP_RUN           : '_'? [+\-*<>=!&|^$]+ { classifyOperator(); } ;
 
 // ---------------------------------------------------------------------
-// Identifiers & Names
+// Holes, intrinsics & annotations
 // ---------------------------------------------------------------------
 
-DOLLAR_NAME      : '$' [a-zA-Z0-9_!$]+ { stripEscape(); setType(NAME_LOWERCASE); } ;
-NAME_LOWERCASE   : ([a-z] | '_' [a-z]) [a-zA-Z0-9_!$]* ;
-NAME_UPPERCASE   : [A-Z] [a-zA-Z0-9_!$]* ;
-NAME_MATH        : [\u2200-\u22FF]+ | '_' [\u2200-\u22FF]+ ;
+HOLE_ANONYMOUS   : '???' ;
+HOLE_NAMED       : '?' [a-zA-Z] [a-zA-Z0-9_!$]* ;
+HOLE_VARIABLE    : '_'? [a-zA-Z] [a-zA-Z0-9_!$]* '?' ;
+BUILT_IN         : '%%' [A-Z0-9_]* '%%' ;
+ANNOTATION       : '@' [a-zA-Z]+ ;
+AT               : '@' ;
+
+// ---------------------------------------------------------------------
+// Identifiers & names
+//
+// `_` is a prefix dispatcher rather than a name character at position zero:
+// `_foo` is a name, `_+` is a user-defined operator, `_1` is an underscore
+// followed by an integer, and a bare `_` is the wildcard.
+// ---------------------------------------------------------------------
+
+DOLLAR_NAME      : '$' [a-zA-Z] [a-zA-Z0-9_!$]* { stripEscape(); setType(NAME_LOWERCASE); } ;
+NAME_LOWERCASE   : '_'? [a-z] [a-zA-Z0-9_!$]* ;
+NAME_UPPERCASE   : '_'? [A-Z] [a-zA-Z0-9_!$]* ;
+NAME_MATH        : '_'? [\u2200-\u22FF]+ ;
 UNDERSCORE       : '_' ;
+DOLLAR           : '$' ;
 
 // ---------------------------------------------------------------------
 // Literals
 // ---------------------------------------------------------------------
 
-HEX_LITERAL      : '0x' [0-9a-fA-F_]+ ( 'i8' | 'i16' | 'i32' | 'i64' | 'ii' | 'i' )? ;
-INT_LITERAL      : [0-9] [0-9_]* ( 'i8' | 'i16' | 'i32' | 'i64' | 'ii' | 'i' )? ;
-FLOAT_LITERAL    : [0-9] [0-9_]* '.' [0-9] [0-9_]* ('e' [+-]? [0-9]+)? ( 'f32' | 'f64' | 'f' | 'ff' )?
-                 | [0-9] [0-9_]* ( 'f32' | 'f64' | 'ff' ) ;
-CHAR_LITERAL     : '\'' ( ~['\\\r\n] | ESCAPE_SEQUENCE ) '\'' ;
+HEX_LITERAL      : '0x' HEXDIGITS INT_SUFFIX? ;
+FLOAT_LITERAL    : DIGITS ( '.' DIGITS EXPONENT? | EXPONENT ) FLOAT_SUFFIX?
+                 | DIGITS FLOAT_SUFFIX
+                 ;
+INT_LITERAL      : DIGITS INT_SUFFIX? ;
+CHAR_LITERAL     : '\'' ( '\\' . | ~['\\] )*? '\'' ;
+REGEX_LITERAL    : 'regex"' ( '\\' . | ~["\\\r\n] )* '"' ;
 
-fragment ESCAPE_SEQUENCE
-    : '\\' [btnfr"'\\]
-    | '\\' 'u' [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F]
-    ;
+// The reference lexes `d` as a token of its own when a string follows; the
+// string is then lexed normally.
+DEBUG_INTERPOLATOR : 'd' { _input.LA(1) == '"' }? ;
+
+fragment DIGITS       : [0-9]+ ( '_' [0-9]+ )* ;
+fragment HEXDIGITS    : [0-9a-fA-F]+ ( '_' [0-9a-fA-F]+ )* ;
+fragment INT_SUFFIX   : 'i8' | 'i16' | 'i32' | 'i64' | 'ii' ;
+fragment FLOAT_SUFFIX : 'f32' | 'f64' | 'ff' ;
+fragment EXPONENT     : 'e' [+-]? DIGITS ( '.' DIGITS )? ;
 
 // ---------------------------------------------------------------------
-// Strings & Interpolations
+// Strings & interpolations
 // ---------------------------------------------------------------------
 
 STRING_START     : '"' -> pushMode(STRING_MODE) ;
 
 // ---------------------------------------------------------------------
-// Comments & Whitespace
+// Comments & whitespace
+//
+// A doc comment is exactly three slashes: `////` is an ordinary line comment.
+// Both patterns must stay free of explicit precedence, or the three-character
+// prefix wins over a whole four-slash line.
 // ---------------------------------------------------------------------
 
-DOC_COMMENT      : '///' ~[/] ~[\r\n]* -> channel(DOC_COMMENTS) ;
-LINE_COMMENT     : '//' ~[\r\n]* -> channel(COMMENTS) ;
+DOC_COMMENT      : '///' ( ~[/\r\n] ~[\r\n]* )? -> channel(DOC_COMMENTS) ;
+LINE_COMMENT     : '//' '/'* ~[\r\n]* -> channel(COMMENTS) ;
 BLOCK_COMMENT    : '/*' ( BLOCK_COMMENT | . )*? '*/' -> channel(COMMENTS) ;
-WS               : [ \t\r\n\f]+ -> channel(HIDDEN) ;
+WS               : [ \t\r\n\u000B\f\u001C-\u001F\u1680\u2000-\u2006\u2008-\u200A\u2028\u2029\u205F\u3000]+ -> channel(HIDDEN) ;
 
 // =====================================================================
-// String Mode
+// String mode
 // =====================================================================
 
 mode STRING_MODE;
 
 STRING_END          : '"' -> popMode ;
 INTERPOLATION_START : '${' { openInterpolation(); } -> pushMode(DEFAULT_MODE) ;
-STRING_CONTENT      : ( ~["\\$] | '\\' . | '$' ~[{] )+ ;
+STRING_CONTENT      : ( ~["\\$\r\n] | '\\' . )+ ;
+STRING_DOLLAR       : '$' -> type(STRING_CONTENT) ;
+
+// A raw newline terminates the string in the reference. Popping the mode here
+// keeps an unterminated string from leaving the lexer stuck inside a string
+// for the remainder of the file.
+STRING_NEWLINE      : [\r\n] -> type(UNTERMINATED_STRING), popMode ;

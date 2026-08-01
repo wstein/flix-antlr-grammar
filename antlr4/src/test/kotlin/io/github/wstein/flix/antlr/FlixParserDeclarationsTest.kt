@@ -36,7 +36,7 @@ class FlixParserDeclarationsTest {
 
         val def = mod.declaration(0).defDeclaration()
         assertNotNull(def)
-        assertEquals("add", def.nameLowercase().text)
+        assertEquals("add", def.definitionName().text)
     }
 
     @Test
@@ -114,7 +114,7 @@ class FlixParserDeclarationsTest {
     fun testClassAndInstanceDeclaration() {
         val input =
             """
-            class Functor[m] {
+            trait Functor[m] {
                 pub def map(f: a -> b, x: m[a]): m[b]
             }
 
@@ -126,13 +126,13 @@ class FlixParserDeclarationsTest {
         assertNull(cu.exception)
         assertEquals(2, cu.declaration().size)
 
-        val classDecl = cu.declaration(0).classDeclaration()
-        assertNotNull(classDecl)
-        assertEquals("Functor", classDecl.nameUppercase().text)
+        val traitDecl = cu.declaration(0).traitDeclaration()
+        assertNotNull(traitDecl)
+        assertEquals("Functor", traitDecl.nameUppercase().text)
 
         val instDecl = cu.declaration(1).instanceDeclaration()
         assertNotNull(instDecl)
-        assertEquals("Functor", instDecl.nameUppercase().text)
+        assertEquals("Functor", instDecl.qname().text)
     }
 
     @Test

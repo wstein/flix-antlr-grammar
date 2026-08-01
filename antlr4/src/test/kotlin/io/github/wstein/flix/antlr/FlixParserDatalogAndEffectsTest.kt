@@ -3,84 +3,97 @@ package io.github.wstein.flix.antlr
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
+/**
+ * Datalog, fixpoint and effect-handler forms.
+ *
+ * Datalog constraints are not top-level declarations in Flix: they appear inside a `#{ ... }`
+ * constraint set, which is an expression. Having them as a declaration alternative made every
+ * unmatched declaration retry as a constraint and report the constraint's expected set.
+ */
 class FlixParserDatalogAndEffectsTest {
     private fun parseExpr(input: String): FlixParser.ExprContext {
-        val stream = CharStreams.fromString(input)
-        val lexer = FlixLexer(stream)
-        val tokens = CommonTokenStream(lexer)
-        val parser = FlixParser(tokens)
+        val parser = FlixParser(CommonTokenStream(FlixLexer(CharStreams.fromString(input))))
         return parser.expr()
     }
 
-    private fun parseCU(input: String): FlixParser.CompilationUnitContext {
-        val stream = CharStreams.fromString(input)
-        val lexer = FlixLexer(stream)
-        val tokens = CommonTokenStream(lexer)
-        val parser = FlixParser(tokens)
-        return parser.compilationUnit()
+    @Test
+    fun constraintSetHoldsFactsAndRules() {
+        val ctx =
+            parseExpr(
+                """
+                #{
+                    Edge("a", "b").
+                    Path(x, z) :- Path(x, y), Edge(y, z).
+                }
+                """.trimIndent(),
+            )
+        assertNull(ctx.exception)
     }
 
     @Test
-    fun testDatalogFactAndRule() {
-        val input =
-            """
-            Edge("a", "b").
-            Path(x, z) :- Path(x, y), Edge(y, z).
-            """.trimIndent()
-
-        val cu = parseCU(input)
-        assertNull(cu.exception)
-        assertEquals(2, cu.declaration().size)
-
-        val fact = cu.declaration(0).datalogConstraint()
-        assertNotNull(fact)
-        assertEquals("Edge", fact.qname().text)
-
-        val rule = cu.declaration(1).datalogConstraint()
-        assertNotNull(rule)
-        assertEquals("Path", rule.qname().text)
-        assertEquals(2, rule.datalogBody().size)
+    fun constraintBodySupportsNegationFixGuardsAndFunctionals() {
+        val ctx =
+            parseExpr(
+                """
+                #{
+                    Reach(x) :- not Blocked(x), fix Seed(x), if (x > 0).
+                    Pair(x, y) :- let (a, b) = f(x), Edge(a, b).
+                }
+                """.trimIndent(),
+            )
+        assertNull(ctx.exception)
     }
 
     @Test
-    fun testFixpointSolveAndQuery() {
-        val solveCtx = parseExpr("solve p")
-        assertNull(solveCtx.exception)
-        assertInstanceOf(FlixParser.SolveExprContext::class.java, solveCtx)
-
-        val queryCtx = parseExpr("query p select (x, y) from P(x, y)")
-        assertNull(queryCtx.exception)
-        assertInstanceOf(FlixParser.QueryExprContext::class.java, queryCtx)
+    fun fixpointKeywordsShareOneExpressionList() {
+        for (
+        source in
+        listOf(
+            "solve p, q project Path, Edge",
+            "psolve p, q",
+            "query p, q select (x, y) from Path(x, y) where x > 0",
+            "inject xs, ys into Path/2, Edge/2",
+        )
+        ) {
+            assertNull(parseExpr(source).exception, "should parse: $source")
+        }
     }
 
     @Test
-    fun testInjectAndProject() {
-        val injectCtx = parseExpr("inject p")
-        assertNull(injectCtx.exception)
-        assertInstanceOf(FlixParser.InjectExprContext::class.java, injectCtx)
-
-        val projectCtx = parseExpr("project(x, y) p")
-        assertNull(projectCtx.exception)
-        assertInstanceOf(FlixParser.ProjectExprContext::class.java, projectCtx)
+    fun effectAndHandlerForms() {
+        // `do op(...)` and `try ... with` were removed from Flix. The surviving forms are
+        // `try e catch { ... }`, `run e with handler E { ... }` and `throw e`.
+        assertNull(parseExpr("try e catch { case ex: Exception => () }").exception)
+        assertNull(parseExpr("run e with handler Logger { def log(msg) = () }").exception)
+        assertNull(parseExpr("throw e").exception)
+        assertNull(parseExpr("unsafe IO { e }").exception)
     }
 
     @Test
-    fun testEffectDoTryRun() {
-        val doCtx = parseExpr("do Logger.log(\"msg\")")
-        assertNull(doCtx.exception)
-        assertInstanceOf(FlixParser.DoOpExprContext::class.java, doCtx)
+    fun concurrencyForms() {
+        assertNull(parseExpr("spawn e @ rc").exception)
+        assertNull(parseExpr("select { case x <- Channel.recv(c) => x, case _ => 0 }").exception)
+        assertNull(parseExpr("par (x <- a; y <- b) yield x + y").exception)
+        assertNull(parseExpr("region rc { e }").exception)
+    }
 
-        val tryCtx = parseExpr("try e with def log(msg) => ()")
-        assertNull(tryCtx.exception)
-        assertInstanceOf(FlixParser.TryWithExprContext::class.java, tryCtx)
+    @Test
+    fun comprehensionForms() {
+        assertNull(parseExpr("foreach (x <- xs; if p(x)) body").exception)
+        assertNull(parseExpr("forM (x <- xs; let y = f(x)) yield y").exception)
+        assertNull(parseExpr("forA (x <- xs) yield x").exception)
+    }
 
-        val runCtx = parseExpr("run e")
-        assertNull(runCtx.exception)
-        assertInstanceOf(FlixParser.RunExprContext::class.java, runCtx)
+    @Test
+    fun constraintTerminatorIsDistinctFromQualifiedNameSeparator() {
+        // `Q.R` is one qualified name; the trailing dot ends the constraint because it is
+        // followed by whitespace, which the lexer tokenizes differently.
+        val parser =
+            FlixParser(CommonTokenStream(FlixLexer(CharStreams.fromString("#{ P(x) :- Q.R(x). }"))))
+        assertNull(parser.expr().exception)
+        assertEquals(0, parser.numberOfSyntaxErrors)
     }
 }

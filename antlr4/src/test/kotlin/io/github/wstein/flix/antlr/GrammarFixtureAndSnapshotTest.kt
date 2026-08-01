@@ -56,12 +56,15 @@ class GrammarFixtureAndSnapshotTest {
             val treeString = tree.toStringTree(parser)
             val snapFile = File(snapshotsDir, "${file.nameWithoutExtension}.snap")
 
-            if (snapFile.exists()) {
-                val expected = snapFile.readText().trim()
+            // Regeneration is opt-in via -Dsnapshots.update=true. Writing whenever the file is
+            // merely absent would let a deleted snapshot silently accept any tree shape.
+            val update = System.getProperty("snapshots.update") == "true"
+            if (snapFile.exists() && !update) {
                 assertEquals(
-                    expected,
+                    snapFile.readText().trim(),
                     treeString,
-                    "Snapshot mismatch for ${file.name}. Structural AST regression detected!",
+                    "Snapshot mismatch for ${file.name}. Structural AST regression detected! " +
+                        "Re-run with -Dsnapshots.update=true if the change is intended.",
                 )
             } else {
                 snapFile.writeText(treeString)

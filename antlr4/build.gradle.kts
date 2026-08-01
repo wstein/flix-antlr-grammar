@@ -81,6 +81,11 @@ ktlint {
 
 tasks.test {
     useJUnitPlatform()
+    // Forward opt-in flags: -Dsnapshots.update=true regenerates CST snapshots,
+    // -Dflix.corpus=<dir> points the parse-rate gate at a Flix checkout.
+    for (key in listOf("snapshots.update", "flix.corpus")) {
+        System.getProperty(key)?.let { systemProperty(key, it) }
+    }
     testLogging {
         events("failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL

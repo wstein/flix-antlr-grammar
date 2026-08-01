@@ -27,7 +27,7 @@ class FlixLexerTest {
     fun testKeywords() {
         val tokens =
             lexDefaultChannel(
-                "def let match pub enum alias case if else try catch for forall yield into mod mut lazy force region",
+                "def let match pub enum alias case if else try catch foreach forall yield into mod mut lazy force region",
             )
         val expectedTypes =
             listOf(
@@ -42,7 +42,7 @@ class FlixLexerTest {
                 FlixLexer.ELSE,
                 FlixLexer.TRY,
                 FlixLexer.CATCH,
-                FlixLexer.FOR,
+                FlixLexer.FOREACH,
                 FlixLexer.FORALL,
                 FlixLexer.YIELD,
                 FlixLexer.INTO,

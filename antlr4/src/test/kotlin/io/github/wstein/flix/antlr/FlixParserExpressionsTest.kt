@@ -83,7 +83,7 @@ class FlixParserExpressionsTest {
         assertNull(ctx.exception)
         assertInstanceOf(FlixParser.MatchExprContext::class.java, ctx)
         val matchCtx = ctx as FlixParser.MatchExprContext
-        assertEquals(2, matchCtx.matchCase().size)
+        assertEquals(2, matchCtx.matchRule().size)
     }
 
     @Test
@@ -93,7 +93,7 @@ class FlixParserExpressionsTest {
         assertInstanceOf(FlixParser.LetExprContext::class.java, ctx)
         val letCtx = ctx as FlixParser.LetExprContext
         assertEquals("x", letCtx.pattern().text)
-        assertEquals("1", letCtx.expr(0).text)
+        assertEquals("1;x+1", letCtx.statement().text)
     }
 
     @Test

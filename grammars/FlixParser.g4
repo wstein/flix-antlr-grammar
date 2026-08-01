@@ -4,138 +4,167 @@ options {
     tokenVocab = FlixLexer;
 }
 
-// ---------------------------------------------------------------------
-// Entry Point
-// ---------------------------------------------------------------------
+// =====================================================================
+// Entry point
+//
+// Uses and imports form a strict prefix of a compilation unit, then
+// declarations follow. Datalog constraints are NOT declarations: they live
+// inside `#{ ... }` expressions. Listing them here made every unmatched
+// declaration retry as a constraint and report the constraint's expected set.
+// =====================================================================
 
 compilationUnit
     : usesOrImports* declaration* EOF
     ;
 
 usesOrImports
-    : useClause
-    | importClause
+    : useClause SEMI?
+    | importClause SEMI?
     ;
 
 useClause
     : USE qname ( dot LBRACE useName ( COMMA useName )* COMMA? RBRACE )?
     ;
 
-useName
-    : name
-    | genericOperator
-    | HASH
-    ;
-
 importClause
-    : IMPORT qname ( AS nameUppercase )?
+    : IMPORT qname ( dot LBRACE useName ( COMMA useName )* COMMA? RBRACE )?
     ;
 
-// ---------------------------------------------------------------------
+useName
+    : name ( ARROW_THICK_R name )?
+    | genericOperator
+    ;
+
+// =====================================================================
 // Declarations
-// ---------------------------------------------------------------------
+//
+// Annotations and modifiers are parsed as unconstrained repetitions. Which
+// combinations are legal is a validation concern, not a syntactic one: the
+// reference parses `modifier*` and rejects duplicates and illegal combinations
+// in a later phase.
+// =====================================================================
 
 declaration
-    : defDeclaration
+    : modDeclaration
+    | defDeclaration
     | enumDeclaration
     | structDeclaration
-    | aliasDeclaration
-    | classDeclaration
+    | traitDeclaration
     | instanceDeclaration
     | effDeclaration
-    | modDeclaration
+    | aliasDeclaration
     | lawDeclaration
-    | datalogConstraint
+    ;
+
+declPrefix
+    : annotation* modifier*
     ;
 
 modDeclaration
-    : modifier* ( MOD | DEF? NAMESPACE ) qname? LBRACE ( usesOrImports | declaration )* RBRACE
+    : declPrefix MOD qname LBRACE ( usesOrImports | declaration )* RBRACE
     ;
 
 defDeclaration
-    : annotation* modifier* DEF ( nameLowercase | genericOperator ) typeParams? formalParams ( COLON type )? ( ARROW_THICK_R expr | EQUAL expr )?
+    : declPrefix ( DEF | REDEF ) definitionName typeParams? formalParams
+      ( COLON typeAndEffect )? withClause? whereClause? ( EQUAL statement )?
     ;
 
 lawDeclaration
-    : annotation* modifier* LAW nameLowercase COLON type EQUAL expr
+    : declPrefix LAW definitionName COLON FORALL typeParams? formalParams?
+      withClause? whereClause? ( EQUAL? statement )?
     ;
 
 enumDeclaration
-    : annotation* modifier* ENUM nameUppercase typeParams? ( LPAREN enumCaseList RPAREN )? ( LBRACE enumCaseList RBRACE )?
+    : declPrefix RESTRICTABLE? ENUM nameUppercase typeParams?
+      ( LPAREN type ( COMMA type )* RPAREN )?
+      derivations?
+      ( LBRACE enumCase* RBRACE )?
     ;
 
-enumCaseList
-    : enumCase ( COMMA enumCase )* COMMA?
-    ;
-
+// Deliberately permissive: the reference accepts `case A, B, C`, `case A, case B,`
+// and `case A case B` alike, and the enum body itself is optional.
 enumCase
-    : CASE nameUppercase ( LPAREN type ( COMMA type )* RPAREN )?
+    : COMMA? CASE? nameUppercase ( LPAREN type ( COMMA type )* RPAREN )? COMMA?
     ;
 
 structDeclaration
-    : annotation* modifier* STRUCT nameUppercase typeParams? LBRACE structFieldList? RBRACE
-    ;
-
-structFieldList
-    : structField ( COMMA structField )* COMMA?
+    : declPrefix STRUCT nameUppercase typeParams?
+      ( LBRACE ( structField ( COMMA structField )* COMMA? )? RBRACE )?
     ;
 
 structField
-    : nameLowercase COLON type
+    : modifier* nameLowercase COLON type
     ;
 
-aliasDeclaration
-    : annotation* modifier* TYPE ALIAS nameUppercase typeParams? EQUAL type
+traitDeclaration
+    : declPrefix TRAIT nameUppercase typeParams? withClause?
+      ( LBRACE traitMember* RBRACE )?
     ;
 
-classDeclaration
-    : annotation* modifier* CLASS nameUppercase typeParams? ( WHERE? LBRACE sigOrDef* RBRACE )?
-    ;
-
-sigOrDef
+traitMember
     : defDeclaration
-    | sigDeclaration
-    ;
-
-sigDeclaration
-    : annotation* modifier* DEF ( nameLowercase | genericOperator ) typeParams? formalParams COLON type
+    | lawDeclaration
+    | assocTypeDeclaration
     ;
 
 instanceDeclaration
-    : annotation* modifier* INSTANCE nameUppercase typeArgs? ( WHERE? LBRACE defDeclaration* RBRACE )?
+    : declPrefix INSTANCE qname ( LBRACK type RBRACK )? withClause? whereClause?
+      ( LBRACE instanceMember* RBRACE )?
+    ;
+
+instanceMember
+    : defDeclaration
+    | assocTypeDeclaration
+    ;
+
+assocTypeDeclaration
+    : declPrefix TYPE nameUppercase ( typeParams | typeArgs )? ( COLON kind )? ( EQUAL type )?
+    ;
+
+aliasDeclaration
+    : declPrefix TYPE ALIAS nameUppercase typeParams? EQUAL type
     ;
 
 effDeclaration
-    : annotation* modifier* EFF nameUppercase typeParams? LBRACE opDeclaration* RBRACE
+    : declPrefix EFF nameUppercase typeParams? ( LBRACE opDeclaration* RBRACE )?
     ;
 
 opDeclaration
-    : annotation* modifier* DEF ( nameLowercase | genericOperator ) typeParams? formalParams COLON type
+    : declPrefix DEF definitionName typeParams? formalParams? COLON typeAndEffect withClause?
     ;
 
-// ---------------------------------------------------------------------
-// Datalog Constraints (Top-level or embedded in fixpoints)
-// ---------------------------------------------------------------------
-
-datalogConstraint
-    : qname ( LPAREN ( pattern ( COMMA pattern )* )? RPAREN )? ( COLON_MINUS datalogBody ( COMMA datalogBody )* )? dot
-    ;
-
-datalogBody
-    : NOT? qname ( LPAREN ( pattern ( COMMA pattern )* )? RPAREN )?
-    | IF expr
-    ;
-
-// ---------------------------------------------------------------------
-// Parameters & Modifiers
-// ---------------------------------------------------------------------
+// =====================================================================
+// Declaration fragments
+// =====================================================================
 
 annotation
-    : AT nameUppercase ( LPAREN ( expr ( COMMA expr )* )? RPAREN )?
+    : ANNOTATION ( LPAREN ( expr ( COMMA expr )* )? RPAREN )?
     ;
 
 modifier
-    : PUB | SEALED | REDEF | OVERRIDE | MUT
+    : PUB | SEALED | LAWFUL | MUT
+    ;
+
+// `with` introduces trait constraints on definitions and derivations on enums;
+// the reference chooses by caller context rather than by lookahead.
+withClause
+    : WITH constraint ( COMMA constraint )*
+    ;
+
+constraint
+    : qname ( LBRACK type RBRACK )?
+    ;
+
+derivations
+    : WITH qname ( COMMA qname )*
+    ;
+
+whereClause
+    : WHERE equalityConstraint ( COMMA equalityConstraint )*
+    ;
+
+equalityConstraint
+    : type TILDE type
     ;
 
 typeParams
@@ -143,58 +172,91 @@ typeParams
     ;
 
 typeParam
-    : nameLowercase ( COLON nameUppercase )?
+    : name ( COLON kind )?
     ;
 
 typeArgs
     : LBRACK type ( COMMA type )* RBRACK
     ;
 
+kind
+    : LPAREN kind RPAREN ( ARROW_WS kind )?
+    | nameUppercase ( ARROW_WS kind )?
+    ;
+
 formalParams
     : LPAREN ( formalParam ( COMMA formalParam )* )? RPAREN
     ;
 
+// The type ascription is optional everywhere; the reference makes its presence
+// required, optional or forbidden depending on context and validates later.
 formalParam
-    : pattern ( COLON type )?
-    | nameLowercase COLON type
+    : variableName ( COLON type )?
     ;
 
-// ---------------------------------------------------------------------
+// =====================================================================
 // Types
-// ---------------------------------------------------------------------
+//
+// Precedence, loosest to tightest, from Parser2.Type.TYPE_OP_PRECEDENCE:
+// `->`, rvadd/rvsub, rvand, `+`/`-`, `&`, xor, or, and, unary. Equal
+// precedence is left-associative; the arrow is right-associative.
+// =====================================================================
+
+typeAndEffect
+    : type ( BACKSLASH type )?
+    ;
 
 type
-    : type ( ARROW_WS | ARROW_TIGHT | ARROW_THICK_R ) type ( BACKSLASH type )?
-    | primaryType typeArgs? ( BACKSLASH type )?
+    : <assoc=right> type ARROW_WS type    # ArrowType
+    | type ( RVADD | RVSUB ) type         # RvAddSubType
+    | type RVAND type                     # RvAndType
+    | type ( PLUS | MINUS ) type          # EffectSumType
+    | type AMPERSAND type                 # EffectIntersectionType
+    | type XOR type                       # XorType
+    | type OR type                        # OrType
+    | type AND type                       # AndType
+    | ( NOT | TILDE | RVNOT ) type        # UnaryType
+    | primaryType typeArgs*               # ApplyType
     ;
 
 primaryType
     : qname
     | nameLowercase
+    | nameMath
+    | UNDERSCORE
+    | STATIC_UPPER
+    | UNIV
+    | TRUE
+    | FALSE
     | LPAREN ( type ( COMMA type )* )? RPAREN
-    | LBRACE ( recordField ( COMMA recordField )* )? RBRACE
-    | HASH LBRACE ( schemaRow ( COMMA schemaRow )* )? RBRACE
+    | LBRACE BAR RBRACE
+    | LBRACE ( recordFieldType ( COMMA recordFieldType )* ( BAR type )? )? RBRACE
+    | HASH_LBRACE ( schemaTerm ( COMMA schemaTerm )* ( BAR name )? )? RBRACE
+    | HASH_LPAREN ( schemaTerm ( COMMA schemaTerm )* ( BAR name )? )? RPAREN
+    | HASH_BAR ( schemaTerm ( COMMA schemaTerm )* ( BAR name )? )? BAR_HASH
+    | ANGLE_L qname ( COMMA qname )* ANGLE_R
     ;
 
-recordField
-    : nameLowercase COLON type
+// Record types use `=`, never `:`. That is what keeps `{ a = t }` distinct
+// from a block and from an effect set.
+recordFieldType
+    : nameLowercase EQUAL type
     ;
 
-schemaRow
-    : nameUppercase LPAREN ( type ( COMMA type )* )? RPAREN
+schemaTerm
+    : nameUppercase typeArgs
+    | nameUppercase ( LPAREN ( type ( COMMA type )* ( SEMI type )? )? RPAREN )?
     ;
 
-// ---------------------------------------------------------------------
-// Names & Qualifiers
-// ---------------------------------------------------------------------
+// =====================================================================
+// Names
+// =====================================================================
 
 qname
     : name ( dot name )*
     ;
 
-dot
-    : DOT | DOT_WS
-    ;
+dot : DOT | DOT_WS ;
 
 name
     : nameLowercase
@@ -202,85 +264,213 @@ name
     | nameMath
     ;
 
+variableName
+    : nameLowercase
+    | nameMath
+    | UNDERSCORE
+    ;
+
+definitionName
+    : nameLowercase
+    | nameUppercase
+    | nameMath
+    | genericOperator
+    ;
+
 nameLowercase : NAME_LOWERCASE ;
 nameUppercase : NAME_UPPERCASE ;
 nameMath      : NAME_MATH ;
+
 genericOperator
     : GENERIC_OPERATOR
     | PLUS | MINUS | STAR | SLASH | BAR | AMPERSAND | CARET | EQUAL | EQUAL_EQUAL
     | BANG | BANG_EQUAL | ANGLE_L | ANGLE_R | ANGLE_L_EQUAL | ANGLE_R_EQUAL
-    | ANGLED_EQUAL | ANGLED_PLUS | ARROW_THIN_L | ARROW_THICK_R
+    | ANGLED_EQUAL | ANGLED_PLUS | ARROW_THIN_L | ARROW_THICK_R | COLON_COLON_COLON
     ;
 
-// ---------------------------------------------------------------------
-// Expressions (Precedence: Highest / Tightest at top)
-// ---------------------------------------------------------------------
+// =====================================================================
+// Statements and expressions
+//
+// Precedence is transcribed from Parser2.Op.precedence, whose docstring is
+// inverted: a LARGER number binds TIGHTER. ANTLR assigns precedence by
+// alternative order, earliest tightest, so the table below reads from level 14
+// (`not`) down to level 0 (`instanceof`).
+//
+// Note that the unary prefixes are NOT all tightest: `discard` is level 9,
+// below the backtick infix at 10 and user-defined operators at 11.
+// =====================================================================
+
+statement
+    : expr ( SEMI expr )* SEMI?
+    ;
 
 expr
-    : primaryExpr                                            # PrimaryExpression
-    | expr dot nameLowercase                                 # FieldSelectExpr
-    | expr ARROW_TIGHT nameLowercase                         # FieldSelectTightExpr
-    | expr LPAREN ( argument ( COMMA argument )* )? RPAREN   # ApplyExpr
-    | DO qname ( LPAREN ( argument ( COMMA argument )* )? RPAREN )? # DoOpExpr
-    | ( BANG | MINUS | NOT | MUT | FORCE | LAZY ) expr        # PrefixExpr
-    | expr ( GENERIC_OPERATOR | nameMath ) expr              # UserOpExpr
-    | BACKTICK nameLowercase BACKTICK expr                   # InfixCallExpr
-    | DISCARD expr                                           # DiscardExpr
-    | expr ( STAR | SLASH | MOD ) expr                       # MultExpr
-    | expr ( PLUS | MINUS ) expr                             # AddExpr
+    // --- postfix chain, tighter than every operator ---------------------
+    : expr LPAREN ( argument ( COMMA argument )* )? RPAREN  # ApplyExpr
+    | expr dot nameLowercase
+      ( LPAREN ( argument ( COMMA argument )* )? RPAREN )?  # FieldOrMethodExpr
+    | expr HASH nameLowercase                               # RecordSelectExpr
+    | expr ARROW_TIGHT nameLowercase ( EQUAL expr )?        # StructFieldExpr
+    | expr LBRACK expr RBRACK ( EQUAL expr )?               # IndexExpr
+    // --- unary and binary operators, tightest first ---------------------
+    | NOT expr                                              # NotExpr
+    | ( PLUS | MINUS ) expr                                 # SignExpr
+    | ( LAZY | FORCE ) expr                                 # LazyForceExpr
+    | expr ( GENERIC_OPERATOR | nameMath ) expr             # UserOpExpr
+    | expr BACKTICK qname BACKTICK expr                     # InfixCallExpr
+    | DISCARD expr                                          # DiscardExpr
+    | expr ANGLED_PLUS expr                                 # AngledPlusExpr
+    | expr ( STAR | SLASH ) expr                            # MultExpr
+    | expr ( PLUS | MINUS ) expr                            # AddExpr
     | <assoc=right> expr ( COLON_COLON | COLON_COLON_COLON ) expr # ConsExpr
-    | expr ( EQUAL_EQUAL | BANG_EQUAL | ANGLE_L | ANGLE_R | ANGLE_L_EQUAL | ANGLE_R_EQUAL | ANGLED_EQUAL | ANGLED_PLUS ) expr # CompareExpr
-    | expr ( OR | AND ) expr                                 # LogicalExpr
-    | REF expr                                               # RefExpr
-    | DEREF expr                                             # DerefExpr
-    | SPAWN expr                                             # SpawnExpr
-    | RUN expr                                               # RunExpr
-    | PAR LPAREN expr ( COMMA expr )* RPAREN                 # ParExpr
-    | lambdaParams ( ARROW_WS | ARROW_TIGHT ) expr           # LambdaExpr
-    | IF LPAREN expr RPAREN expr ( ELSE expr )?              # IfExpr
-    | MATCH expr LBRACE matchCase+ RBRACE                    # MatchExpr
-    | TRY expr WITH ( qname LBRACE effectHandlerCase+ RBRACE | effectHandlerCase | qname )+ # TryWithExpr
-    | ( SOLVE | PSOLVE ) fixpointExpressions ( selectClause | fromClause | whereClause )* # SolveExpr
-    | ( QUERY | PQUERY ) fixpointExpressions ( selectClause | fromClause | whereClause )* # QueryExpr
-    | INJECT fixpointExpressions                             # InjectExpr
-    | PROJECT LPAREN ( expr ( COMMA expr )* )? RPAREN expr   # ProjectExpr
-    | LET pattern ( COLON type )? EQUAL expr SEMI expr       # LetExpr
+    | expr ( ANGLE_L | ANGLE_R | ANGLE_L_EQUAL | ANGLE_R_EQUAL ) expr # CompareExpr
+    | expr ( EQUAL_EQUAL | BANG_EQUAL | ANGLED_EQUAL ) expr # EqualityExpr
+    | expr AND expr                                         # AndExpr
+    | expr OR expr                                          # OrExpr
+    | expr INSTANCEOF qname                                 # InstanceOfExpr
+    // --- forms whose trailing expression extends greedily ---------------
+    | lambdaParams ARROW_WS expr                            # LambdaExpr
+    | IF LPAREN expr RPAREN expr ( ELSE expr )?             # IfExpr
+    | LET pattern ( COLON typeAndEffect )? EQUAL statement  # LetExpr
+    | DEF definitionName formalParams ( COLON typeAndEffect )? EQUAL statement # LocalDefExpr
+    | REGION nameLowercase block                            # RegionExpr
+    | MATCH expr LBRACE matchRule* RBRACE                   # MatchExpr
+    | MATCH pattern ARROW_WS expr                           # MatchLambdaExpr
+    | EMATCH expr LBRACE matchRule* RBRACE                  # EMatchExpr
+    | ( CHOOSE | CHOOSE_STAR ) expr LBRACE matchRule* RBRACE # ChooseExpr
+    | XVAR qname ( LPAREN ( expr ( COMMA expr )* )? RPAREN )? # ExtTagExpr
+    | ( OPEN_VARIANT | OPEN_VARIANT_AS ) qname expr?        # OpenVariantExpr
+    | FOREACH forFragments expr                             # ForeachExpr
+    | ( FORA | FORM ) forFragments YIELD expr               # ForYieldExpr
+    | TRY expr ( CATCH LBRACE catchRule* RBRACE )*          # TryCatchExpr
+    | RUN expr ( WITH expr )*                               # RunWithExpr
+    | HANDLER qname ( LBRACE handlerRule* RBRACE )?         # HandlerExpr
+    | THROW expr                                            # ThrowExpr
+    | UNSAFE type ( AS type )? block                        # UnsafeExpr
+    | SPAWN expr ( AT expr )?                               # SpawnExpr
+    | PAR LPAREN parFragment ( SEMI parFragment )* RPAREN YIELD expr # ParYieldExpr
+    | SELECT LBRACE selectRule* RBRACE                      # SelectExpr
+    | ( CHECKED_CAST | CHECKED_ECAST ) LPAREN expr RPAREN   # CheckedCastExpr
+    | UNCHECKED_CAST LPAREN expr AS typeAndEffect RPAREN    # UncheckedCastExpr
+    | NEW qname ( AT expr )?
+      ( LBRACE newBody* RBRACE | LPAREN ( expr ( COMMA expr )* )? RPAREN )? # NewExpr
+    | SUPER ( dot nameLowercase )? LPAREN ( expr ( COMMA expr )* )? RPAREN # SuperExpr
+    | USE qname SEMI expr                                   # UseExpr
+    | fixpointExpr                                          # FixpointExpression
+    | primaryExpr                                           # PrimaryExpression
+    ;
+
+lambdaParams
+    : formalParams
+    | variableName
+    ;
+
+argument
+    : nameLowercase EQUAL expr
+    | expr
+    ;
+
+block
+    : LBRACE statement? RBRACE
+    ;
+
+matchRule
+    : CASE pattern ( IF expr )? ARROW_THICK_R statement COMMA?
+    ;
+
+catchRule
+    : CASE variableName COLON qname ARROW_THICK_R statement COMMA?
+    ;
+
+handlerRule
+    : DEF definitionName formalParams ( COLON typeAndEffect )? EQUAL statement COMMA?
+    ;
+
+selectRule
+    : CASE pattern ARROW_THIN_L expr ARROW_THICK_R statement COMMA?
+    | CASE UNDERSCORE ARROW_THICK_R statement COMMA?
+    ;
+
+newBody
+    : DEF definitionName formalParams ( COLON typeAndEffect )? EQUAL statement
+    | nameLowercase EQUAL expr COMMA?
+    ;
+
+forFragments
+    : LPAREN forFragment ( SEMI forFragment )* RPAREN
+    ;
+
+forFragment
+    : IF expr
+    | LET pattern EQUAL expr
+    | pattern ARROW_THIN_L expr
+    ;
+
+parFragment
+    : pattern ARROW_THIN_L expr
+    ;
+
+// =====================================================================
+// Datalog and fixpoint
+//
+// All five fixpoint keywords share one `fixpointExpressions` rule. Repeating a
+// greedy comma-separated expression list at each site is what makes `,`
+// ambiguous across the whole language; sharing it confines the cost.
+// =====================================================================
+
+fixpointExpr
+    : ( SOLVE | PSOLVE ) fixpointExpressions ( PROJECT qname ( COMMA qname )* )?
+    | ( QUERY | PQUERY ) fixpointExpressions fixpointClause*
+    | INJECT fixpointExpressions INTO predicateAndArity ( COMMA predicateAndArity )*
+    ;
+
+// Clause order is deliberately unconstrained. The reference fixes the order,
+// but three chained optionals after a greedy expression list is the most
+// expensive shape in the grammar; ordering is checked in validation instead.
+fixpointClause
+    : SELECT ( LPAREN ( expr ( COMMA expr )* )? RPAREN | expr )
+    | FROM predicateAtom ( COMMA predicateAtom )*
+    | WHERE expr
+    | WITH LBRACE qname ( COMMA qname )* RBRACE
     ;
 
 fixpointExpressions
     : expr ( COMMA expr )*
     ;
 
-selectClause
-    : SELECT ( LPAREN ( expr ( COMMA expr )* )? RPAREN | expr )
+predicateAndArity
+    : nameUppercase SLASH INT_LITERAL
     ;
 
-fromClause
-    : FROM ( expr ( COMMA expr )* )
+constraintSet
+    : HASH_LBRACE datalogConstraint* RBRACE
     ;
 
-whereClause
-    : WHERE expr
+// A constraint is terminated by a dot followed by whitespace, which is a
+// distinct token from the qualified-name separator.
+datalogConstraint
+    : predicateHead ( COLON_MINUS predicateBody ( COMMA predicateBody )* )? ( DOT_WS | DOT )
     ;
 
-effectHandlerCase
-    : DEF ( nameLowercase | genericOperator ) formalParams ( COLON type )? ( ARROW_THICK_R expr | EQUAL expr )
-    | CASE qname ARROW_THICK_R expr
+predicateHead
+    : nameUppercase ( LPAREN ( expr ( COMMA expr )* ( SEMI expr )? )? RPAREN )?
     ;
 
-lambdaParams
-    : formalParams
-    | nameLowercase
+predicateBody
+    : IF LPAREN expr RPAREN
+    | IF expr
+    | LET ( LPAREN variableName ( COMMA variableName )* RPAREN | variableName ) EQUAL expr
+    | predicateAtom
     ;
 
-argument
-    : expr
-    | nameLowercase EQUAL expr
+predicateAtom
+    : NOT? FIX? nameUppercase
+      ( LPAREN ( pattern ( COMMA pattern )* ( SEMI pattern )? )? RPAREN )?
     ;
 
-matchCase
-    : CASE pattern ( IF expr )? ARROW_THICK_R expr
-    ;
+// =====================================================================
+// Primary expressions
+// =====================================================================
 
 primaryExpr
     : qname
@@ -288,40 +478,82 @@ primaryExpr
     | FLOAT_LITERAL
     | HEX_LITERAL
     | CHAR_LITERAL
-    | STRING_START STRING_CONTENT* STRING_END
+    | REGEX_LITERAL
+    | stringLiteral
+    | DEBUG_INTERPOLATOR stringLiteral
+    | HOLE_ANONYMOUS
+    | HOLE_NAMED
+    | HOLE_VARIABLE
+    | BUILT_IN
     | TRUE
     | FALSE
     | NULL
-    | LPAREN ( expr ( COMMA expr )* )? RPAREN
-    | LBRACE ( recordOpField ( COMMA recordOpField )* ( BAR expr )? | datalogConstraint+ | expr ( SEMI expr )* )? RBRACE
-    | LBRACK ( expr ( COMMA expr )* )? RBRACK
+    | STATIC_UPPER
+    | STATIC_LOWER
+    | UNDERSCORE
+    | LPAREN ( expr ( COLON typeAndEffect )? ( COMMA expr )* )? RPAREN
+    | LPAREN genericOperator RPAREN
+    | constraintSet
+    | HASH_LPAREN ( predicateParam ( COMMA predicateParam )* )? RPAREN ARROW_WS expr
+    | collectionLiteral
+    | recordOperation
+    | block
+    ;
+
+predicateParam
+    : nameUppercase ( LPAREN ( type ( COMMA type )* ( SEMI type )? )? RPAREN )?
+    ;
+
+collectionLiteral
+    : ARRAY_HASH LBRACE ( expr ( COMMA expr )* )? RBRACE ( AT expr )?
+    | VECTOR_HASH LBRACE ( expr ( COMMA expr )* )? RBRACE
+    | LIST_HASH LBRACE ( expr ( COMMA expr )* )? RBRACE
+    | SET_HASH LBRACE ( expr ( COMMA expr )* )? RBRACE
+    | MAP_HASH LBRACE ( mapEntry ( COMMA mapEntry )* )? RBRACE
+    ;
+
+mapEntry
+    : expr ARROW_THICK_R expr
+    ;
+
+// `{}` is an empty record operation; a non-empty brace is a block unless the
+// first two tokens look like a record field or a record extension/restriction.
+recordOperation
+    : LBRACE ( recordOpField ( COMMA recordOpField )* ( BAR expr )? )? RBRACE
     ;
 
 recordOpField
-    : ( PLUS | MINUS )? nameLowercase ( EQUAL expr | COLON type )?
+    : ( PLUS | MINUS )? nameLowercase ( EQUAL expr )?
     ;
 
-// ---------------------------------------------------------------------
+stringLiteral
+    : STRING_START ( STRING_CONTENT | INTERPOLATION_START expr INTERPOLATION_END )* STRING_END
+    ;
+
+// =====================================================================
 // Patterns
-// ---------------------------------------------------------------------
+// =====================================================================
 
 pattern
-    : pattern ( COLON_COLON | COLON_COLON_COLON ) pattern # ConsPattern
-    | primaryPattern                                      # PrimaryPat
+    : <assoc=right> pattern COLON_COLON pattern # ConsPattern
+    | primaryPattern                            # PrimaryPat
     ;
 
 primaryPattern
     : qname ( LPAREN ( pattern ( COMMA pattern )* )? RPAREN )?
     | recordPattern
     | tuplePattern
-    | nameLowercase
-    | UNDERSCORE
+    | variableName
+    | MINUS ( INT_LITERAL | FLOAT_LITERAL | HEX_LITERAL )
     | INT_LITERAL
     | FLOAT_LITERAL
+    | HEX_LITERAL
     | CHAR_LITERAL
-    | STRING_START STRING_CONTENT* STRING_END
+    | REGEX_LITERAL
+    | stringLiteral
     | TRUE
     | FALSE
+    | NULL
     ;
 
 tuplePattern
