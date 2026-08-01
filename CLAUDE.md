@@ -8,7 +8,7 @@ An ANTLR4 grammar for Flix, transliterated from the reference compiler.
 - [x] **Phase 2**: Implement `FlixLexer.g4`, `FlixLexerBase.java`, and `FlixLexerTest.kt` (`feat(lexer): implement FlixLexer.g4 and comprehensive lexer test suite`).
 - [x] **Phase 3**: Parser — declarations, types, uses/imports (`feat(parser): implement FlixParser.g4 declaration, type, and use/import rules`).
 - [x] **Phase 4**: Parser — expressions and patterns (`feat(parser): implement expression precedence and pattern matching rules`).
-- [ ] **Phase 5**: Datalog, fixpoint, effect handlers
+- [x] **Phase 5**: Datalog, fixpoint, effect handlers (`feat(parser): implement Datalog constraints, fixpoints, and effect handlers`).
 - [ ] **Phase 6**: Validation CLI + corpus coverage gate
 
 ## Source of truth

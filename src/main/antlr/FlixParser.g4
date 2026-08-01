@@ -45,6 +45,7 @@ declaration
     | effDeclaration
     | modDeclaration
     | lawDeclaration
+    | datalogConstraint
     ;
 
 modDeclaration
@@ -110,6 +111,19 @@ effDeclaration
 
 opDeclaration
     : annotation* modifier* DEF ( nameLowercase | genericOperator ) typeParams? formalParams COLON type
+    ;
+
+// ---------------------------------------------------------------------
+// Datalog Constraints (Top-level or embedded in fixpoints)
+// ---------------------------------------------------------------------
+
+datalogConstraint
+    : qname ( LPAREN ( pattern ( COMMA pattern )* )? RPAREN )? ( COLON_MINUS datalogBody ( COMMA datalogBody )* )? dot
+    ;
+
+datalogBody
+    : NOT? qname ( LPAREN ( pattern ( COMMA pattern )* )? RPAREN )?
+    | IF expr
     ;
 
 // ---------------------------------------------------------------------
@@ -207,6 +221,7 @@ expr
     | expr dot nameLowercase                                 # FieldSelectExpr
     | expr ARROW_TIGHT nameLowercase                         # FieldSelectTightExpr
     | expr LPAREN ( argument ( COMMA argument )* )? RPAREN   # ApplyExpr
+    | DO qname ( LPAREN ( argument ( COMMA argument )* )? RPAREN )? # DoOpExpr
     | ( BANG | MINUS | NOT | MUT | FORCE | LAZY ) expr        # PrefixExpr
     | expr ( GENERIC_OPERATOR | nameMath ) expr              # UserOpExpr
     | BACKTICK nameLowercase BACKTICK expr                   # InfixCallExpr
@@ -219,11 +234,38 @@ expr
     | REF expr                                               # RefExpr
     | DEREF expr                                             # DerefExpr
     | SPAWN expr                                             # SpawnExpr
+    | RUN expr                                               # RunExpr
     | PAR LPAREN expr ( COMMA expr )* RPAREN                 # ParExpr
     | lambdaParams ( ARROW_WS | ARROW_TIGHT ) expr           # LambdaExpr
     | IF LPAREN expr RPAREN expr ( ELSE expr )?              # IfExpr
     | MATCH expr LBRACE matchCase+ RBRACE                    # MatchExpr
+    | TRY expr WITH ( effectHandlerCase | qname )+           # TryWithExpr
+    | ( SOLVE | PSOLVE ) fixpointExpressions ( selectClause | fromClause | whereClause )* # SolveExpr
+    | ( QUERY | PQUERY ) fixpointExpressions ( selectClause | fromClause | whereClause )* # QueryExpr
+    | INJECT fixpointExpressions                             # InjectExpr
+    | PROJECT LPAREN ( expr ( COMMA expr )* )? RPAREN expr   # ProjectExpr
     | LET pattern ( COLON type )? EQUAL expr SEMI expr       # LetExpr
+    ;
+
+fixpointExpressions
+    : expr ( COMMA expr )*
+    ;
+
+selectClause
+    : SELECT ( LPAREN ( expr ( COMMA expr )* )? RPAREN | expr )
+    ;
+
+fromClause
+    : FROM ( expr ( COMMA expr )* )
+    ;
+
+whereClause
+    : WHERE expr
+    ;
+
+effectHandlerCase
+    : DEF ( nameLowercase | genericOperator ) formalParams ( COLON type )? ARROW_THICK_R expr
+    | CASE qname ARROW_THICK_R expr
     ;
 
 lambdaParams
@@ -251,7 +293,7 @@ primaryExpr
     | FALSE
     | NULL
     | LPAREN ( expr ( COMMA expr )* )? RPAREN
-    | LBRACE ( recordOpField ( COMMA recordOpField )* ( BAR expr )? | expr ( SEMI expr )* )? RBRACE
+    | LBRACE ( recordOpField ( COMMA recordOpField )* ( BAR expr )? | datalogConstraint+ | expr ( SEMI expr )* )? RBRACE
     | LBRACK ( expr ( COMMA expr )* )? RBRACK
     ;
 
