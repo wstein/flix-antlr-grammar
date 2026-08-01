@@ -1,8 +1,12 @@
 package io.github.wstein.flix.antlr
 
+import org.antlr.v4.runtime.BaseErrorListener
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
+import org.antlr.v4.runtime.RecognitionException
+import org.antlr.v4.runtime.Recognizer
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -79,15 +83,44 @@ class GrammarFixtureAndSnapshotTest {
         assertTrue(negativeFiles.isNotEmpty(), "fixtures/negative should contain .flix test files")
 
         for (file in negativeFiles.sortedBy { it.name }) {
-            val stream = CharStreams.fromPath(file.toPath())
-            val lexer = FlixLexer(stream)
-            val tokens = CommonTokenStream(lexer)
-            val parser = FlixParser(tokens)
+            // Each fixture declares where its first error must land, as
+            // `// expect-error: <line>:<column>` on the first line. Asserting only that some
+            // error occurred is close to worthless: `def f(::: = {` fails under almost any
+            // grammar, including one for a different language, so it cannot detect
+            // over-permissiveness at any particular place.
+            val directive = file.readLines().firstOrNull().orEmpty()
+            val expected = Regex("// expect-error: (\\d+):(\\d+)").find(directive)
+            assertNotNull(expected, "${file.name} must start with `// expect-error: <line>:<col>`")
+
+            val errors = mutableListOf<Pair<Int, Int>>()
+            val parser = FlixParser(CommonTokenStream(FlixLexer(CharStreams.fromPath(file.toPath()))))
+            parser.removeErrorListeners()
+            parser.addErrorListener(
+                object : BaseErrorListener() {
+                    override fun syntaxError(
+                        recognizer: Recognizer<*, *>?,
+                        offendingSymbol: Any?,
+                        line: Int,
+                        charPositionInLine: Int,
+                        msg: String?,
+                        e: RecognitionException?,
+                    ) {
+                        errors += line to charPositionInLine
+                    }
+                },
+            )
             parser.compilationUnit()
 
             assertTrue(
-                parser.numberOfSyntaxErrors > 0,
+                errors.isNotEmpty(),
                 "Negative fixture ${file.name} expected syntax errors but parsed cleanly",
+            )
+            val want = expected!!.groupValues[1].toInt() to expected.groupValues[2].toInt()
+            assertEquals(
+                want,
+                errors.first(),
+                "${file.name}: first error moved. Update the directive only if the new position " +
+                    "is correct; a moved error often means the grammar became more permissive.",
             )
         }
     }

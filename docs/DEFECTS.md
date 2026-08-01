@@ -135,6 +135,17 @@ install at all; the target had therefore never been built. `FlixLexerBase.ts` di
 either, using the Java field `_input` instead of antlr4ng's `inputStream`, calling `reset()` on
 a plain array, and reading `charIndex`. All three are fixed.
 
+## D12 — U+FFFF cannot be lexed
+
+ANTLR's Java target reserves U+FFFF in its serialized ATN, so no lexer rule can match it —
+adding it explicitly to `STRING_CONTENT` changes nothing. When it appears in a source file the
+lexer cannot leave `STRING_MODE`, and every character after it is silently dropped.
+
+One corpus file is affected (`TestJson.flix`, which tests JSON escaping of the Unicode
+non-characters). The token-tiling property excludes files containing U+FFFF and reports the
+count, rather than weakening the property for every other character. Nothing else in the corpus
+loses a single character.
+
 ---
 
 ## How these were found
