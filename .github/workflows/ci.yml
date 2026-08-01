@@ -25,21 +25,21 @@ jobs:
       matrix:
         java: ['21', '25']
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
 
       - name: Set up JDK ${{ matrix.java }}
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v5.6.0
         with:
           distribution: temurin
           java-version: ${{ matrix.java }}
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
         with:
           # Reject a tampered or hand-edited wrapper before it can run.
           validate-wrappers: true
@@ -50,7 +50,7 @@ jobs:
       # The corpus gate skips without a checkout, so without this step CI would
       # not enforce the parse-rate floor it claims.
       - name: Check out the pinned Flix corpus
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           repository: flix/flix
           ref: debf7df0fdd63f2b76b7a539ebbff5243070ca6e
@@ -74,7 +74,7 @@ jobs:
 
       - name: Upload test and coverage reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: reports-jdk${{ matrix.java }}
           path: |
@@ -86,10 +86,10 @@ jobs:
     name: antlr-ng target
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
 
