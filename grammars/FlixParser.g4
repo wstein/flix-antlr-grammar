@@ -172,7 +172,7 @@ typeParams
     ;
 
 typeParam
-    : name ( COLON kind )?
+    : ( name | UNDERSCORE ) ( COLON kind )?
     ;
 
 typeArgs
@@ -191,31 +191,37 @@ formalParams
 // The type ascription is optional everywhere; the reference makes its presence
 // required, optional or forbidden depending on context and validates later.
 formalParam
-    : variableName ( COLON type )?
+    : variableName ( COLON typeAndEffect )?
     ;
 
 // =====================================================================
 // Types
 //
-// Precedence, loosest to tightest, from Parser2.Type.TYPE_OP_PRECEDENCE:
-// `->`, rvadd/rvsub, rvand, `+`/`-`, `&`, xor, or, and, unary. Equal
-// precedence is left-associative; the arrow is right-associative.
+// TYPE_OP_PRECEDENCE lists operators LOOSEST first: `->`, rvadd/rvsub, rvand,
+// `+`/`-`, `&`, xor, or, and, then unary. Equal precedence is left-associative
+// and the arrow is right-associative. Its docstring claims the opposite, as
+// does the expression table's; both are inverted.
 // =====================================================================
 
+// The effect annotation binds looser than everything, including the arrow:
+// in `a -> b \ ef` the effect belongs to the arrow type as a whole.
 typeAndEffect
-    : type ( BACKSLASH type )?
+    : type
     ;
 
+// ANTLR assigns precedence by alternative order, earliest tightest, so this
+// table is the reverse of TYPE_OP_PRECEDENCE, whose index 0 is the LOOSEST.
 type
-    : <assoc=right> type ARROW_WS type    # ArrowType
-    | type ( RVADD | RVSUB ) type         # RvAddSubType
-    | type RVAND type                     # RvAndType
-    | type ( PLUS | MINUS ) type          # EffectSumType
-    | type AMPERSAND type                 # EffectIntersectionType
-    | type XOR type                       # XorType
-    | type OR type                        # OrType
+    : ( NOT | TILDE | RVNOT ) type        # UnaryType
     | type AND type                       # AndType
-    | ( NOT | TILDE | RVNOT ) type        # UnaryType
+    | type OR type                        # OrType
+    | type XOR type                       # XorType
+    | type AMPERSAND type                 # EffectIntersectionType
+    | type ( PLUS | MINUS ) type          # EffectSumType
+    | type RVAND type                     # RvAndType
+    | type ( RVADD | RVSUB ) type         # RvAddSubType
+    | <assoc=right> type ARROW_WS type    # ArrowType
+    | type BACKSLASH type                 # EffectAnnotatedType
     | primaryType typeArgs*               # ApplyType
     ;
 
@@ -231,6 +237,7 @@ primaryType
     | LPAREN ( type ( COMMA type )* )? RPAREN
     | LBRACE BAR RBRACE
     | LBRACE ( recordFieldType ( COMMA recordFieldType )* ( BAR type )? )? RBRACE
+    | LBRACE type ( COMMA type )* RBRACE
     | HASH_LBRACE ( schemaTerm ( COMMA schemaTerm )* ( BAR name )? )? RBRACE
     | HASH_LPAREN ( schemaTerm ( COMMA schemaTerm )* ( BAR name )? )? RPAREN
     | HASH_BAR ( schemaTerm ( COMMA schemaTerm )* ( BAR name )? )? BAR_HASH
