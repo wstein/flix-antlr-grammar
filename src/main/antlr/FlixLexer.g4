@@ -96,6 +96,7 @@ LAZY             : 'lazy' { !isNameCharFollow() }? ;
 LET              : 'let' { !isNameCharFollow() }? ;
 MATCH            : 'match' { !isNameCharFollow() }? ;
 MOD              : 'mod' { !isNameCharFollow() }? ;
+NAMESPACE        : 'namespace' { !isNameCharFollow() }? ;
 MUT              : 'mut' { !isNameCharFollow() }? ;
 NEW              : 'new' { !isNameCharFollow() }? ;
 NOT              : 'not' { !isNameCharFollow() }? ;

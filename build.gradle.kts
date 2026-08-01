@@ -90,7 +90,7 @@ tasks.jacocoTestReport {
     classDirectories.setFrom(
         files(
             classDirectories.files.map {
-                fileTree(it) { exclude("$grammarPackage/Flix*.class".replace('.', '/')) }
+                fileTree(it) { exclude("${grammarPackage.replace('.', '/')}/Flix*.class") }
             },
         ),
     )
