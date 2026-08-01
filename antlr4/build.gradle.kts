@@ -18,7 +18,7 @@ dependencies {
     implementation("org.antlr:antlr4-runtime:$antlrVersion")
 
     testImplementation(kotlin("test"))
-    testImplementation(platform("org.junit:junit-bom:5.11.4"))
+    testImplementation(platform("org.junit:junit-bom:5.12.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

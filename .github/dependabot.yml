@@ -2,7 +2,7 @@ version: 2
 
 updates:
   - package-ecosystem: gradle
-    directory: /
+    directory: /antlr4
     schedule:
       interval: weekly
       day: monday
@@ -18,6 +18,15 @@ updates:
           - org.junit*
           - org.junit.jupiter:*
           - org.junit.platform:*
+
+  - package-ecosystem: npm
+    directory: /antlr-ng
+    schedule:
+      interval: weekly
+      day: monday
+    labels:
+      - dependencies
+      - npm
 
   - package-ecosystem: github-actions
     directory: /
