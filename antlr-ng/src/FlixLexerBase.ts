@@ -6,12 +6,13 @@ import { CharStream, Lexer } from "antlr4ng";
  * Mirrors the logic in FlixLexerBase.java for the antlr-ng structural target.
  */
 export abstract class FlixLexerBase extends Lexer {
+    // Reserved spellings composed only of user-operator characters. `/`, `~` and the
+    // colon family are absent by design: they cannot occur inside an operator run.
     private static readonly RESERVED_OPERATORS = new Map<string, string>([
         ["!", "BANG"],
         ["!=", "BANG_EQUAL"],
         ["&", "AMPERSAND"],
         ["*", "STAR"],
-        ["/", "SLASH"],
         ["+", "PLUS"],
         ["-", "MINUS"],
         ["<", "ANGLE_L"],

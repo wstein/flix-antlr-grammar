@@ -4,23 +4,18 @@ An ANTLR4 grammar for Flix, transliterated from the reference compiler.
 
 ## Implementation status
 
-**Measured corpus parse rate: 10.26% (71 / 692).** The scaffolding, build, CLI and gate are
-done; the grammar itself is an incomplete first draft. See [docs/DEFECTS.md](docs/DEFECTS.md)
-before doing anything else — the lexer's keyword table was not derived from `Lexer.scala` and
-is missing 22 real keywords while defining 24 that do not exist in Flix.
+**Measured corpus parse rate: 90.90% (629 / 692).** Run the gate before and after every
+grammar change and state the delta in the commit message.
 
-- [x] **Phase 1**: Gradle build, CI, Dependabot, design documentation.
-- [~] **Phase 2**: `FlixLexer.g4` and `FlixLexerBase.java` exist; keyword table is wrong (D1, D2)
-      and holes are not tokenized (D3).
-- [~] **Phase 3**: Declaration, type and use/import rules exist; enum bodies too strict (D5),
-      declaration recovery falls through to Datalog (D6).
-- [~] **Phase 4**: Expression and pattern rules exist; unverified against the corpus.
-- [~] **Phase 5**: Datalog, fixpoint and effect-handler rules exist; unverified against the corpus.
-- [x] **Phase 6**: Validation CLI and a real ratcheting corpus gate.
-- [ ] **Phase 7**: Syntax reference, railroad diagrams, `TREEKIND-MAP.md`.
+- [x] Build, CI, Dependabot, release workflow.
+- [x] Lexer: 84 keywords pinned by `fixtures/keywords.txt`, operator runs, holes,
+      interpolation modes, whitespace-sensitive `->` and `.`.
+- [x] Parser: declarations, types, expressions, patterns, Datalog, effect handlers.
+- [x] Validation CLI and a ratcheting corpus gate.
+- [ ] Java interop edge cases (D7), syntax reference and railroad diagrams.
 
-Legend: `[x]` complete, `[~]` present but incomplete, `[ ]` not started. Do not mark a phase
-complete on the strength of unit tests alone — the corpus gate is the acceptance criterion.
+Do not mark work complete on the strength of unit tests alone — the corpus gate is the
+acceptance criterion. See [docs/DEFECTS.md](docs/DEFECTS.md).
 
 ## Project layout & Customer separation
 
@@ -70,6 +65,11 @@ These cost real time to discover. Do not re-derive them.
 (`Parser2.scala:3492`) both say "lower is higher precedence". They are **wrong**.
 `rightBindsTighter` compares `right.precedence > left.precedence`, so a **larger number binds
 tighter**. Verify against `1 + 2 * 3`.
+
+This bit twice. ANTLR assigns precedence by alternative order with the **earliest binding
+tightest**, so a left-recursive rule must list the table in reverse. The type rule was written
+with the arrow first, making the loosest type operator the tightest; fixing it moved the corpus
+rate from 67% to 91%.
 
 ### User-defined operators bind tighter than every built-in arithmetic operator
 

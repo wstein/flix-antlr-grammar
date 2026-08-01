@@ -3,15 +3,17 @@
 Findings from measuring the grammar against the real Flix corpus
 (`wstein/flix-fork@debf7df`, 692 `.flix` files). Ordered by impact.
 
-Measured parse rate at the time of writing: **10.26% (71 / 692)**.
+Measured parse rate: **90.90% (629 / 692)**, up from 10.26% when this log was opened.
 
-The build was green and all 38 unit tests passed while the grammar rejected nine out of ten
-real Flix files. The tests only ever exercised hand-written snippets, so they could not detect
-this. See D4.
+D1-D6, D9 and D10 are resolved. D7 is open. The entry that made the rest possible is D4: the
+build was green and all 38 unit tests passed while the grammar rejected nine out of ten real
+Flix files, because the tests only ever exercised hand-written snippets.
+
+Do not raise the corpus baseline by hand; let the gate ratchet it.
 
 ---
 
-## D1 — 22 real keywords are missing from the lexer
+## D1 — 22 real keywords are missing from the lexer — RESOLVED
 
 `grammars/FlixLexer.g4` defines 86 keywords, but they are not the 84 keywords Flix actually
 has. Absent, despite being in `Lexer.scala:49-139`:
@@ -28,7 +30,7 @@ constructs. Their absence alone accounts for a large share of the failures.
 **Fix**: regenerate the keyword table from `Lexer.scala:49-139`. The authoritative list of 84
 is reproduced in `CLAUDE.md`.
 
-## D2 — 24 phantom keywords that do not exist in Flix
+## D2 — 24 phantom keywords that do not exist in Flix — RESOLVED
 
 These are defined as keywords but are ordinary identifiers in Flix 0.75.1. Any real program
 using one as a name fails to parse:
@@ -48,7 +50,7 @@ This is the same defect class `flix-textmate` catalogues as its "phantom keyword
 
 **Fix**: delete these rules and every parser reference to them.
 
-## D3 — Holes are not tokenized at all
+## D3 — Holes are not tokenized at all — RESOLVED
 
 `???` (`HoleAnonymous`), `?name` (`HoleNamed`) and `name?` (`HoleVariable`) have no lexer
 rules and no parser alternative. `???` is Flix's standard "unimplemented" marker and appears
@@ -57,7 +59,7 @@ throughout the corpus and the standard library; `def f(): Bool = ???` does not p
 **Fix**: add the three token rules (`Lexer.scala:153`, `:470-482`, `:509-513`) and an
 expression alternative.
 
-## D4 — The corpus gate did not test a corpus
+## D4 — The corpus gate did not test a corpus — RESOLVED
 
 `CorpusCoverageTest.testCorpusParseRate` wrote two hand-written snippets into a temporary
 directory and parsed those. It never touched the corpus, so the parse rate it reported was
@@ -70,25 +72,48 @@ asserted the walker visited more than ten nodes, which is true for any non-empty
 committed to `fixtures/corpus-baseline.json`. It skips, rather than passes, when no corpus is
 available, so an absent corpus can never read as success.
 
-## D5 — Enum bodies and case separators are too strict
+## D5 — Enum bodies and case separators are too strict — RESOLVED
 
 `enum E0` with no body is rejected, and `enum E { case A case B }` (no comma between cases) is
 rejected. `Parser2.scala:1214` defines `FIRST_ENUM_CASE = { CommentDoc, 'case', ',' }` and
 deliberately accepts `case A, B, C`, `case A, case B,` and `case A case B` alike. The enum
 body is also optional.
 
-## D6 — Stray input falls through to the Datalog constraint rule
+## D6 — Stray input falls through to the Datalog constraint rule — RESOLVED
 
 Errors in declaration position resync into the Datalog constraint rule, producing
 `expecting {DOT, DOT_WS, '(', ':-'}` on ordinary declarations. The diagnostics are actively
 misleading. This is an alternative-ordering problem in `compilationUnit`.
 
+## D7 — Java interop and remaining edge cases
+
+The 63 files that still fail cluster around Java interop (anonymous classes with method
+bodies, `[Object]`-style type arguments), a handful of dot-position cases, and named
+arguments in some call positions. These are genuine grammar gaps rather than defects in the
+derivation, and each needs its own reading of `Parser2.scala`.
+
+## D8 — The corpus gate does not run in CI — RESOLVED (documented)
+
+The gate needs a Flix checkout and skips without one, so CI cannot currently enforce the
+ratchet. Contributors must run it locally; the README states this. Wiring a pinned corpus
+checkout into CI would close the gap and is tracked as a non-blocking follow-up.
+
+## D9 — `/` listed as a reserved operator in the antlr-ng target — RESOLVED
+
+`antlr-ng/src/FlixLexerBase.ts` mapped `/` to `SLASH` in its reserved-operator table. Since
+`/` is excluded from the user-operator character set, it can never appear in an operator run,
+so the entry was unreachable and misleading. Removed to mirror the Java implementation.
+
+## D10 — CI matrix was a no-op — RESOLVED
+
+The build job pinned a `java:21-bookworm` container while running a 21/25 JDK matrix, so both
+legs built on the image's JDK 21 and the JDK 25 leg proved nothing. The container is gone and
+`actions/setup-java` now supplies the matrix JDK.
+
 ---
 
-## Remediation order
+## How these were found
 
-D1, D2 and D3 are lexical and mechanical, and together should move the parse rate the most.
-Re-measure after each — the corpus gate now makes that a single command. D5 and D6 are parser
-changes that only become visible once the lexer is correct.
-
-Do not raise the baseline by hand. Let the gate ratchet it.
+Every defect above came from one measurement — parsing a real Flix checkout — rather than from
+review. None was visible in a passing test suite. When adding a construct, re-measure; when a
+number does not move, the construct was not the problem.
