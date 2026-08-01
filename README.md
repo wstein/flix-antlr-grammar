@@ -27,6 +27,10 @@ see [Verification](#verification).
 | Java interop, anonymous classes, remaining edge cases | in progress |
 | Syntax reference and railroad diagrams | not started |
 
+[docs/SYNTAX.md](docs/SYNTAX.md) is a syntax reference generated from the grammars, and
+[docs/TREEKIND-MAP.md](docs/TREEKIND-MAP.md) maps every rule to the compiler's `TreeKind`.
+Regenerate the reference with `python3 tools/gen-syntax-reference.py` after changing a grammar.
+
 Design decisions and the reasoning behind them are recorded in
 [docs/DESIGN-DEBATE.md](docs/DESIGN-DEBATE.md) and
 [docs/REMEDIATION-DEBATE.md](docs/REMEDIATION-DEBATE.md). Open defects are tracked in
@@ -47,7 +51,8 @@ grammars/          FlixLexer.g4 and FlixParser.g4 — the shared, canonical gram
 antlr4/            JVM target: FlixLexerBase.java, validation CLI, JUnit 5 tests
 antlr-ng/          TypeScript target: FlixLexerBase.ts, generated via antlr4ng
 fixtures/          positive and negative sources, CST snapshots, keyword and corpus pins
-docs/              design debates, defect log
+docs/              design debates, defect log, generated syntax reference
+tools/             documentation generators
 ```
 
 Only the JVM target generates from `grammars/` today. The antlr-ng target ships the

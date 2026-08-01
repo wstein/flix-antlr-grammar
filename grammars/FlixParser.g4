@@ -359,10 +359,10 @@ expr
     | SELECT LBRACE selectRule* RBRACE                      # SelectExpr
     | ( CHECKED_CAST | CHECKED_ECAST ) LPAREN expr RPAREN   # CheckedCastExpr
     | UNCHECKED_CAST LPAREN expr AS typeAndEffect RPAREN    # UncheckedCastExpr
-    | NEW qname ( AT expr )?
+    | NEW qname typeArgs? ( AT expr )?
       ( LBRACE newBody* RBRACE | LPAREN ( expr ( COMMA expr )* )? RPAREN )? # NewExpr
     | SUPER ( dot nameLowercase )? LPAREN ( expr ( COMMA expr )* )? RPAREN # SuperExpr
-    | USE qname SEMI expr                                   # UseExpr
+    | useClause SEMI expr                                   # UseExpr
     | fixpointExpr                                          # FixpointExpression
     | primaryExpr                                           # PrimaryExpression
     ;
