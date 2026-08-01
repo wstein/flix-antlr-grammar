@@ -13,9 +13,9 @@ An ANTLR4 grammar for Flix, transliterated from the reference compiler.
 
 ## Project layout & Customer separation
 
-The project is refactored into distinct customer target directories:
-- `antlr4/`: JVM target / Java customer (`FlixLexer.g4`, `FlixParser.g4`, `FlixLexerBase.java`, Gradle build, CLI runner, Kotlin unit tests).
-- `antlr-ng/`: `antlr-ng` TypeScript / structural target (`FlixLexer.g4`, `FlixParser.g4`, `FlixLexerBase.ts`, `package.json`, `tsconfig.json`).
+- `grammars/`: Shared canonical ANTLR4 grammars (`FlixLexer.g4`, `FlixParser.g4`) consumed by both customers.
+- `antlr4/`: JVM target / Java customer (`FlixLexerBase.java`, Gradle build, CLI runner, Kotlin unit tests).
+- `antlr-ng/`: `antlr-ng` TypeScript / structural target (`FlixLexerBase.ts`, `package.json`, `tsconfig.json`).
 
 ## Source of truth
 

@@ -37,6 +37,10 @@ application {
     mainClass = "$grammarPackage.cli.MainKt"
 }
 
+sourceSets.main {
+    antlr.srcDir(file("../grammars"))
+}
+
 tasks.generateGrammarSource {
     maxHeapSize = "512m"
     // ANTLR derives no package from the source layout, so state it explicitly and
