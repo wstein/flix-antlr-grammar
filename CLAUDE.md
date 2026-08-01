@@ -11,6 +11,12 @@ An ANTLR4 grammar for Flix, transliterated from the reference compiler.
 - [x] **Phase 5**: Datalog, fixpoint, effect handlers (`feat(parser): implement Datalog constraints, fixpoints, and effect handlers`).
 - [x] **Phase 6**: Validation CLI + corpus coverage gate (`feat(cli): implement validation CLI and corpus coverage test gate`).
 
+## Project layout & Customer separation
+
+The project is refactored into distinct customer target directories:
+- `antlr4/`: JVM target / Java customer (`FlixLexer.g4`, `FlixParser.g4`, `FlixLexerBase.java`, Gradle build, CLI runner, Kotlin unit tests).
+- `antlr-ng/`: `antlr-ng` TypeScript / structural target (`FlixLexer.g4`, `FlixParser.g4`, `FlixLexerBase.ts`, `package.json`, `tsconfig.json`).
+
 ## Source of truth
 
 Reference: `wstein/flix-fork@debf7df` (Flix 0.75.1). Paths below are relative to
