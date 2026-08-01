@@ -4,12 +4,23 @@ An ANTLR4 grammar for Flix, transliterated from the reference compiler.
 
 ## Implementation status
 
-- [x] **Phase 1**: Scaffold Gradle build, CI, and design documentation (`chore: scaffold Gradle build, CI, and design documentation`).
-- [x] **Phase 2**: Implement `FlixLexer.g4`, `FlixLexerBase.java`, and `FlixLexerTest.kt` (`feat(lexer): implement FlixLexer.g4 and comprehensive lexer test suite`).
-- [x] **Phase 3**: Parser — declarations, types, uses/imports (`feat(parser): implement FlixParser.g4 declaration, type, and use/import rules`).
-- [x] **Phase 4**: Parser — expressions and patterns (`feat(parser): implement expression precedence and pattern matching rules`).
-- [x] **Phase 5**: Datalog, fixpoint, effect handlers (`feat(parser): implement Datalog constraints, fixpoints, and effect handlers`).
-- [x] **Phase 6**: Validation CLI + corpus coverage gate (`feat(cli): implement validation CLI and corpus coverage test gate`).
+**Measured corpus parse rate: 10.26% (71 / 692).** The scaffolding, build, CLI and gate are
+done; the grammar itself is an incomplete first draft. See [docs/DEFECTS.md](docs/DEFECTS.md)
+before doing anything else — the lexer's keyword table was not derived from `Lexer.scala` and
+is missing 22 real keywords while defining 24 that do not exist in Flix.
+
+- [x] **Phase 1**: Gradle build, CI, Dependabot, design documentation.
+- [~] **Phase 2**: `FlixLexer.g4` and `FlixLexerBase.java` exist; keyword table is wrong (D1, D2)
+      and holes are not tokenized (D3).
+- [~] **Phase 3**: Declaration, type and use/import rules exist; enum bodies too strict (D5),
+      declaration recovery falls through to Datalog (D6).
+- [~] **Phase 4**: Expression and pattern rules exist; unverified against the corpus.
+- [~] **Phase 5**: Datalog, fixpoint and effect-handler rules exist; unverified against the corpus.
+- [x] **Phase 6**: Validation CLI and a real ratcheting corpus gate.
+- [ ] **Phase 7**: Syntax reference, railroad diagrams, `TREEKIND-MAP.md`.
+
+Legend: `[x]` complete, `[~]` present but incomplete, `[ ]` not started. Do not mark a phase
+complete on the strength of unit tests alone — the corpus gate is the acceptance criterion.
 
 ## Project layout & Customer separation
 
