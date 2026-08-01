@@ -2,7 +2,7 @@
 
 A working session held before writing a line of grammar. Five perspectives, deliberately
 adversarial. Every claim is expected to carry a citation into the reference compiler
-(`wstein/flix-fork@debf7df`, Flix 0.75.1) or into measured evidence from the sibling projects.
+(`flix/flix@318bb51`, Flix 0.75.1) or into measured evidence from the sibling projects.
 
 Proposals are rated **1–5** (5 = adopt, 1 = reject). Ratings are per-participant; the
 consensus row records what was actually adopted.

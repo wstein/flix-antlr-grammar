@@ -48,7 +48,7 @@ class FlixGrammarPropertiesTest {
         val roots =
             listOfNotNull(
                 configured,
-                "${System.getProperty("user.home")}/github.com/wstein/flix-fork/main",
+                "${System.getProperty("user.home")}/github.com/flix/flix/main",
             )
         val dir = roots.map(::File).firstOrNull { it.isDirectory } ?: return emptyList()
         return dir.walkTopDown().filter { it.isFile && it.extension == "flix" }.toList()

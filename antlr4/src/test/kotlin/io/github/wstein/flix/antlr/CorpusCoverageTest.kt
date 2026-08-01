@@ -19,7 +19,7 @@ import java.io.File
  * baseline.
  *
  * The corpus location comes from `-Dflix.corpus=<dir>` or the `FLIX_CORPUS` environment variable,
- * falling back to a sibling `flix-fork` checkout. When no corpus is present the test is *skipped*
+ * falling back to a sibling `flix/flix` checkout. When no corpus is present the test is *skipped*
  * rather than passed, so a missing corpus can never be mistaken for coverage.
  */
 class CorpusCoverageTest {
@@ -30,7 +30,7 @@ class CorpusCoverageTest {
         val candidates =
             listOfNotNull(
                 configured,
-                "${System.getProperty("user.home")}/github.com/wstein/flix-fork/main",
+                "${System.getProperty("user.home")}/github.com/flix/flix/main",
             )
         return candidates.map(::File).firstOrNull { it.isDirectory }
     }

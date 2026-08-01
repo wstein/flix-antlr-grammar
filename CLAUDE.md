@@ -29,7 +29,7 @@ acceptance criterion. See [docs/DEFECTS.md](docs/DEFECTS.md).
 
 ## Source of truth
 
-Reference: `wstein/flix-fork@debf7df` (Flix 0.75.1). Paths below are relative to
+Reference: `flix/flix@318bb51` (Flix 0.75.1). Paths below are relative to
 `main/src/ca/uwaterloo/flix/language/`.
 
 | File | Authority for |

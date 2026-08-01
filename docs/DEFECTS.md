@@ -1,7 +1,7 @@
 # Known defects
 
 Findings from measuring the grammar against the real Flix corpus
-(`wstein/flix-fork@debf7df`, 692 `.flix` files). Ordered by impact.
+(`flix/flix@318bb51`, 692 `.flix` files). Ordered by impact.
 
 Measured parse rate: **90.90% (629 / 692)**, up from 10.26% when this log was opened.
 

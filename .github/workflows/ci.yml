@@ -52,7 +52,7 @@ jobs:
       - name: Check out the pinned Flix corpus
         uses: actions/checkout@v5
         with:
-          repository: wstein/flix-fork
+          repository: flix/flix
           ref: debf7df0fdd63f2b76b7a539ebbff5243070ca6e
           path: corpus
 

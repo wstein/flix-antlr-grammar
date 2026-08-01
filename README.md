@@ -88,7 +88,7 @@ directory. The gates that now exist:
 | Negative fixtures | Over-permissiveness |
 
 The corpus gate needs a Flix checkout, resolved from `-Dflix.corpus=<dir>`, the `FLIX_CORPUS`
-environment variable, or a sibling `flix-fork` checkout. Without one it **skips** rather than
+environment variable, or a sibling `flix/flix` checkout. Without one it **skips** rather than
 passes, so an absent corpus can never be mistaken for coverage. It therefore does not run in
 CI today; run it locally before proposing a grammar change:
 
@@ -102,7 +102,7 @@ Raise the baseline when the rate improves; never lower it.
 ## Source of truth
 
 All syntax decisions trace to the reference compiler
-(fork [`wstein/flix-fork@debf7df`](https://github.com/wstein/flix-fork), Flix 0.75.1):
+(fork [`flix/flix@318bb51`](https://github.com/flix/flix), Flix 0.75.1):
 
 | File | Authority for |
 | --- | --- |
