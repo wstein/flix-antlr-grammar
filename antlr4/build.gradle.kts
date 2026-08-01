@@ -38,16 +38,15 @@ application {
 }
 
 sourceSets.main {
-    antlr.srcDir(file("../grammars"))
+    antlr.setSrcDirs(listOf(file("../grammars")))
 }
 
 tasks.generateGrammarSource {
     maxHeapSize = "512m"
-    // ANTLR derives no package from the source layout, so state it explicitly and
-    // emit into the matching directory.
     val outDir = layout.buildDirectory.dir("generated-src/antlr/main/${grammarPackage.replace('.', '/')}")
     outputDirectory = outDir.get().asFile
-    arguments = arguments +
+    outDir.get().asFile.mkdirs()
+    arguments =
         listOf(
             "-visitor",
             "-no-listener",
@@ -56,7 +55,7 @@ tasks.generateGrammarSource {
             "-package",
             grammarPackage,
             "-lib",
-            outDir.get().asFile.path,
+            outDir.get().asFile.absolutePath,
         )
 }
 

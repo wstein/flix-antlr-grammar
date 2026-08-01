@@ -16,6 +16,10 @@ An ANTLR4 grammar for Flix, transliterated from the reference compiler.
 - `grammars/`: Shared canonical ANTLR4 grammars (`FlixLexer.g4`, `FlixParser.g4`) consumed by both customers.
 - `antlr4/`: JVM target / Java customer (`FlixLexerBase.java`, Gradle build, CLI runner, Kotlin unit tests).
 - `antlr-ng/`: `antlr-ng` TypeScript / structural target (`FlixLexerBase.ts`, `package.json`, `tsconfig.json`).
+- `fixtures/`: Structured grammar test suite:
+  - `fixtures/positive/`: Valid Flix code snippets.
+  - `fixtures/negative/`: Syntax error test snippets.
+  - `fixtures/snapshots/`: Serialized CST S-expression snapshots (`.snap`) verifying structural parser consistency.
 
 ## Source of truth
 

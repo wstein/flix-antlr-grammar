@@ -1,0 +1,3 @@
+def brokenFunc(::: = {
+    let let = ;
+}

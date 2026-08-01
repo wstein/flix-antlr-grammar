@@ -11,6 +11,7 @@ export abstract class FlixLexerBase extends Lexer {
         ["!=", "BANG_EQUAL"],
         ["&", "AMPERSAND"],
         ["*", "STAR"],
+        ["/", "SLASH"],
         ["+", "PLUS"],
         ["-", "MINUS"],
         ["<", "ANGLE_L"],

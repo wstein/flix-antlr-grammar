@@ -164,8 +164,8 @@ formalParam
 // ---------------------------------------------------------------------
 
 type
-    : type ( ARROW_WS | ARROW_TIGHT | ARROW_THICK_R ) type
-    | primaryType typeArgs?
+    : type ( ARROW_WS | ARROW_TIGHT | ARROW_THICK_R ) type ( BACKSLASH type )?
+    | primaryType typeArgs? ( BACKSLASH type )?
     ;
 
 primaryType
@@ -207,7 +207,7 @@ nameUppercase : NAME_UPPERCASE ;
 nameMath      : NAME_MATH ;
 genericOperator
     : GENERIC_OPERATOR
-    | PLUS | MINUS | STAR | BAR | AMPERSAND | CARET | EQUAL | EQUAL_EQUAL
+    | PLUS | MINUS | STAR | SLASH | BAR | AMPERSAND | CARET | EQUAL | EQUAL_EQUAL
     | BANG | BANG_EQUAL | ANGLE_L | ANGLE_R | ANGLE_L_EQUAL | ANGLE_R_EQUAL
     | ANGLED_EQUAL | ANGLED_PLUS | ARROW_THIN_L | ARROW_THICK_R
     ;
@@ -226,7 +226,7 @@ expr
     | expr ( GENERIC_OPERATOR | nameMath ) expr              # UserOpExpr
     | BACKTICK nameLowercase BACKTICK expr                   # InfixCallExpr
     | DISCARD expr                                           # DiscardExpr
-    | expr ( STAR | MOD ) expr                               # MultExpr
+    | expr ( STAR | SLASH | MOD ) expr                       # MultExpr
     | expr ( PLUS | MINUS ) expr                             # AddExpr
     | <assoc=right> expr ( COLON_COLON | COLON_COLON_COLON ) expr # ConsExpr
     | expr ( EQUAL_EQUAL | BANG_EQUAL | ANGLE_L | ANGLE_R | ANGLE_L_EQUAL | ANGLE_R_EQUAL | ANGLED_EQUAL | ANGLED_PLUS ) expr # CompareExpr
@@ -239,7 +239,7 @@ expr
     | lambdaParams ( ARROW_WS | ARROW_TIGHT ) expr           # LambdaExpr
     | IF LPAREN expr RPAREN expr ( ELSE expr )?              # IfExpr
     | MATCH expr LBRACE matchCase+ RBRACE                    # MatchExpr
-    | TRY expr WITH ( effectHandlerCase | qname )+           # TryWithExpr
+    | TRY expr WITH ( qname LBRACE effectHandlerCase+ RBRACE | effectHandlerCase | qname )+ # TryWithExpr
     | ( SOLVE | PSOLVE ) fixpointExpressions ( selectClause | fromClause | whereClause )* # SolveExpr
     | ( QUERY | PQUERY ) fixpointExpressions ( selectClause | fromClause | whereClause )* # QueryExpr
     | INJECT fixpointExpressions                             # InjectExpr
@@ -264,7 +264,7 @@ whereClause
     ;
 
 effectHandlerCase
-    : DEF ( nameLowercase | genericOperator ) formalParams ( COLON type )? ARROW_THICK_R expr
+    : DEF ( nameLowercase | genericOperator ) formalParams ( COLON type )? ( ARROW_THICK_R expr | EQUAL expr )
     | CASE qname ARROW_THICK_R expr
     ;
 

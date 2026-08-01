@@ -17,6 +17,7 @@ tokens {
     BANG_EQUAL,
     AMPERSAND,
     STAR,
+    SLASH,
     PLUS,
     MINUS,
     ANGLE_L,
@@ -31,6 +32,7 @@ tokens {
     ANGLE_R_EQUAL,
     CARET,
     BAR,
+    BACKSLASH,
     GENERIC_OPERATOR,
 
     // String interpolation token emitted when closing brace closes interpolation
@@ -155,6 +157,8 @@ HASH             : '#' ;
 PERCENT_PERCENT  : '%%' ;
 QUESTION         : '?' ;
 TILDE            : '~' ;
+SLASH            : '/' ;
+BACKSLASH        : '\\' ;
 BACKTICK         : '`' ;
 
 // ---------------------------------------------------------------------
