@@ -5,9 +5,9 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "generate:experimental": "antlr-ng -o src/generated -D language=TypeScript --generate-visitor --generate-listener false ../grammars/FlixLexer.g4 ../grammars/FlixParser.g4",
     "build": "tsc",
-    "test": "vitest run"
+    "test": "vitest run",
+    "generate": "node ../tools/gen-antlr-ng.mjs"
   },
   "dependencies": {
     "antlr4ng": "^3.0.16"
