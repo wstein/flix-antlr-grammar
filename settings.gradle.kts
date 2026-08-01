@@ -1,3 +1,3 @@
-rootProject.name = "flix-antlr4-grammar"
+rootProject.name = "flix-antlr-grammar"
 
 include("antlr4")

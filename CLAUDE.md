@@ -1,4 +1,4 @@
-# flix-antlr4-grammar — project notes
+# flix-antlr-grammar — project notes
 
 An ANTLR4 grammar for Flix, transliterated from the reference compiler.
 

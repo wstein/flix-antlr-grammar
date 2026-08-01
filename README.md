@@ -1,6 +1,6 @@
-# flix-antlr4-grammar
+# flix-antlr-grammar
 
-[![CI](https://github.com/wstein/flix-antlr4-grammar/actions/workflows/ci.yml/badge.svg)](https://github.com/wstein/flix-antlr4-grammar/actions/workflows/ci.yml)
+[![CI](https://github.com/wstein/flix-antlr-grammar/actions/workflows/ci.yml/badge.svg)](https://github.com/wstein/flix-antlr-grammar/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE.md)
 [![ANTLR](https://img.shields.io/badge/ANTLR-4.13.2-c92a2a.svg)](https://www.antlr.org)
 [![Java](https://img.shields.io/badge/Java-21%2B-orange.svg)](https://adoptium.net)
