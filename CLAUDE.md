@@ -7,7 +7,7 @@ An ANTLR4 grammar for Flix, transliterated from the reference compiler.
 - [x] **Phase 1**: Scaffold Gradle build, CI, and design documentation (`chore: scaffold Gradle build, CI, and design documentation`).
 - [x] **Phase 2**: Implement `FlixLexer.g4`, `FlixLexerBase.java`, and `FlixLexerTest.kt` (`feat(lexer): implement FlixLexer.g4 and comprehensive lexer test suite`).
 - [x] **Phase 3**: Parser — declarations, types, uses/imports (`feat(parser): implement FlixParser.g4 declaration, type, and use/import rules`).
-- [ ] **Phase 4**: Parser — expressions and patterns
+- [x] **Phase 4**: Parser — expressions and patterns (`feat(parser): implement expression precedence and pattern matching rules`).
 - [ ] **Phase 5**: Datalog, fixpoint, effect handlers
 - [ ] **Phase 6**: Validation CLI + corpus coverage gate
 

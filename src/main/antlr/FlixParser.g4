@@ -199,11 +199,45 @@ genericOperator
     ;
 
 // ---------------------------------------------------------------------
-// Expressions & Patterns (Baseline)
+// Expressions (Precedence: Highest / Tightest at top)
 // ---------------------------------------------------------------------
 
 expr
-    : primaryExpr
+    : primaryExpr                                            # PrimaryExpression
+    | expr dot nameLowercase                                 # FieldSelectExpr
+    | expr ARROW_TIGHT nameLowercase                         # FieldSelectTightExpr
+    | expr LPAREN ( argument ( COMMA argument )* )? RPAREN   # ApplyExpr
+    | ( BANG | MINUS | NOT | MUT | FORCE | LAZY ) expr        # PrefixExpr
+    | expr ( GENERIC_OPERATOR | nameMath ) expr              # UserOpExpr
+    | BACKTICK nameLowercase BACKTICK expr                   # InfixCallExpr
+    | DISCARD expr                                           # DiscardExpr
+    | expr ( STAR | MOD ) expr                               # MultExpr
+    | expr ( PLUS | MINUS ) expr                             # AddExpr
+    | <assoc=right> expr ( COLON_COLON | COLON_COLON_COLON ) expr # ConsExpr
+    | expr ( EQUAL_EQUAL | BANG_EQUAL | ANGLE_L | ANGLE_R | ANGLE_L_EQUAL | ANGLE_R_EQUAL | ANGLED_EQUAL | ANGLED_PLUS ) expr # CompareExpr
+    | expr ( OR | AND ) expr                                 # LogicalExpr
+    | REF expr                                               # RefExpr
+    | DEREF expr                                             # DerefExpr
+    | SPAWN expr                                             # SpawnExpr
+    | PAR LPAREN expr ( COMMA expr )* RPAREN                 # ParExpr
+    | lambdaParams ( ARROW_WS | ARROW_TIGHT ) expr           # LambdaExpr
+    | IF LPAREN expr RPAREN expr ( ELSE expr )?              # IfExpr
+    | MATCH expr LBRACE matchCase+ RBRACE                    # MatchExpr
+    | LET pattern ( COLON type )? EQUAL expr SEMI expr       # LetExpr
+    ;
+
+lambdaParams
+    : formalParams
+    | nameLowercase
+    ;
+
+argument
+    : expr
+    | nameLowercase EQUAL expr
+    ;
+
+matchCase
+    : CASE pattern ( IF expr )? ARROW_THICK_R expr
     ;
 
 primaryExpr
@@ -217,20 +251,45 @@ primaryExpr
     | FALSE
     | NULL
     | LPAREN ( expr ( COMMA expr )* )? RPAREN
-    | LBRACE ( expr ( COMMA expr )* )? RBRACE
+    | LBRACE ( recordOpField ( COMMA recordOpField )* ( BAR expr )? | expr ( SEMI expr )* )? RBRACE
+    | LBRACK ( expr ( COMMA expr )* )? RBRACK
     ;
 
+recordOpField
+    : ( PLUS | MINUS )? nameLowercase ( EQUAL expr | COLON type )?
+    ;
+
+// ---------------------------------------------------------------------
+// Patterns
+// ---------------------------------------------------------------------
+
 pattern
-    : primaryPattern
+    : pattern ( COLON_COLON | COLON_COLON_COLON ) pattern # ConsPattern
+    | primaryPattern                                      # PrimaryPat
     ;
 
 primaryPattern
     : qname ( LPAREN ( pattern ( COMMA pattern )* )? RPAREN )?
+    | recordPattern
+    | tuplePattern
     | nameLowercase
     | UNDERSCORE
     | INT_LITERAL
+    | FLOAT_LITERAL
     | CHAR_LITERAL
+    | STRING_START STRING_CONTENT* STRING_END
     | TRUE
     | FALSE
-    | LPAREN ( pattern ( COMMA pattern )* )? RPAREN
+    ;
+
+tuplePattern
+    : LPAREN ( pattern ( COMMA pattern )* )? RPAREN
+    ;
+
+recordPattern
+    : LBRACE ( recordFieldPattern ( COMMA recordFieldPattern )* ( BAR pattern )? )? RBRACE
+    ;
+
+recordFieldPattern
+    : nameLowercase ( EQUAL pattern )?
     ;
