@@ -9,7 +9,7 @@ An ANTLR4 grammar for Flix, transliterated from the reference compiler.
 - [x] **Phase 3**: Parser — declarations, types, uses/imports (`feat(parser): implement FlixParser.g4 declaration, type, and use/import rules`).
 - [x] **Phase 4**: Parser — expressions and patterns (`feat(parser): implement expression precedence and pattern matching rules`).
 - [x] **Phase 5**: Datalog, fixpoint, effect handlers (`feat(parser): implement Datalog constraints, fixpoints, and effect handlers`).
-- [ ] **Phase 6**: Validation CLI + corpus coverage gate
+- [x] **Phase 6**: Validation CLI + corpus coverage gate (`feat(cli): implement validation CLI and corpus coverage test gate`).
 
 ## Source of truth
 
