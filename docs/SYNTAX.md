@@ -8,7 +8,7 @@ Constraints such as duplicate modifiers, non-linear patterns and unknown annotat
 parse here and are rejected by a later validation pass, mirroring how the reference
 compiler separates `Parser2` from `Weeder2`.
 
-Parser rules: 82 · lexer rules: 136
+Parser rules: 83 · lexer rules: 136
 
 ## Parser rules
 
@@ -41,7 +41,7 @@ useClause
 
 ```antlr
 importClause
-    : IMPORT qname ( dot LBRACE useName ( COMMA useName )* COMMA? RBRACE )?
+    : IMPORT javaQname ( dot LBRACE useName ( COMMA useName )* COMMA? RBRACE )?
     ;
 ```
 
@@ -384,6 +384,14 @@ schemaTerm
 
 ```antlr
 qname
+    : ( nameUppercase dot )* ( nameLowercase | nameUppercase | nameMath )
+    ;
+```
+
+### `javaQname`
+
+```antlr
+javaQname
     : name ( dot name )*
     ;
 ```
@@ -508,7 +516,7 @@ matchRule
 
 ```antlr
 catchRule
-    : CASE variableName COLON qname ARROW_THICK_R statement COMMA?
+    : CASE variableName COLON javaQname ARROW_THICK_R statement COMMA?
     ;
 ```
 
