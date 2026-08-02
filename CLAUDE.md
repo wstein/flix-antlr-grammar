@@ -4,7 +4,7 @@ An ANTLR4 grammar for Flix, transliterated from the reference compiler.
 
 ## Implementation status
 
-**Measured corpus parse rate: 90.90% (629 / 692).** Run the gate before and after every
+**Measured corpus parse rate: 95.81% (663 / 692).** Run the gate before and after every
 grammar change and state the delta in the commit message.
 
 - [x] Build, CI, Dependabot, release workflow.

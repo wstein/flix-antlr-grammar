@@ -6,7 +6,7 @@
 [![Java](https://img.shields.io/badge/Java-21%2B-orange.svg)](https://adoptium.net)
 [![Gradle](https://img.shields.io/badge/Gradle-9.6.1-02303A.svg?logo=gradle&logoColor=white)](https://gradle.org)
 [![Flix](https://img.shields.io/badge/Flix-0.75.1-blueviolet.svg)](https://flix.dev)
-[![Corpus](https://img.shields.io/badge/corpus%20parse%20rate-90.9%25-brightgreen.svg)](fixtures/corpus-baseline.json)
+[![Corpus](https://img.shields.io/badge/corpus%20parse%20rate-95.81%25-brightgreen.svg)](fixtures/corpus-baseline.json)
 
 An [ANTLR4](https://www.antlr.org) grammar for the [Flix](https://flix.dev) programming
 language, derived from the reference compiler's `Lexer.scala` and `Parser2.scala` rather than
@@ -14,7 +14,7 @@ from prose documentation.
 
 ## Status
 
-**Corpus parse rate: 90.90% (629 / 692 files.)** The rate is enforced by a ratcheting gate;
+**Corpus parse rate: 95.81% (663 / 692 files.)** The rate is enforced by a ratcheting gate;
 see [Verification](#verification).
 
 | Area | State |

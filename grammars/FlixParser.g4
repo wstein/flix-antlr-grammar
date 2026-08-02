@@ -27,7 +27,7 @@ useClause
     ;
 
 importClause
-    : IMPORT qname ( dot LBRACE useName ( COMMA useName )* COMMA? RBRACE )?
+    : IMPORT javaQname ( dot LBRACE useName ( COMMA useName )* COMMA? RBRACE )?
     ;
 
 useName
@@ -259,7 +259,25 @@ schemaTerm
 // Names
 // =====================================================================
 
+// Stops after the first lowercase segment, mirroring Parser2.scala's `nameAllowQualified`'s
+// default `tail = NAME_LOWERCASE`: a namespace-qualified reference like `Foo.Bar.baz.qux` stops
+// after `baz`, leaving `.qux` unconsumed for the postfix chain to turn into GetField/InvokeMethod.
+// Module/type/trait/effect names are conventionally all-uppercase multi-segment paths, so this
+// never stops early for them -- it is only observably different from unrestricted consumption when
+// a lowercase segment is followed by more segments, which is exactly the case the reference itself
+// singles out with `tail`. Was `name ( dot name )*` (unrestricted) until this fix: 1,243
+// expression-position qname nodes had the wrong shape as a result (a flat qname where the
+// reference produces a qname stopped at the first lowercase segment plus a postfix chain).
 qname
+    : ( nameUppercase dot )* ( nameLowercase | nameUppercase | nameMath )
+    ;
+
+// Unrestricted consumption -- `nameAllowQualified(..., tail = Set())` in the reference, used only
+// for Java package/class paths (`java.util.List`), which have lowercase package segments that must
+// NOT trigger qname's early stop. Mirrors Parser2.scala's `iimport()` (:911) and `catchRule()`
+// (:2811) exactly; every other qname position uses the tail-aware `qname` above, matching the
+// reference's own near-universal default.
+javaQname
     : name ( dot name )*
     ;
 
@@ -386,7 +404,7 @@ matchRule
     ;
 
 catchRule
-    : CASE variableName COLON qname ARROW_THICK_R statement COMMA?
+    : CASE variableName COLON javaQname ARROW_THICK_R statement COMMA?
     ;
 
 handlerRule

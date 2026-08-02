@@ -3,7 +3,7 @@
 Findings from measuring the grammar against the real Flix corpus
 (`flix/flix@318bb51`, 692 `.flix` files). Ordered by impact.
 
-Measured parse rate: **90.90% (629 / 692)**, up from 10.26% when this log was opened.
+Measured parse rate: **95.81% (663 / 692)**, up from 10.26% when this log was opened.
 
 D1-D6, D9 and D10 are resolved. D7 is open. The entry that made the rest possible is D4: the
 build was green and all 38 unit tests passed while the grammar rejected nine out of ten real
@@ -87,7 +87,7 @@ misleading. This is an alternative-ordering problem in `compilationUnit`.
 
 ## D7 — Java interop and remaining edge cases
 
-The 63 files that still fail cluster around Java interop (anonymous classes with method
+The 29 files that still fail cluster around Java interop (anonymous classes with method
 bodies, `[Object]`-style type arguments), a handful of dot-position cases, and named
 arguments in some call positions. These are genuine grammar gaps rather than defects in the
 derivation, and each needs its own reading of `Parser2.scala`.
@@ -145,6 +145,28 @@ One corpus file is affected (`TestJson.flix`, which tests JSON escaping of the U
 non-characters). The token-tiling property excludes files containing U+FFFF and reports the
 count, rather than weakening the property for every other character. Nothing else in the corpus
 loses a single character.
+
+## D13 — `qname` never honored `tail`, so it never stopped early — RESOLVED
+
+`grammars/FlixParser.g4`'s `qname : name ( dot name )*` was greedy and unbounded.
+`Parser2.scala`'s `nameAllowQualified` (`:738`) is not: it takes a `tail` parameter and, by
+default, stops consuming dot-separated segments the moment it consumes one whose kind is in
+`tail` (`NAME_LOWERCASE` by default). A namespace-qualified reference like `Foo.Bar.baz.qux`
+therefore stops after `baz` in the reference, leaving `.qux` for the postfix chain
+(`postfixSuffix`-equivalent) to turn into a field/method access. This grammar's `qname` consumed
+the whole thing instead, so `x.foo(1)` parsed as `Apply(qname(x.foo), 1)` where the reference
+produces `Apply(GetField(x, foo))` (or `InvokeMethod` outright) — a real shape defect, not a
+cosmetic one, affecting 1,243 expression-position `qname` nodes across the corpus (measured
+before the fix; see the corpus-analysis notes this defect was found from).
+
+Fixed by splitting `qname` into two rules: the general one now stops after the first
+`nameLowercase`/`nameMath` segment (or the last `nameUppercase` segment if none is lower/math),
+matching the reference's default; a new `javaQname` keeps the old unrestricted definition for the
+two positions the reference itself marks `tail = Set()` — `import` (`Parser2.scala:911`) and a
+`catch` clause's exception type (`:2811`), both of which need Java's lowercase package segments
+(`java.util.List`) to NOT trigger an early stop. Every other `qname` call site in this grammar
+matches a reference call site that already used the default `tail`, so no other position needed
+to change.
 
 ---
 
