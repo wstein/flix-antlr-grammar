@@ -42,8 +42,10 @@ function baselineRate(): number {
 describe("corpus coverage", () => {
     const corpus = corpusDir();
 
-    // Parsing ~700 real-world files takes well over vitest's 5s default.
-    it.skipIf(!corpus)("corpus parse rate meets baseline", { timeout: 300_000 }, () => {
+    // Parsing ~700 real-world files takes well over vitest's 5s default -- ~155s on a fast
+    // local machine, comfortably over 300s on a CI runner (antlr4ng's pure-JS runtime is
+    // slower per file than the JVM ANTLR runtime the antlr4 target uses).
+    it.skipIf(!corpus)("corpus parse rate meets baseline", { timeout: 900_000 }, () => {
         const files = walkFlixFiles(corpus!);
         expect(files.length).toBeGreaterThan(0);
 
