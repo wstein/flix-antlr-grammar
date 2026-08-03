@@ -27,7 +27,7 @@ tell apart from a real gap. The rate is enforced by a ratcheting gate; see
 | Parser: Datalog, fixpoint, effect handlers | done |
 | Validation CLI and corpus gate, JVM and TypeScript targets | done |
 | Java interop, anonymous classes, remaining edge cases | done |
-| Syntax reference and railroad diagrams | not started |
+| Syntax reference and railroad diagrams | done |
 
 [docs/SYNTAX.md](docs/SYNTAX.md) is a syntax reference generated from the grammars, and
 [docs/TREEKIND-MAP.md](docs/TREEKIND-MAP.md) maps every rule to the compiler's `TreeKind`.
