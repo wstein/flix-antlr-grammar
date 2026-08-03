@@ -120,10 +120,13 @@ class FlixGrammarPropertiesTest {
         var excluded = 0
         for (file in files) {
             val source = file.readText()
-            // ANTLR's Java target reserves U+FFFF in its serialized ATN, so no lexer rule can
-            // match it and everything after it in the file is lost. This cannot be expressed
-            // away in the grammar; see docs/DEFECTS.md D12.
-            if (source.contains('\uFFFF')) {
+            // TestJson.flix drops its final `}\n` regardless of whether U+FFFF is present or
+            // absent (verified directly: replacing every U+FFFF with an ordinary character
+            // produces the identical two-character drop at the identical offset) -- a distinct,
+            // unexplained defect from D12, tracked separately in docs/DEFECTS.md D14. Excluding by
+            // name rather than by content, since the old content-based check (U+FFFF presence)
+            // would now silently pass this file without ever reaching the real bug.
+            if (file.name == "TestJson.flix") {
                 excluded++
                 continue
             }

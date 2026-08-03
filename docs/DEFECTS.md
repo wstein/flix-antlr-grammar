@@ -10,9 +10,10 @@ file the corpus script still counts as a failure
 the script cannot distinguish from a real gap -- every syntactically valid file in the corpus
 parses.
 
-D1-D7, D9, D10 and D13 are resolved. The entry that made the rest possible is D4: the build was
-green and all 38 unit tests passed while the grammar rejected nine out of ten real Flix files,
-because the tests only ever exercised hand-written snippets.
+D1-D7, D9, D10, D12 and D13 are resolved. D14 is open, freshly found while fixing D12 rather
+than by the corpus parse-rate gate, which cannot see it. The entry that made the rest possible
+is D4: the build was green and all 38 unit tests passed while the grammar rejected nine out of
+ten real Flix files, because the tests only ever exercised hand-written snippets.
 
 Do not raise the corpus baseline by hand; let the gate ratchet it.
 
@@ -196,16 +197,29 @@ install at all; the target had therefore never been built. `FlixLexerBase.ts` di
 either, using the Java field `_input` instead of antlr4ng's `inputStream`, calling `reset()` on
 a plain array, and reading `charIndex`. All three are fixed.
 
-## D12 — U+FFFF cannot be lexed
+## D12 — U+FFFF cannot be lexed — RESOLVED
 
-ANTLR's Java target reserves U+FFFF in its serialized ATN, so no lexer rule can match it —
-adding it explicitly to `STRING_CONTENT` changes nothing. When it appears in a source file the
-lexer cannot leave `STRING_MODE`, and every character after it is silently dropped.
+ANTLR's Java target reserves U+FFFF in its serialized ATN: any char-range-based rule --
+`~[...]` negated sets, the `.` wildcard, U+FFFF added explicitly to `STRING_CONTENT`, all of it
+-- silently fails to match the character, because the *interval encoding itself* cannot
+represent that codepoint, regardless of which `CharStream` implementation is used at runtime.
+This is a compile-time ATN-serialization limitation, confirmed against
+[antlr/antlr4's own Unicode documentation](https://github.com/tunnelvisionlabs/antlr4/blob/master/doc/unicode.md)
+and issue tracker before attempting a fix, not assumed.
 
-One corpus file is affected (`TestJson.flix`, which tests JSON escaping of the Unicode
-non-characters). The token-tiling property excludes files containing U+FFFF and reports the
-count, rather than weakening the property for every other character. Nothing else in the corpus
-loses a single character.
+**Fix**: a semantic predicate does not compile into the ATN's char-range encoding at all -- it
+is arbitrary Java code evaluated against `_input.LA(1)` as a runtime `int`, which represents
+0xFFFF (65535) without difficulty (EOF is -1, not 0xFFFF, so the two never collide). Added
+`{ _input.LA(1) == 0xFFFF }? .` as a third alternative to `STRING_CONTENT`. Verified two ways:
+the file that exercises it (`TestJson.flix`) now parses (previously the lexer got stuck in
+`STRING_MODE` and everything after the character was lost), and the token-tiling property (the
+stricter, character-exact check -- see `assertTokensTileInput`) now correctly consumes U+FFFF
+itself into the token span rather than losing it.
+
+Un-excluding `TestJson.flix` from the token-tiling property surfaced a second, unrelated defect
+in the same file -- see D14. It does not reopen this one: replacing every U+FFFF in the file
+with an ordinary character and re-running produces the identical failure at the identical
+offset, proving D14 has nothing to do with U+FFFF specifically.
 
 ## D13 — `qname` never honored `tail`, so it never stopped early — RESOLVED
 
@@ -228,6 +242,30 @@ two positions the reference itself marks `tail = Set()` — `import` (`Parser2.s
 (`java.util.List`) to NOT trigger an early stop. Every other `qname` call site in this grammar
 matches a reference call site that already used the default `tail`, so no other position needed
 to change.
+
+## D14 — `TestJson.flix` drops its final two characters, cause unknown
+
+Found while verifying D12's fix: un-excluding `TestJson.flix` from the token-tiling property
+(now that U+FFFF itself lexes correctly) revealed the file still fails that property, dropping
+exactly `}\n` -- the module's closing brace and the trailing newline -- at the true end of the
+file. Confirmed unrelated to U+FFFF: replacing every occurrence of the character with an
+ordinary one and re-running the same check produces the identical two-character drop at the
+identical byte offset (82492 of 82494).
+
+Does not affect the corpus parse-rate gate (687/688 unchanged by D12's fix) -- the file already
+parsed without error before and after, so whatever consumes these two characters without
+emitting a token for them does not confuse the parser into reporting an error. It is invisible
+to every gate except the token-tiling property, which is exactly why that property exists
+(`FlixGrammarPropertiesTest.assertTokensTileInput`'s own doc comment: cheap and worth more than
+it looks).
+
+Not yet root-caused. The file is JSON-encoding-heavy and contains 263 `{` against 260 `}`
+characters in raw text (including inside ordinary string literals, which are not indicative of
+anything by themselves), so a hypothesis worth checking first is a brace-depth counter used for
+interpolation-nesting tracking becoming desynchronized by braces inside plain string content
+rather than genuine `${` interpolation -- not confirmed. Excluded from
+`tokensTileEveryCorpusFile` by filename (not by content, unlike D12's old exclusion, since the
+content-based test would now silently pass this file without ever re-reaching the bug).
 
 ---
 

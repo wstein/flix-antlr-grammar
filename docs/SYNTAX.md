@@ -1200,7 +1200,7 @@ INTERPOLATION_START
 
 ```antlr
 STRING_CONTENT
-    : ( ~["\\$\r\n] | '\\' . )+
+    : ( ~["\\$\r\n] | '\\' . |  . )+
     ;
 ```
 

@@ -265,7 +265,7 @@ mode STRING_MODE;
 
 STRING_END          : '"' -> popMode ;
 INTERPOLATION_START : '${' { openInterpolation(); } -> pushMode(DEFAULT_MODE) ;
-STRING_CONTENT      : ( ~["\\$\r\n] | '\\' . )+ ;
+STRING_CONTENT      : ( ~["\\$\r\n] | '\\' . | { _input.LA(1) == 0xFFFF }? . )+ ;
 STRING_DOLLAR       : '$' -> type(STRING_CONTENT) ;
 
 // A raw newline terminates the string in the reference. Popping the mode here
