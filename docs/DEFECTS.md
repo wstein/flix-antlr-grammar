@@ -1,13 +1,15 @@
 # Known defects
 
 Findings from measuring the grammar against the real Flix corpus
-(`flix/flix@318bb51`, 692 `.flix` files). Ordered by impact.
+(`flix/flix@318bb51`, 688 `.flix` files as currently checked out -- corpus size drifts with the
+local checkout; see `fixtures/corpus-baseline.json`). Ordered by impact.
 
-Measured parse rate: **95.81% (663 / 692)**, up from 10.26% when this log was opened.
+Measured parse rate: **96.22% (662 / 688)**, up from 10.26% when this log was opened.
 
-D1-D6, D9 and D10 are resolved. D7 is open. The entry that made the rest possible is D4: the
-build was green and all 38 unit tests passed while the grammar rejected nine out of ten real
-Flix files, because the tests only ever exercised hand-written snippets.
+D1-D6, D9, D10 and D13 are resolved. D7 is open, narrower than when it was opened. The entry
+that made the rest possible is D4: the build was green and all 38 unit tests passed while the
+grammar rejected nine out of ten real Flix files, because the tests only ever exercised
+hand-written snippets.
 
 Do not raise the corpus baseline by hand; let the gate ratchet it.
 
@@ -87,10 +89,24 @@ misleading. This is an alternative-ordering problem in `compilationUnit`.
 
 ## D7 — Java interop and remaining edge cases
 
-The 29 files that still fail cluster around Java interop (anonymous classes with method
-bodies, `[Object]`-style type arguments), a handful of dot-position cases, and named
-arguments in some call positions. These are genuine grammar gaps rather than defects in the
-derivation, and each needs its own reading of `Parser2.scala`.
+The 26 files that still fail (one further "failure" is `resiliency/ford-fulkerson-prefix.flix`,
+an intentionally truncated negative test the corpus script cannot distinguish from a real gap)
+cluster around Java interop (`new` object expressions and anonymous-class bodies, generic
+type-argument brackets on `choose`/`choose*`), a handful of record/schema polymorphism-row
+cases (`{... | r}`), and misc single-file gaps (`ematch` lambda form, `@Tailrec` on a nested
+local def, struct field access with `_`). These are genuine grammar gaps rather than defects in
+the derivation, and each needs its own reading of `Parser2.scala`.
+
+**Resolved from this bucket**: named arguments in *any* argument or tuple position
+(`f(a = 1)`, `(a = 1)`, `A.Tag(a = 1, b = 2)`) -- `argument` only allowed a bare `nameLowercase`
+on the left of `=`, and only tuple/paren expressions never routed through `argument` at all, so
+`(a = 1)` had no path to succeed regardless. `Parser2.scala:1878`'s `argument()` is `expression()
+(EQUAL expression)?` uniformly for every argument-list position, including plain
+parenthesized/tuple expressions (`parenOrTupleOrAscribe`, `Parser2.scala:2110`) -- not a
+call-specific feature. Fixed by widening `argument` to `expr (EQUAL expr)?` and routing tuple
+elements through it. 96.22% (662/688), up from 95.93% (660/688) after D13's corpus was
+re-measured on this checkout, unaffected by the fix (the change is at expression precedence
+below the tuple/argument boundary, not the `qname` reachability D13 concerns).
 
 ## D8 — The corpus gate does not run in CI — RESOLVED (documented)
 
@@ -110,10 +126,10 @@ The build job pinned a `java:21-bookworm` container while running a 21/25 JDK ma
 legs built on the image's JDK 21 and the JDK 25 leg proved nothing. The container is gone and
 `actions/setup-java` now supplies the matrix JDK.
 
-## D11 — The antlr-ng target cannot consume the shared grammar
+## D11 — The antlr-ng target cannot consume the shared grammar — RESOLVED
 
-`grammars/` is described as canonical for both targets, but only the JVM target can generate
-from it today. Two independent obstacles:
+`grammars/` is described as canonical for both targets, but only the JVM target could generate
+from it. Two independent obstacles:
 
 1. **Embedded actions are Java syntax.** The lexer's actions and predicates call
    `isNameCharFollow()`, `enterBrace()` and `_input.LA(1)` unqualified. TypeScript requires
@@ -123,12 +139,20 @@ from it today. Two independent obstacles:
    nothing, so every helper call is unresolved and `override` is rejected
    (`TS4112`).
 
-Generation itself succeeds and is kept as `npm run generate:experimental`; its output is not
-committed and does not type-check. CI type-checks only the hand-written `FlixLexerBase.ts`.
+**Fix**: `tools/gen-antlr-ng.mjs` (`npm run generate` in `antlr-ng/`) stages a TypeScript-adapted
+copy of `grammars/*.g4` into `antlr-ng/build/grammars/` -- qualifying the shared helper calls
+with `this.`, translating `setType`/`_input.` to antlr4ng's API, and rewriting Java char-literal
+comparisons to code-point comparisons -- runs `antlr-ng` over the copy, then patches the
+generated lexer to import and extend `FlixLexerBase`. The output is not committed
+(`antlr-ng/src/generated/` is gitignored, same reasoning as `antlr4`'s generated sources) but
+now type-checks cleanly and CI runs `npm run generate` before `npm run build`/`npm test`.
 
-Closing this needs a small pre-processing step that emits a TypeScript-adapted copy of the
-grammars — qualifying action calls with `this.` and injecting the superclass import — rather
-than pointing antlr-ng at `grammars/` directly.
+**Proof, not just a clean build**: `antlr-ng/test/corpus-coverage.test.ts` parses the same real
+Flix corpus the JVM target's `CorpusCoverageTest.kt` does, against the same shared
+`fixtures/corpus-baseline.json`, and gets the **same rate** (662/688, 96.22%) -- the two targets
+are not just both green, they agree on what they accept. `antlr-ng/test/lexer-base.test.ts`
+alone (parity checks on the hand-written runtime support, predating a generated parser to test
+against) was not that proof.
 
 Note also that `antlr4ng-cli` never had a 3.x release, so the declared `^3.0.0` could not
 install at all; the target had therefore never been built. `FlixLexerBase.ts` did not compile

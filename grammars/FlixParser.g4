@@ -391,8 +391,7 @@ lambdaParams
     ;
 
 argument
-    : nameLowercase EQUAL expr
-    | expr
+    : expr ( EQUAL expr )?
     ;
 
 block
@@ -516,7 +515,7 @@ primaryExpr
     | STATIC_UPPER
     | STATIC_LOWER
     | UNDERSCORE
-    | LPAREN ( expr ( COLON typeAndEffect )? ( COMMA expr )* )? RPAREN
+    | LPAREN ( argument ( COLON typeAndEffect )? ( COMMA argument )* )? RPAREN
     | LPAREN genericOperator RPAREN
     | constraintSet
     | HASH_LPAREN ( predicateParam ( COMMA predicateParam )* )? RPAREN ARROW_WS expr

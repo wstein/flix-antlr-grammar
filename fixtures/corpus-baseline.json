@@ -1,7 +1,7 @@
 {
   "_comment": "Ratcheting parse-rate floor over a real Flix checkout. Raise it when the grammar improves; never lower it. The gate prints the new rate when it improves; edit this file to lock it in.",
   "corpus": "flix/flix@318bb51 (Flix 0.75.1)",
-  "files": 692,
-  "parsed": 663,
-  "rate": 0.9581
+  "files": 688,
+  "parsed": 662,
+  "rate": 0.9622
 }

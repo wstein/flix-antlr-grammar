@@ -4,8 +4,9 @@ import { FlixLexerBase } from "../src/FlixLexerBase.js";
 /**
  * Parity checks for the hand-written runtime support.
  *
- * The antlr-ng target cannot yet generate a parser from the shared grammars (docs/DEFECTS.md
- * D11), so these assert the invariants of FlixLexerBase that must match FlixLexerBase.java.
+ * These assert the invariants of FlixLexerBase that must match FlixLexerBase.java. See
+ * corpus-coverage.test.ts for the gate that exercises the generated parser itself
+ * (docs/DEFECTS.md D11).
  */
 describe("FlixLexerBase", () => {
     it("declares only reserved spellings made of user-operator characters", () => {

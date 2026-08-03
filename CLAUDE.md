@@ -4,14 +4,16 @@ An ANTLR4 grammar for Flix, transliterated from the reference compiler.
 
 ## Implementation status
 
-**Measured corpus parse rate: 95.81% (663 / 692).** Run the gate before and after every
-grammar change and state the delta in the commit message.
+**Measured corpus parse rate: 96.22% (662 / 688), both targets.** Run the gate before and after
+every grammar change and state the delta in the commit message.
 
 - [x] Build, CI, Dependabot, release workflow.
 - [x] Lexer: 84 keywords pinned by `fixtures/keywords.txt`, operator runs, holes,
       interpolation modes, whitespace-sensitive `->` and `.`.
 - [x] Parser: declarations, types, expressions, patterns, Datalog, effect handlers.
-- [x] Validation CLI and a ratcheting corpus gate.
+- [x] Validation CLI and a ratcheting corpus gate, on both the `antlr4` (JVM) and `antlr-ng`
+      (TypeScript) targets -- see `antlr-ng/test/corpus-coverage.test.ts` and docs/DEFECTS.md
+      D11.
 - [ ] Java interop edge cases (D7), syntax reference and railroad diagrams.
 
 Do not mark work complete on the strength of unit tests alone — the corpus gate is the

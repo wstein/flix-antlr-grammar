@@ -97,13 +97,28 @@ jobs:
         working-directory: antlr-ng
         run: npm ci
 
-      # Only the hand-written runtime support is checked. Generating the parser
-      # from the shared grammars does not yet produce compilable TypeScript;
-      # see docs/DEFECTS.md D11.
+      # src/generated/ is gitignored (docs/DEFECTS.md D11: derived from grammars/, which is
+      # canonical) -- a fresh checkout has nothing for the type-check or the corpus test's
+      # `import ... from "./generated/..."` to resolve without this step.
+      - name: Generate parser from the shared grammars
+        working-directory: antlr-ng
+        run: npm run generate
+
       - name: Type-check
         working-directory: antlr-ng
         run: npm run build
 
+      # Mirrors the `build` job's corpus checkout: the corpus test skips without one, so
+      # omitting this step would silently stop enforcing the parse-rate floor in CI.
+      - name: Check out the pinned Flix corpus
+        uses: actions/checkout@v7
+        with:
+          repository: flix/flix
+          ref: debf7df0fdd63f2b76b7a539ebbff5243070ca6e
+          path: corpus
+
       - name: Test
         working-directory: antlr-ng
+        env:
+          FLIX_CORPUS: ${{ github.workspace }}/corpus/main
         run: npm test

@@ -6,7 +6,7 @@
 [![Java](https://img.shields.io/badge/Java-21%2B-orange.svg)](https://adoptium.net)
 [![Gradle](https://img.shields.io/badge/Gradle-9.6.1-02303A.svg?logo=gradle&logoColor=white)](https://gradle.org)
 [![Flix](https://img.shields.io/badge/Flix-0.75.1-blueviolet.svg)](https://flix.dev)
-[![Corpus](https://img.shields.io/badge/corpus%20parse%20rate-95.81%25-brightgreen.svg)](fixtures/corpus-baseline.json)
+[![Corpus](https://img.shields.io/badge/corpus%20parse%20rate-96.22%25-brightgreen.svg)](fixtures/corpus-baseline.json)
 
 An [ANTLR4](https://www.antlr.org) grammar for the [Flix](https://flix.dev) programming
 language, derived from the reference compiler's `Lexer.scala` and `Parser2.scala` rather than
@@ -14,8 +14,8 @@ from prose documentation.
 
 ## Status
 
-**Corpus parse rate: 95.81% (663 / 692 files.)** The rate is enforced by a ratcheting gate;
-see [Verification](#verification).
+**Corpus parse rate: 96.22% (662 / 688 files), the same on both targets.** The rate is enforced
+by a ratcheting gate; see [Verification](#verification).
 
 | Area | State |
 | --- | --- |
@@ -23,7 +23,7 @@ see [Verification](#verification).
 | Lexer: 84 keywords, operator runs, holes, interpolation modes | done |
 | Parser: declarations, types, expressions, patterns | done |
 | Parser: Datalog, fixpoint, effect handlers | done |
-| Validation CLI and corpus gate | done |
+| Validation CLI and corpus gate, JVM and TypeScript targets | done |
 | Java interop, anonymous classes, remaining edge cases | in progress |
 | Syntax reference and railroad diagrams | not started |
 
@@ -56,10 +56,10 @@ docs/              design debates, defect log, generated syntax and railroad ref
 tools/             Node documentation generators
 ```
 
-Only the JVM target generates from `grammars/` today. The antlr-ng target ships the
-hand-written runtime support and is type-checked in CI, but cannot yet generate from the
-shared grammars: the embedded actions are Java syntax and antlr-ng's TypeScript target ignores
-`options { superClass }`. See [docs/DEFECTS.md](docs/DEFECTS.md) D11.
+Both targets generate from `grammars/`: the embedded actions are Java syntax and antlr-ng's
+TypeScript target ignores `options { superClass }`, so `antlr-ng`'s `npm run generate` stages a
+TypeScript-adapted copy first rather than pointing antlr-ng at the grammars directly. See
+[docs/DEFECTS.md](docs/DEFECTS.md) D11.
 
 ## Build
 
@@ -87,17 +87,22 @@ directory. The gates that now exist:
 | CST snapshots in `fixtures/snapshots/` | Silent changes in tree shape |
 | Negative fixtures | Over-permissiveness |
 
-The corpus gate needs a Flix checkout, resolved from `-Dflix.corpus=<dir>`, the `FLIX_CORPUS`
-environment variable, or a sibling `flix/flix` checkout. Without one it **skips** rather than
-passes, so an absent corpus can never be mistaken for coverage. It therefore does not run in
-CI today; run it locally before proposing a grammar change:
+The corpus gate needs a Flix checkout, resolved from `-Dflix.corpus=<dir>` (`FLIX_CORPUS` for
+the antlr-ng target), or a sibling `flix/flix` checkout. Without one it **skips** rather than
+passes, so an absent corpus can never be mistaken for coverage. CI checks out a pinned corpus
+and runs the gate for both targets; run it locally before proposing a grammar change:
 
 ```bash
 ./gradlew :antlr4:test -Dflix.corpus=/path/to/flix/main
 ./gradlew :antlr4:test -Dsnapshots.update=true   # after an intended tree-shape change
+
+cd antlr-ng && npm run generate && FLIX_CORPUS=/path/to/flix/main npm test
 ```
 
-Raise the baseline when the rate improves; never lower it.
+Both targets are generated from the same `grammars/`, so they are expected to report the same
+rate; a divergence between them means the antlr-ng target's TypeScript-adaptation step
+(`tools/gen-antlr-ng.mjs`) changed grammar behaviour, not just syntax. Raise the baseline when
+the rate improves; never lower it.
 
 ## Source of truth
 
