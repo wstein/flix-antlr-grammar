@@ -4,12 +4,15 @@ Findings from measuring the grammar against the real Flix corpus
 (`flix/flix@318bb51`, 688 `.flix` files as currently checked out -- corpus size drifts with the
 local checkout; see `fixtures/corpus-baseline.json`). Ordered by impact.
 
-Measured parse rate: **96.22% (662 / 688)**, up from 10.26% when this log was opened.
+Measured parse rate: **99.85% (687 / 688)**, up from 10.26% when this log was opened. The one
+file the corpus script still counts as a failure
+(`test/flix/resiliency/ford-fulkerson-prefix.flix`) is an intentionally truncated negative test
+the script cannot distinguish from a real gap -- every syntactically valid file in the corpus
+parses.
 
-D1-D6, D9, D10 and D13 are resolved. D7 is open, narrower than when it was opened. The entry
-that made the rest possible is D4: the build was green and all 38 unit tests passed while the
-grammar rejected nine out of ten real Flix files, because the tests only ever exercised
-hand-written snippets.
+D1-D7, D9, D10 and D13 are resolved. The entry that made the rest possible is D4: the build was
+green and all 38 unit tests passed while the grammar rejected nine out of ten real Flix files,
+because the tests only ever exercised hand-written snippets.
 
 Do not raise the corpus baseline by hand; let the gate ratchet it.
 
@@ -87,32 +90,66 @@ Errors in declaration position resync into the Datalog constraint rule, producin
 `expecting {DOT, DOT_WS, '(', ':-'}` on ordinary declarations. The diagnostics are actively
 misleading. This is an alternative-ordering problem in `compilationUnit`.
 
-## D7 — Java interop and remaining edge cases
+## D7 — Java interop and remaining edge cases — RESOLVED
 
-The 26 files that still fail (one further "failure" is `resiliency/ford-fulkerson-prefix.flix`,
-an intentionally truncated negative test the corpus script cannot distinguish from a real gap)
-cluster around Java interop (`new` object expressions and anonymous-class bodies, generic
-type-argument brackets on `choose`/`choose*`), a handful of record/schema polymorphism-row
-cases (`{... | r}`), and misc single-file gaps (`ematch` lambda form, `@Tailrec` on a nested
-local def, struct field access with `_`). These are genuine grammar gaps rather than defects in
-the derivation, and each needs its own reading of `Parser2.scala`.
+Opened at 29 failing files; closed at 687/688 (99.85%), the one remaining "failure" being
+`resiliency/ford-fulkerson-prefix.flix`, an intentionally truncated negative test the corpus
+script cannot distinguish from a real gap. Every fix here traces to a real position in
+`Parser2.scala`, verified against the failing file before changing the grammar, not guessed
+from the error message. Two recurring bug classes account for most of the count:
 
-**Resolved from this bucket**: named arguments in *any* argument or tuple position
-(`f(a = 1)`, `(a = 1)`, `A.Tag(a = 1, b = 2)`) -- `argument` only allowed a bare `nameLowercase`
-on the left of `=`, and only tuple/paren expressions never routed through `argument` at all, so
-`(a = 1)` had no path to succeed regardless. `Parser2.scala:1878`'s `argument()` is `expression()
-(EQUAL expression)?` uniformly for every argument-list position, including plain
-parenthesized/tuple expressions (`parenOrTupleOrAscribe`, `Parser2.scala:2110`) -- not a
-call-specific feature. Fixed by widening `argument` to `expr (EQUAL expr)?` and routing tuple
-elements through it. 96.22% (662/688), up from 95.93% (660/688) after D13's corpus was
-re-measured on this checkout, unaffected by the fix (the change is at expression precedence
-below the tuple/argument boundary, not the `qname` reachability D13 concerns).
+**The "optional-leading-group blocks an independent optional trailing part" class.** A native
+shape like `LPAREN ( item ( COMMA item )* ( SEMI extra )? )? RPAREN` reads as "the whole
+comma-list-plus-extra is optional", but the reference treats the list and the trailing part as
+*independently* optional -- `zeroOrMore(..., optionallyWith = Some((Bar, ...)))` in
+`Parser2.scala` accepts zero items *and* the trailing part together. A flat ANTLR translation
+that nests the trailing part inside the same optional group as the list rejects exactly the
+zero-items-plus-trailing case. Found and fixed in five places, each confirmed against its own
+`Parser2.scala` function: `predicateHead`/`predicateAtom`/`predicateParam` (Datalog lattice
+terms, `P(;1)`, `Nodes(; ns)` -- `Parser2.scala:3909,3928,4035`), the `{ ... }` and `( ... )`
+record-row types (`{| r}`, `Parser2.scala:3740`), and the three schema-type delimiters
+`#{...}`/`#(...)`/`#|...|#` (`#{ | r}`, `Parser2.scala:3796,3812,3778`). Same fix each time:
+split `( list )? ( trailing )?` into two independent optional groups.
 
-## D8 — The corpus gate does not run in CI — RESOLVED (documented)
+**Missing alternatives, not malformed ones.** `argument` only allowed a bare `nameLowercase` on
+the left of `=`, and only call-argument lists routed through it at all -- plain
+parenthesized/tuple expressions never did, so `(a = 1)` had no path to succeed regardless of the
+left-hand side. `Parser2.scala:1878`'s `argument()` is `expression() (EQUAL expression)?`
+uniformly for every argument position, including tuple elements (`parenOrTupleOrAscribe`,
+`Parser2.scala:2110`), not a call-specific feature. Widened `argument` to `expr (EQUAL expr)?`
+and routed tuple elements through it; the identical named-element gap existed at the type level
+too (`(y = Int32)`, a `Type.RecordRow` sharing the plain tuple's parens,
+`Parser2.scala:3675`) and got the same treatment via a new `recordFieldOrType` rule.
+`newBody`'s `def new(): T = super(...)` constructor override (`Parser2.scala:2956`, dispatched
+whenever `def` is immediately followed by `new`, distinct from an ordinary method and unlike it
+not annotatable) had no alternative at all, nor did a leading `annotation*` on an ordinary
+method (`Parser2.scala:2940`) or a local `def` inside a statement (`Parser2.scala:2252`,
+`@Tailrec def loop(...) = ...;`). `ematch`'s lambda short-hand (`ematch pattern -> expr`,
+`Parser2.scala`'s `extMatchExpr`) was missing the same way `match`'s already-present
+`MatchLambdaExpr` alternative covers `match pattern -> expr`. `region`'s bound name required
+`nameLowercase`; the reference's `NAME_VARIABLE` also allows `_` and a math name
+(`Parser2.scala:2274`, `region _ { ... }`). A restrictable enum's index parameter (`Expr[_][t]`)
+had no bracket group of its own before the ordinary type-parameter list
+(`Parser2.scala:1170`). A use/import rename could not target or produce an operator name
+(`use Op.{<>< => ><>}`) because `aliasedName`'s underlying `NAME_USE` set includes
+`GenericOperator` on both sides (`Parser2.scala:690,932`), not just names. `Static` doubles as
+an ordinary declaration name (`type alias Static = IO` in `Prelude.flix`) via
+`Parser2.scala:696`'s `NAME_TYPE = Set(NameUppercase, KeywordStaticUppercase)`, alongside its
+existing use as a type reference.
 
-The gate needs a Flix checkout and skips without one, so CI cannot currently enforce the
-ratchet. Contributors must run it locally; the README states this. Wiring a pinned corpus
-checkout into CI would close the gap and is tracked as a non-blocking follow-up.
+**One lexer bug, not a grammar gap**: `DEBUG_INTERPOLATOR` (`d"..."`) was declared *after*
+`NAME_LOWERCASE` in `FlixLexer.g4`. For input `d"`, both match exactly the single character `d`
+(`"` is not a name character), and ANTLR breaks same-length lexer ties by declaration order --
+so `d"Hello"` silently lexed as the bare identifier `d` followed by an ordinary string, and the
+parser failed several tokens later at the string, nowhere near the real cause. Reordering the
+two rules was the entire fix; nothing else in this bucket was a lexer issue.
+
+## D8 — The corpus gate does not run in CI — RESOLVED
+
+The gate needs a Flix checkout and skips without one, so an absent step would silently stop
+enforcing the ratchet. `ci.yml`'s `build` job checks out a pinned `flix/flix` revision to
+`corpus/` and passes `-Dflix.corpus=$GITHUB_WORKSPACE/corpus/main`; the `antlr-ng target` job
+does the same via `FLIX_CORPUS` (see D11). Both run the gate on every push and PR.
 
 ## D9 — `/` listed as a reserved operator in the antlr-ng target — RESOLVED
 

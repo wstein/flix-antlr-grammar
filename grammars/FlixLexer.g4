@@ -209,6 +209,11 @@ AT               : '@' ;
 // ---------------------------------------------------------------------
 
 DOLLAR_NAME      : '$' [a-zA-Z] [a-zA-Z0-9_!$]* { stripEscape(); setType(NAME_LOWERCASE); } ;
+// Must precede NAME_LOWERCASE: for input `d"`, both match exactly the single character `d`
+// (`"` isn't a name character), and ANTLR breaks same-length ties by declaration order. Declared
+// after NAME_LOWERCASE, `d"Hello"` silently lexed as the bare identifier `d` followed by a
+// string, never as a debug interpolator.
+DEBUG_INTERPOLATOR : 'd' { _input.LA(1) == '"' }? ;
 NAME_LOWERCASE   : '_'? [a-z] [a-zA-Z0-9_!$]* ;
 NAME_UPPERCASE   : '_'? [A-Z] [a-zA-Z0-9_!$]* ;
 NAME_MATH        : '_'? [\u2200-\u22FF]+ ;
@@ -226,10 +231,6 @@ FLOAT_LITERAL    : DIGITS ( '.' DIGITS EXPONENT? | EXPONENT ) FLOAT_SUFFIX?
 INT_LITERAL      : DIGITS INT_SUFFIX? ;
 CHAR_LITERAL     : '\'' ( '\\' . | ~['\\] )*? '\'' ;
 REGEX_LITERAL    : 'regex"' ( '\\' . | ~["\\\r\n] )* '"' ;
-
-// The reference lexes `d` as a token of its own when a string follows; the
-// string is then lexed normally.
-DEBUG_INTERPOLATOR : 'd' { _input.LA(1) == '"' }? ;
 
 fragment DIGITS       : [0-9]+ ( '_' [0-9]+ )* ;
 fragment HEXDIGITS    : [0-9a-fA-F]+ ( '_' [0-9a-fA-F]+ )* ;

@@ -6,7 +6,7 @@
 [![Java](https://img.shields.io/badge/Java-21%2B-orange.svg)](https://adoptium.net)
 [![Gradle](https://img.shields.io/badge/Gradle-9.6.1-02303A.svg?logo=gradle&logoColor=white)](https://gradle.org)
 [![Flix](https://img.shields.io/badge/Flix-0.75.1-blueviolet.svg)](https://flix.dev)
-[![Corpus](https://img.shields.io/badge/corpus%20parse%20rate-96.22%25-brightgreen.svg)](fixtures/corpus-baseline.json)
+[![Corpus](https://img.shields.io/badge/corpus%20parse%20rate-99.85%25-brightgreen.svg)](fixtures/corpus-baseline.json)
 
 An [ANTLR4](https://www.antlr.org) grammar for the [Flix](https://flix.dev) programming
 language, derived from the reference compiler's `Lexer.scala` and `Parser2.scala` rather than
@@ -14,8 +14,10 @@ from prose documentation.
 
 ## Status
 
-**Corpus parse rate: 96.22% (662 / 688 files), the same on both targets.** The rate is enforced
-by a ratcheting gate; see [Verification](#verification).
+**Corpus parse rate: 99.85% (687 / 688 files), the same on both targets** -- the one file the
+corpus script still counts as a failure is an intentionally truncated negative test it cannot
+tell apart from a real gap. The rate is enforced by a ratcheting gate; see
+[Verification](#verification).
 
 | Area | State |
 | --- | --- |
@@ -24,7 +26,7 @@ by a ratcheting gate; see [Verification](#verification).
 | Parser: declarations, types, expressions, patterns | done |
 | Parser: Datalog, fixpoint, effect handlers | done |
 | Validation CLI and corpus gate, JVM and TypeScript targets | done |
-| Java interop, anonymous classes, remaining edge cases | in progress |
+| Java interop, anonymous classes, remaining edge cases | done |
 | Syntax reference and railroad diagrams | not started |
 
 [docs/SYNTAX.md](docs/SYNTAX.md) is a syntax reference generated from the grammars, and

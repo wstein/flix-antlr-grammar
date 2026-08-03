@@ -30,9 +30,11 @@ importClause
     : IMPORT javaQname ( dot LBRACE useName ( COMMA useName )* COMMA? RBRACE )?
     ;
 
+// Parser2.scala's aliasedName(NAME_USE) draws both the name and its optional `=>` rename
+// target from the same set (lowercase/uppercase/math name or a user-defined operator), so an
+// operator can be renamed (`Op.{<>< => ><>}`) exactly like an ordinary name can.
 useName
-    : name ( ARROW_THICK_R name )?
-    | genericOperator
+    : ( name | genericOperator ) ( ARROW_THICK_R ( name | genericOperator ) )?
     ;
 
 // =====================================================================
@@ -74,9 +76,18 @@ lawDeclaration
       withClause? whereClause? ( EQUAL? statement )?
     ;
 
+// A restrictable enum's index parameter (`Expr[_][t]`'s first `[_]`) is its own single-name
+// bracket group before the ordinary type-parameter list, present only when RESTRICTABLE is --
+// two separate alternatives, not one `RESTRICTABLE? ... ( LBRACK typeParam RBRACK )? typeParams?`,
+// because that shape would misparse an ordinary `enum Foo[T]`'s sole type-parameter list as the
+// (absent) index group followed by nothing.
 enumDeclaration
-    : declPrefix RESTRICTABLE? ENUM nameUppercase typeParams?
-      ( LPAREN type ( COMMA type )* RPAREN )?
+    : declPrefix RESTRICTABLE ENUM nameUppercase LBRACK typeParam RBRACK typeParams? enumDeclarationTail
+    | declPrefix ENUM nameUppercase typeParams? enumDeclarationTail
+    ;
+
+enumDeclarationTail
+    : ( LPAREN type ( COMMA type )* RPAREN )?
       derivations?
       ( LBRACE enumCase* RBRACE )?
     ;
@@ -234,13 +245,17 @@ primaryType
     | UNIV
     | TRUE
     | FALSE
-    | LPAREN ( type ( COMMA type )* )? RPAREN
+    // A tuple type and a record-row type (`(y = Int32)`, `(x = Int32 | Tail)`, used where a
+    // type alias splices into a `{...| tail}` record) share this same paren pair. The reference
+    // dispatches upfront via lookahead (Parser2.scala's tupleOrRecordRowType); ANTLR's ALL(*)
+    // does not need that, so both element shapes are just alternatives of one element rule.
+    | LPAREN ( recordFieldOrType ( COMMA recordFieldOrType )* )? ( BAR type )? RPAREN
     | LBRACE BAR RBRACE
-    | LBRACE ( recordFieldType ( COMMA recordFieldType )* ( BAR type )? )? RBRACE
+    | LBRACE ( recordFieldType ( COMMA recordFieldType )* )? ( BAR type )? RBRACE
     | LBRACE type ( COMMA type )* RBRACE
-    | HASH_LBRACE ( schemaTerm ( COMMA schemaTerm )* ( BAR name )? )? RBRACE
-    | HASH_LPAREN ( schemaTerm ( COMMA schemaTerm )* ( BAR name )? )? RPAREN
-    | HASH_BAR ( schemaTerm ( COMMA schemaTerm )* ( BAR name )? )? BAR_HASH
+    | HASH_LBRACE ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? RBRACE
+    | HASH_LPAREN ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? RPAREN
+    | HASH_BAR ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? BAR_HASH
     | ANGLE_L qname ( COMMA qname )* ANGLE_R
     ;
 
@@ -248,6 +263,11 @@ primaryType
 // from a block and from an effect set.
 recordFieldType
     : nameLowercase EQUAL type
+    ;
+
+recordFieldOrType
+    : nameLowercase EQUAL type
+    | type
     ;
 
 schemaTerm
@@ -303,7 +323,10 @@ definitionName
     ;
 
 nameLowercase : NAME_LOWERCASE ;
-nameUppercase : NAME_UPPERCASE ;
+// Parser2.scala's NAME_TYPE = Set(NameUppercase, KeywordStaticUppercase): `Static` doubles as
+// an ordinary declaration name (`type alias Static = IO` in Prelude.flix) alongside its use as
+// a type reference (the primaryExpr/primaryType STATIC_UPPER alternatives).
+nameUppercase : NAME_UPPERCASE | STATIC_UPPER ;
 nameMath      : NAME_MATH ;
 
 genericOperator
@@ -357,10 +380,11 @@ expr
     | lambdaParams ARROW_WS expr                            # LambdaExpr
     | IF LPAREN expr RPAREN expr ( ELSE expr )?             # IfExpr
     | LET pattern ( COLON typeAndEffect )? EQUAL statement  # LetExpr
-    | DEF definitionName formalParams ( COLON typeAndEffect )? EQUAL statement # LocalDefExpr
-    | REGION nameLowercase block                            # RegionExpr
+    | annotation* DEF definitionName formalParams ( COLON typeAndEffect )? EQUAL statement # LocalDefExpr
+    | REGION variableName block?                            # RegionExpr
     | MATCH expr LBRACE matchRule* RBRACE                   # MatchExpr
     | MATCH pattern ARROW_WS expr                           # MatchLambdaExpr
+    | EMATCH pattern ARROW_WS expr                          # EMatchLambdaExpr
     | EMATCH expr LBRACE matchRule* RBRACE                  # EMatchExpr
     | ( CHOOSE | CHOOSE_STAR ) expr LBRACE matchRule* RBRACE # ChooseExpr
     | XVAR qname ( LPAREN ( expr ( COMMA expr )* )? RPAREN )? # ExtTagExpr
@@ -415,8 +439,13 @@ selectRule
     | CASE UNDERSCORE ARROW_THICK_R statement COMMA?
     ;
 
+// `def new(): T = ...` inside a `new Type { ... }` body overrides the constructor
+// (Parser2.scala's jvmConstructor, dispatched whenever DEF is immediately followed by NEW) --
+// `new` there is the literal keyword, not a name, so it cannot go through `definitionName`
+// (jvmMethod) at all. Unlike jvmMethod, the reference does not accept annotations on it.
 newBody
-    : DEF definitionName formalParams ( COLON typeAndEffect )? EQUAL statement
+    : annotation* DEF definitionName formalParams ( COLON typeAndEffect )? EQUAL statement
+    | DEF NEW LPAREN RPAREN COLON typeAndEffect EQUAL statement
     | nameLowercase EQUAL expr COMMA?
     ;
 
@@ -477,7 +506,7 @@ datalogConstraint
     ;
 
 predicateHead
-    : nameUppercase ( LPAREN ( expr ( COMMA expr )* ( SEMI expr )? )? RPAREN )?
+    : nameUppercase ( LPAREN ( expr ( COMMA expr )* )? ( SEMI expr )? RPAREN )?
     ;
 
 predicateBody
@@ -489,7 +518,7 @@ predicateBody
 
 predicateAtom
     : NOT? FIX? nameUppercase
-      ( LPAREN ( pattern ( COMMA pattern )* ( SEMI pattern )? )? RPAREN )?
+      ( LPAREN ( pattern ( COMMA pattern )* )? ( SEMI pattern )? RPAREN )?
     ;
 
 // =====================================================================
@@ -525,7 +554,7 @@ primaryExpr
     ;
 
 predicateParam
-    : nameUppercase ( LPAREN ( type ( COMMA type )* ( SEMI type )? )? RPAREN )?
+    : nameUppercase ( LPAREN ( type ( COMMA type )* )? ( SEMI type )? RPAREN )?
     ;
 
 collectionLiteral

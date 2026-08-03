@@ -8,7 +8,7 @@ Constraints such as duplicate modifiers, non-linear patterns and unknown annotat
 parse here and are rejected by a later validation pass, mirroring how the reference
 compiler separates `Parser2` from `Weeder2`.
 
-Parser rules: 83 · lexer rules: 136
+Parser rules: 85 · lexer rules: 136
 
 ## Parser rules
 
@@ -49,8 +49,7 @@ importClause
 
 ```antlr
 useName
-    : name ( ARROW_THICK_R name )?
-    | genericOperator
+    : ( name | genericOperator ) ( ARROW_THICK_R ( name | genericOperator ) )?
     ;
 ```
 
@@ -108,8 +107,16 @@ withClause? whereClause? ( EQUAL? statement )?
 
 ```antlr
 enumDeclaration
-    : declPrefix RESTRICTABLE? ENUM nameUppercase typeParams?
-( LPAREN type ( COMMA type )* RPAREN )?
+    : declPrefix RESTRICTABLE ENUM nameUppercase LBRACK typeParam RBRACK typeParams? enumDeclarationTail
+    | declPrefix ENUM nameUppercase typeParams? enumDeclarationTail
+    ;
+```
+
+### `enumDeclarationTail`
+
+```antlr
+enumDeclarationTail
+    : ( LPAREN type ( COMMA type )* RPAREN )?
 derivations?
 ( LBRACE enumCase* RBRACE )?
     ;
@@ -352,13 +359,13 @@ primaryType
     | UNIV
     | TRUE
     | FALSE
-    | LPAREN ( type ( COMMA type )* )? RPAREN
+    | LPAREN ( recordFieldOrType ( COMMA recordFieldOrType )* )? ( BAR type )? RPAREN
     | LBRACE BAR RBRACE
-    | LBRACE ( recordFieldType ( COMMA recordFieldType )* ( BAR type )? )? RBRACE
+    | LBRACE ( recordFieldType ( COMMA recordFieldType )* )? ( BAR type )? RBRACE
     | LBRACE type ( COMMA type )* RBRACE
-    | HASH_LBRACE ( schemaTerm ( COMMA schemaTerm )* ( BAR name )? )? RBRACE
-    | HASH_LPAREN ( schemaTerm ( COMMA schemaTerm )* ( BAR name )? )? RPAREN
-    | HASH_BAR ( schemaTerm ( COMMA schemaTerm )* ( BAR name )? )? BAR_HASH
+    | HASH_LBRACE ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? RBRACE
+    | HASH_LPAREN ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? RPAREN
+    | HASH_BAR ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? BAR_HASH
     | ANGLE_L qname ( COMMA qname )* ANGLE_R
     ;
 ```
@@ -368,6 +375,15 @@ primaryType
 ```antlr
 recordFieldType
     : nameLowercase EQUAL type
+    ;
+```
+
+### `recordFieldOrType`
+
+```antlr
+recordFieldOrType
+    : nameLowercase EQUAL type
+    | type
     ;
 ```
 
@@ -447,7 +463,7 @@ nameLowercase
 
 ```antlr
 nameUppercase
-    : NAME_UPPERCASE
+    : NAME_UPPERCASE | STATIC_UPPER
     ;
 ```
 
@@ -540,7 +556,8 @@ selectRule
 
 ```antlr
 newBody
-    : DEF definitionName formalParams ( COLON typeAndEffect )? EQUAL statement
+    : annotation* DEF definitionName formalParams ( COLON typeAndEffect )? EQUAL statement
+    | DEF NEW LPAREN RPAREN COLON typeAndEffect EQUAL statement
     | nameLowercase EQUAL expr COMMA?
     ;
 ```
@@ -628,7 +645,7 @@ datalogConstraint
 
 ```antlr
 predicateHead
-    : nameUppercase ( LPAREN ( expr ( COMMA expr )* ( SEMI expr )? )? RPAREN )?
+    : nameUppercase ( LPAREN ( expr ( COMMA expr )* )? ( SEMI expr )? RPAREN )?
     ;
 ```
 
@@ -648,7 +665,7 @@ predicateBody
 ```antlr
 predicateAtom
     : NOT? FIX? nameUppercase
-( LPAREN ( pattern ( COMMA pattern )* ( SEMI pattern )? )? RPAREN )?
+( LPAREN ( pattern ( COMMA pattern )* )? ( SEMI pattern )? RPAREN )?
     ;
 ```
 
@@ -688,7 +705,7 @@ primaryExpr
 
 ```antlr
 predicateParam
-    : nameUppercase ( LPAREN ( type ( COMMA type )* ( SEMI type )? )? RPAREN )?
+    : nameUppercase ( LPAREN ( type ( COMMA type )* )? ( SEMI type )? RPAREN )?
     ;
 ```
 

@@ -41,7 +41,8 @@ defDeclaration ::= declPrefix ( DEF | REDEF ) definitionName typeParams? formalP
 
 ```mermaid
 railroad-ebnf-beta
-enumDeclaration ::= declPrefix RESTRICTABLE? ENUM nameUppercase typeParams? ( LPAREN type ( COMMA type )* RPAREN )? derivations? ( LBRACE enumCase* RBRACE )? ;
+enumDeclaration ::= declPrefix RESTRICTABLE ENUM nameUppercase LBRACK typeParam RBRACK typeParams? enumDeclarationTail
+    | declPrefix ENUM nameUppercase typeParams? enumDeclarationTail ;
 ```
 
 ## `traitDeclaration`
@@ -87,13 +88,13 @@ primaryType ::= qname
     | UNIV
     | TRUE
     | FALSE
-    | LPAREN ( type ( COMMA type )* )? RPAREN
+    | LPAREN ( recordFieldOrType ( COMMA recordFieldOrType )* )? ( BAR type )? RPAREN
     | LBRACE BAR RBRACE
-    | LBRACE ( recordFieldType ( COMMA recordFieldType )* ( BAR type )? )? RBRACE
+    | LBRACE ( recordFieldType ( COMMA recordFieldType )* )? ( BAR type )? RBRACE
     | LBRACE type ( COMMA type )* RBRACE
-    | HASH_LBRACE ( schemaTerm ( COMMA schemaTerm )* ( BAR name )? )? RBRACE
-    | HASH_LPAREN ( schemaTerm ( COMMA schemaTerm )* ( BAR name )? )? RPAREN
-    | HASH_BAR ( schemaTerm ( COMMA schemaTerm )* ( BAR name )? )? BAR_HASH
+    | HASH_LBRACE ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? RBRACE
+    | HASH_LPAREN ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? RPAREN
+    | HASH_BAR ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? BAR_HASH
     | ANGLE_L qname ( COMMA qname )* ANGLE_R ;
 ```
 

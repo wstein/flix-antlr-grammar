@@ -4,7 +4,7 @@ An ANTLR4 grammar for Flix, transliterated from the reference compiler.
 
 ## Implementation status
 
-**Measured corpus parse rate: 96.22% (662 / 688), both targets.** Run the gate before and after
+**Measured corpus parse rate: 99.85% (687 / 688), both targets.** Run the gate before and after
 every grammar change and state the delta in the commit message.
 
 - [x] Build, CI, Dependabot, release workflow.
@@ -14,7 +14,8 @@ every grammar change and state the delta in the commit message.
 - [x] Validation CLI and a ratcheting corpus gate, on both the `antlr4` (JVM) and `antlr-ng`
       (TypeScript) targets -- see `antlr-ng/test/corpus-coverage.test.ts` and docs/DEFECTS.md
       D11.
-- [ ] Java interop edge cases (D7), syntax reference and railroad diagrams.
+- [x] Java interop edge cases (D7).
+- [ ] Syntax reference and railroad diagrams.
 
 Do not mark work complete on the strength of unit tests alone — the corpus gate is the
 acceptance criterion. See [docs/DEFECTS.md](docs/DEFECTS.md).
