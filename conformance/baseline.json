@@ -1,0 +1,34 @@
+{
+  "note": "Divergence ratchets for scripts/flix-spec-conformance.sh. Lower them as divergences are fixed; never raise one without saying why in the commit message. The measurement is only comparable against the flix-spec inputs recorded below -- a different pin or fixture revision is a different question, not a regression. Read fixturesAgreeing together with depthPercent: a high agreement count at low depth is the number to distrust, because an unmapped node is skipped rather than compared, so a map that maps little agrees with almost everything.",
+  "divergences": 75,
+  "recoveryDivergences": 0,
+  "measuredAt": {
+    "flixAntlrGrammar": "HEAD",
+    "flixSpecPin": "v0.75.1",
+    "flixSpecPinCommit": "318bb51a953c58a8785251a80fad8aea005f729f",
+    "fixtureRevision": "4eccee6368ecb3c9235cc278b77f6596dffce1af19f63dfd578c3cefb60dde35",
+    "fixtures": 136
+  },
+  "lanes": {
+    "oracle_conformance": {
+      "verdict": "pass",
+      "fixturesAgreeing": 76,
+      "fixturesCompared": 136,
+      "divergenceCount": 75,
+      "nodesCompared": 818,
+      "nodesUnmapped": 113,
+      "depthPercent": 88,
+      "comment": "First measurement of this grammar against flix-spec. It began at 0/136 with 316 divergences; declaring symmetric transparency for the wrappers the reference always emits and ANTLR omits when empty (UsesOrImports.UseOrImportList, AnnotationList, ModifierList) took it to 2/136, and treating the name rules as wrappers rather than names -- the reference's Ident holds its token directly, so mapping both definitionName and nameLowercase onto Ident produced Ident-inside-Ident on every declaration -- took it to 76/136. That one class was 126 of the divergences."
+    },
+    "recovery_conformance": {
+      "verdict": "not-applicable",
+      "comment": "This grammar declares no recoveryMarkers, so there is no error-recovery vocabulary for the lane to compare and it stands down with that as the recorded reason. ANTLR's own recovery inserts error nodes the parse tree does not name, so declaring markers needs a deliberate decision about which of our rules stand for recovery rather than syntax -- not a guess."
+    },
+    "source_invariants": {
+      "verdict": "pass",
+      "checksEvaluated": 1,
+      "checksNotApplicable": 3,
+      "comment": "document-shape passes. The vocabulary checks stand down because a projection map is in play, and token-accounting stands down because the projection emits no token leaves. That is not laziness: this grammar routes comments to the COMMENTS and DOC_COMMENTS channels, and off-channel tokens never appear in the parse tree, so emitting what the tree holds would silently omit every comment and fail a check that should have stood down. Splicing the off-channel tokens back into position would let this consumer pass the one oracle-free check in the suite, which neither other structural consumer can."
+    }
+  }
+}

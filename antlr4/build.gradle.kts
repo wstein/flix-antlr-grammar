@@ -37,6 +37,24 @@ application {
     mainClass = "$grammarPackage.cli.MainKt"
 }
 
+// Emits this grammar's parse of every flix-spec fixture as a canonical projected tree, for
+// flix-spec's own comparison to read. Deliberately a writer and not a comparator: the comparison
+// lives in flix-spec, and a second port of it is exactly the duplication that repository exists to
+// end -- see the note on Projection.kt.
+tasks.register<JavaExec>("projectFixtures") {
+    description = "Projects flix-spec fixtures into build/flix-spec-projection/ for conformance."
+    group = "verification"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass = "$grammarPackage.cli.Projection"
+    workingDir = rootProject.projectDir
+    argumentProviders.add(
+        CommandLineArgumentProvider {
+            val spec = providers.environmentVariable("FLIX_SPEC").orNull
+            if (spec == null) emptyList() else listOf("--flix-spec", spec)
+        },
+    )
+}
+
 sourceSets.main {
     antlr.setSrcDirs(listOf(file("../grammars")))
 }
