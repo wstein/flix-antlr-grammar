@@ -1,6 +1,6 @@
 import { readFileSync, statSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { join, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parseFile, walkFlixFiles } from "../src/cli.js";
 
@@ -39,6 +39,18 @@ function baselineRate(): number {
     return Number(match[1]);
 }
 
+/**
+ * Corpus files that are *meant* not to parse.
+ *
+ * Kept identical to the JVM target's list in `CorpusCoverageTest.kt`: both targets share one
+ * committed baseline, so an exclusion applied to only one of them would make the two rates
+ * disagree by construction and the shared floor unmeetable for whichever lacked it.
+ */
+const INTENTIONALLY_UNPARSEABLE = ["test/flix/resiliency/ford-fulkerson-prefix.flix"];
+
+const isIntentionallyUnparseable = (file: string): boolean =>
+    INTENTIONALLY_UNPARSEABLE.some((suffix) => file.split(sep).join("/").endsWith(suffix));
+
 describe("corpus coverage", () => {
     const corpus = corpusDir();
 
@@ -46,22 +58,36 @@ describe("corpus coverage", () => {
     // local machine, comfortably over 300s on a CI runner (antlr4ng's pure-JS runtime is
     // slower per file than the JVM ANTLR runtime the antlr4 target uses).
     it.skipIf(!corpus)("corpus parse rate meets baseline", { timeout: 900_000 }, () => {
-        const files = walkFlixFiles(corpus!);
-        expect(files.length).toBeGreaterThan(0);
+        const all = walkFlixFiles(corpus!);
+        expect(all.length).toBeGreaterThan(0);
 
-        const parsed = files.filter((f) => {
+        const parses = (f: string): boolean => {
             try {
                 return parseFile(f).success;
             } catch {
                 return false;
             }
-        }).length;
+        };
+
+        const excluded = all.filter(isIntentionallyUnparseable);
+        const files = all.filter((f) => !isIntentionallyUnparseable(f));
+
+        // An exclusion that stopped being necessary silently shrinks what the gate measures, so
+        // a file that now parses is reported rather than quietly counted as a success.
+        expect(
+            excluded.filter(parses),
+            "these files are excluded as intentionally unparseable but now parse; " +
+                "remove them from INTENTIONALLY_UNPARSEABLE",
+        ).toEqual([]);
+
+        const parsed = files.filter(parses).length;
         const rate = parsed / files.length;
         const baseline = baselineRate();
 
         console.log(
             `corpus: ${parsed} / ${files.length} parsed (${(rate * 100).toFixed(2)}%), ` +
-                `baseline ${(baseline * 100).toFixed(2)}%`,
+                `baseline ${(baseline * 100).toFixed(2)}%, ` +
+                `${excluded.length} excluded as intentionally unparseable`,
         );
 
         // Tolerance absorbs corpus churn only, not grammar regressions.

@@ -77,12 +77,19 @@ class FlixGrammarPropertiesTest {
         lexer.removeErrorListeners()
         lexer.addErrorListener(listener)
 
+        // Token indices come from ANTLR's CodePointCharStream and count **code points**;
+        // `source.length` counts **UTF-16 units**. They differ by one per astral character, so
+        // comparing the two reports a file's last N characters as dropped whenever it contains
+        // N surrogate pairs -- which is what made TestJson.flix look like it lost its final
+        // `}\n` (two U+1F600 emoji, two units, two characters). Everything below is therefore
+        // in code-point space, and converts only when it has to slice the string.
+        val total = source.codePointCount(0, source.length)
         var expectedNext = 0
         val dropped = StringBuilder()
         for (token in lexer.allTokens) {
             if (token.type == Token.EOF) break
             if (token.startIndex > expectedNext) {
-                dropped.append(source, expectedNext, token.startIndex)
+                dropped.append(slice(source, expectedNext, token.startIndex))
             }
             assertTrue(
                 token.startIndex >= expectedNext,
@@ -90,8 +97,8 @@ class FlixGrammarPropertiesTest {
             )
             expectedNext = token.stopIndex + 1
         }
-        if (source.length > expectedNext) {
-            dropped.append(source, expectedNext, source.length)
+        if (total > expectedNext) {
+            dropped.append(slice(source, expectedNext, total))
         }
 
         assertTrue(
@@ -100,6 +107,16 @@ class FlixGrammarPropertiesTest {
                 dropped.take(20).map { "U+%04X".format(it.code) },
         )
         assertTrue(listener.messages.isEmpty(), "$label: lexer errors ${listener.messages.take(3)}")
+    }
+
+    /** Substring by code-point index, which is the space token spans are measured in. */
+    private fun slice(
+        source: String,
+        fromCodePoint: Int,
+        toCodePoint: Int,
+    ): String {
+        val from = source.offsetByCodePoints(0, fromCodePoint)
+        return source.substring(from, source.offsetByCodePoints(from, toCodePoint - fromCodePoint))
     }
 
     @Test
@@ -116,24 +133,15 @@ class FlixGrammarPropertiesTest {
         val files = corpusFiles()
         assumeTrue(files.isNotEmpty(), "No Flix corpus available; set -Dflix.corpus=<dir>")
 
+        // Nothing is excluded. TestJson.flix used to be, for a drop that was this test's own
+        // code-point/UTF-16 confusion rather than a lexer defect (docs/DEFECTS.md D14); an
+        // exclusion kept for a bug that was never in the grammar hides the next real one.
         val broken = mutableListOf<String>()
-        var excluded = 0
         for (file in files) {
-            val source = file.readText()
-            // TestJson.flix drops its final `}\n` regardless of whether U+FFFF is present or
-            // absent (verified directly: replacing every U+FFFF with an ordinary character
-            // produces the identical two-character drop at the identical offset) -- a distinct,
-            // unexplained defect from D12, tracked separately in docs/DEFECTS.md D14. Excluding by
-            // name rather than by content, since the old content-based check (U+FFFF presence)
-            // would now silently pass this file without ever reaching the real bug.
-            if (file.name == "TestJson.flix") {
-                excluded++
-                continue
-            }
-            runCatching { assertTokensTileInput(source, file.name) }
+            runCatching { assertTokensTileInput(file.readText(), file.name) }
                 .onFailure { broken += "${file.name}: ${it.message?.take(120)}" }
         }
-        println("token tiling: ${files.size - excluded} files checked, $excluded excluded for U+FFFF")
+        println("token tiling: ${files.size} files checked, none excluded")
         assertTrue(
             broken.isEmpty(),
             "${broken.size} of ${files.size} corpus files lex lossily:\n" + broken.take(5).joinToString("\n"),

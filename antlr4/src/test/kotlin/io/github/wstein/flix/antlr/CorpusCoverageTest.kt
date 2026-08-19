@@ -35,6 +35,26 @@ class CorpusCoverageTest {
         return candidates.map(::File).firstOrNull { it.isDirectory }
     }
 
+    /**
+     * Corpus files that are *meant* not to parse.
+     *
+     * The Flix repository carries fixtures for its own resiliency tests: source truncated
+     * mid-expression, on purpose, to check the compiler recovers. A grammar cannot parse them and
+     * should not be asked to, so counting them as failures put a permanent ceiling of 99.85% on a
+     * rate that was otherwise 100% -- and a floor below 100% cannot distinguish "known-benign" from
+     * "one new real gap".
+     *
+     * Matched on the path suffix rather than the bare name, so an unrelated file of the same name
+     * elsewhere in the corpus is still measured.
+     */
+    private val intentionallyUnparseable =
+        listOf("test/flix/resiliency/ford-fulkerson-prefix.flix")
+
+    private fun isIntentionallyUnparseable(file: File): Boolean {
+        val path = file.invariantSeparatorsPath
+        return intentionallyUnparseable.any { path.endsWith(it) }
+    }
+
     /** Minimal field read; the baseline file is ours and has a fixed shape. */
     private fun baselineRate(): Double {
         val match = Regex("\"rate\"\\s*:\\s*([0-9.]+)").find(baselineFile.readText())
@@ -50,13 +70,26 @@ class CorpusCoverageTest {
         val files = corpus!!.walkTopDown().filter { it.isFile && it.extension == "flix" }.toList()
         assumeTrue(files.isNotEmpty(), "Corpus directory contains no .flix files")
 
-        val parsed = files.count { runCatching { parseFile(it).success }.getOrDefault(false) }
-        val rate = parsed.toDouble() / files.size
+        val (excluded, measured) = files.partition(::isIntentionallyUnparseable)
+
+        // An exclusion that stopped being necessary is worse than no exclusion: it silently
+        // shrinks what the gate measures. If one of these ever parses, the entry is stale and
+        // should go -- so say so rather than quietly counting it as a success.
+        val nowParsing =
+            excluded.filter { runCatching { parseFile(it).success }.getOrDefault(false) }
+        assertTrue(
+            nowParsing.isEmpty(),
+            "these files are excluded as intentionally unparseable but now parse; " +
+                "remove them from intentionallyUnparseable: " + nowParsing.map { it.name },
+        )
+
+        val parsed = measured.count { runCatching { parseFile(it).success }.getOrDefault(false) }
+        val rate = parsed.toDouble() / measured.size
         val baseline = baselineRate()
 
         println(
-            "corpus: %d / %d parsed (%.2f%%), baseline %.2f%%"
-                .format(parsed, files.size, rate * 100, baseline * 100),
+            "corpus: %d / %d parsed (%.2f%%), baseline %.2f%%, %d excluded as intentionally unparseable"
+                .format(parsed, measured.size, rate * 100, baseline * 100, excluded.size),
         )
 
         // Tolerance absorbs corpus churn only, not grammar regressions.

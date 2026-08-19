@@ -1,17 +1,15 @@
 # Known defects
 
-Findings from measuring the grammar against the real Flix corpus
-(`flix/flix@318bb51`, 688 `.flix` files as currently checked out -- corpus size drifts with the
-local checkout; see `fixtures/corpus-baseline.json`). Ordered by impact.
+Findings from measuring the grammar against the real Flix corpus (the revision pinned in
+`.github/workflows/ci.yml`; corpus size drifts with the local checkout, see
+`fixtures/corpus-baseline.json`). Ordered by impact.
 
-Measured parse rate: **99.85% (687 / 688)**, up from 10.26% when this log was opened. The one
-file the corpus script still counts as a failure
-(`test/flix/resiliency/ford-fulkerson-prefix.flix`) is an intentionally truncated negative test
-the script cannot distinguish from a real gap -- every syntactically valid file in the corpus
-parses.
+Measured parse rate: **100% of the syntactically valid corpus**, up from 10.26% when this log
+was opened. The gate now excludes `test/flix/resiliency/ford-fulkerson-prefix.flix` by name --
+Flix ships it truncated on purpose, to test its own recovery -- and fails if an excluded file
+ever parses, so the exclusion cannot go stale unnoticed.
 
-D1-D7, D9, D10, D12 and D13 are resolved. D14 is open, freshly found while fixing D12 rather
-than by the corpus parse-rate gate, which cannot see it. The entry that made the rest possible
+D1-D7, D9, D10 and D12-D14 are resolved. The entry that made the rest possible
 is D4: the build was green and all 38 unit tests passed while the grammar rejected nine out of
 ten real Flix files, because the tests only ever exercised hand-written snippets.
 
@@ -243,29 +241,28 @@ two positions the reference itself marks `tail = Set()` — `import` (`Parser2.s
 matches a reference call site that already used the default `tail`, so no other position needed
 to change.
 
-## D14 — `TestJson.flix` drops its final two characters, cause unknown
+## D14 — `TestJson.flix` appeared to drop two characters — RESOLVED
 
-Found while verifying D12's fix: un-excluding `TestJson.flix` from the token-tiling property
-(now that U+FFFF itself lexes correctly) revealed the file still fails that property, dropping
-exactly `}\n` -- the module's closing brace and the trailing newline -- at the true end of the
-file. Confirmed unrelated to U+FFFF: replacing every occurrence of the character with an
-ordinary one and re-running the same check produces the identical two-character drop at the
-identical byte offset (82492 of 82494).
+The lexer was not dropping anything. `FlixGrammarPropertiesTest.assertTokensTileInput` compared
+a **code-point** index against a **UTF-16** length: ANTLR's `CodePointCharStream` measures token
+spans in code points, while Kotlin's `String.length` counts UTF-16 units. The two differ by one
+per astral character, and `TestJson.flix` contains two U+1F600 emoji — so the test reported the
+file's last two UTF-16 units, which happen to be `}` and `\n`, as dropped.
 
-Does not affect the corpus parse-rate gate (687/688 unchanged by D12's fix) -- the file already
-parsed without error before and after, so whatever consumes these two characters without
-emitting a token for them does not confuse the parser into reporting an error. It is invisible
-to every gate except the token-tiling property, which is exactly why that property exists
-(`FlixGrammarPropertiesTest.assertTokensTileInput`'s own doc comment: cheap and worth more than
-it looks).
+That also explains the observation recorded here as evidence of a real defect: replacing every
+U+FFFF with an ordinary character changed nothing, because U+FFFF is a BMP character and was
+never the cause. The surrogate pairs were, and nothing in the report pointed at them.
 
-Not yet root-caused. The file is JSON-encoding-heavy and contains 263 `{` against 260 `}`
-characters in raw text (including inside ordinary string literals, which are not indicative of
-anything by themselves), so a hypothesis worth checking first is a brace-depth counter used for
-interpolation-nesting tracking becoming desynchronized by braces inside plain string content
-rather than genuine `${` interpolation -- not confirmed. Excluded from
-`tokensTileEveryCorpusFile` by filename (not by content, unlike D12's old exclusion, since the
-content-based test would now silently pass this file without ever re-reaching the bug).
+Measured directly: the file is 82,652 bytes, 82,492 code points, 82,494 UTF-16 units — and the
+lexer's tokens tile all 82,492 of them with no gap.
+
+**Fix**: the property works in code-point space throughout and converts only when it slices the
+string. The `TestJson.flix` exclusion is gone; the corpus tiling check now runs over every file
+with none excluded.
+
+**Worth keeping**: this was invisible to every gate except the token-tiling property, and the
+property itself was what reported it wrongly. A test that measures two things in different units
+can manufacture a defect that survives three rounds of investigation into the wrong component.
 
 ---
 

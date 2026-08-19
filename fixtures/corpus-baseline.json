@@ -1,7 +1,7 @@
 {
-  "_comment": "Ratcheting parse-rate floor over a real Flix checkout. Raise it when the grammar improves; never lower it. The gate prints the new rate when it improves; edit this file to lock it in.",
-  "corpus": "flix/flix@318bb51 (Flix 0.75.1)",
-  "files": 688,
-  "parsed": 687,
-  "rate": 0.9985
+  "_comment": "Ratcheting parse-rate floor over the Flix checkout CI pins. Raise it when the grammar improves; never lower it. The gate prints the new rate when it improves; edit this file to lock it in.",
+  "_corpusRevision": "Pinned in .github/workflows/ci.yml (both jobs check out the same ref). Recorded here so the two cannot silently disagree about what the rate was measured against.",
+  "_excluded": "Files the Flix repository ships as deliberately-truncated resiliency fixtures are excluded by CorpusCoverageTest and are not part of this rate. The gate fails if one of them ever parses, so the exclusion cannot go stale unnoticed.",
+  "corpus": "flix/flix@debf7df0fdd63f2b76b7a539ebbff5243070ca6e",
+  "rate": 1.0
 }
