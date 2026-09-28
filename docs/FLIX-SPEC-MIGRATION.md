@@ -4,6 +4,21 @@ Status: **not started.** `conformance/baseline.json` records, under `measuredAt`
 `flixSpecArtifact` 0.75.8 and `flixSpecPinCommit` `40949531b4d42e5eaf2e4b9997537eaf793c24e7`
 (Flix v0.75.2). That is two releases behind: v0.76.0 and v0.77.0.
 
+## Terms
+
+flix-spec's vocabulary, as this document uses it. The full definitions are in flix-spec's
+`docs/CONFORMANCE.md` and `docs/PROJECTION.md`.
+
+| Term | Meaning |
+| --- | --- |
+| **lane** | One independent comparison in a conformance report: `oracle_conformance` (tree shape), `recovery_conformance`, `diagnostic_conformance`, `source_invariants`. Each has its own verdict, which may be `not-applicable`. |
+| **projection map** | `conformance/projection-map.json`. It maps this grammar's rule names onto flix-spec's canonical `TreeKind`s and declares which of our nodes are transparent (`ignored`, `flatten`). |
+| **elide** | A canonical kind skipped during comparison. Upstream now applies most of these itself, via `ast/transparency.json`. |
+| **unmapped / stop** | A native node that is neither mapped nor ignored. The comparison stops there, skipping it and its whole subtree. `nodesUnmapped` counts these. |
+| **depth** (`depthPercent`) | Nodes actually compared as a share of `nodesExpected`, the canonical tree's size after normalisation. Read it together with `fixturesAgreeing`: a map that maps little agrees with almost everything. |
+| **kind / arity divergence** | A compared node whose canonical kind differs, or whose child count differs. |
+| **`schemaVersion`** | Per artifact. Reports are at 7 with flix-spec 0.77.0 (6 before). The projection documents this repository writes are at 2. |
+
 ## What changed in Flix
 
 This repository names **three** Flix revisions, and they answer different questions:
