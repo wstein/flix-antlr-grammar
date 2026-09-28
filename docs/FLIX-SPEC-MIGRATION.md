@@ -122,6 +122,14 @@ reaches both targets and has to pass both corpus gates.
 | `argumentList` (shared `FlixParser.g4`) | yes | yes: regenerate, corpus gate |
 | `COLON_COLON_TIGHT`, package path (shared grammars + both `FlixLexerBase`) | yes | yes: `FlixLexerBase.ts`, corpus gate |
 
+The steps are ordered by value against effort and risk:
+
+1. Measurement changes that touch no code come first.
+2. Then the cheapest independent signal: diagnostics.
+3. Then the projection work with the largest depth gain.
+4. Grammar and lexer changes come last, because they are the only steps that can move the corpus
+   rate.
+
 ### 1. Move the pin
 
 In `conformance/baseline.json`, update these fields under `measuredAt`:
@@ -154,7 +162,30 @@ AnnotationList  Expr.Expr  ModifierList  Pattern.Pattern  QName  UsesOrImports.U
 `CommentList`, `Expr.Statement` and `Type.Apply` stay. You have no mappings onto elided kinds, so
 nothing there needs review.
 
-### 3. The real depth problem is one line, and it is not the contract
+### 3. The diagnostic lane is your cheapest win
+
+`recovery_conformance` is `not-applicable` here — ANTLR's recovery inserts nodes the parse tree does
+not name — so this repository currently produces one derived signal. The new lane needs no tree and
+no map: emitting one diagnostic per ANTLR syntax error gives accept/reject agreement across all 146
+fixtures of flix-spec 0.77.0 (the current baseline measured 138). With `diagnosticMappings`
+translating ANTLR's error names, kind and line compare too.
+
+It is cheap because the errors are already collected and then thrown away:
+
+- `Projection.kt:151` writes `"diagnostics": []` unconditionally.
+- The `quiet` listener (`Projection.kt:110-120`) already receives every lexer and parser error, with
+  line and column, and discards them.
+
+Have the listener collect `{kind, line, col, message}` and write the list, sorted by
+`(line, col, kind)` as `schemas/projection.schema.json` requires. `kind` can start as one constant
+per recognizer, such as `LexerError` and `ParserError`. That is enough for accept/reject; map to the
+reference's names later through `diagnosticMappings`. The projection document's `schemaVersion`
+(2) is unaffected, because `diagnostics` is already a required field.
+
+It is independent of every other step: no grammar change, no map change. That is why it comes
+before the structural work.
+
+### 4. The real depth problem is one line, and it is not the contract
 
 `antlr4/src/main/kotlin/io/github/wstein/flix/antlr/cli/Projection.kt:69` uses
 
@@ -190,9 +221,9 @@ ANTLR labels all of a rule's alternatives or none of them, so after this change 
 `pattern` are never emitted again. Their `ignored` entries go dead and should be replaced by entries
 for the labels themselves: each label is either mapped or declared `ignored`.
 
-### 4. Two missing nodes keep three of the largest canonical kinds unreachable
+### 5. Two missing nodes keep three of the largest canonical kinds unreachable
 
-Do this together with (3), not after — on its own, (3) turns some kind divergences into arity
+Do this together with (4), not after — on its own, (4) turns some kind divergences into arity
 divergences.
 
 - `Expr.Binary` has canonical arity **3** (lhs, `Operator`, rhs). `Projection.kt` emits only
@@ -245,7 +276,7 @@ This also settles the open question in your own `notes.expr`, which records that
 `Expr.Binary` *"drops agreement 76 -> 40, which is the signature of a guess that is often wrong"*.
 It is not a bad guess — it is a **missing node**.
 
-### 5. `::` and the package path
+### 6. `::` and the package path
 
 `grammars/FlixLexer.g4` must distinguish tight `::` from spaced `::`, and the parser must produce a
 node mapping to `UsesOrImports.Package` for `use flixball::Game.Board` and `use flixball::{Game, Board}`.
@@ -280,13 +311,6 @@ Pitfalls:
   `FlixLexerTest.kt:216-219` covers only spaced `::`.
 - **Open question: tight `:::`.** Decide from `Lexer.scala` at `4a5b60a` whether it gets a tight
   variant as well. `COLON_COLON_COLON` sits at `FlixLexer.g4:165`.
-
-### 6. The diagnostic lane is your cheapest win
-
-`recovery_conformance` is `not-applicable` here — ANTLR's recovery inserts nodes the parse tree does
-not name — so this repository currently produces one derived signal. The new lane needs no tree and
-no map: emitting one diagnostic per ANTLR syntax error gives accept/reject agreement across all 146
-fixtures of flix-spec 0.77.0 (the current baseline measured 138). With `diagnosticMappings` translating ANTLR's error names, kind and line compare too.
 
 ### 7. Update `CLAUDE.md`
 
