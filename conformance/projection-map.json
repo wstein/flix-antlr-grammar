@@ -168,7 +168,6 @@
     "statement",
     "stringLiteral",
     "type",
-    "typeAndEffect",
     "useName",
     "usesOrImports",
     "variableName"
@@ -178,7 +177,8 @@
     "declPrefix",
     "enumDeclarationTail",
     "instanceMember",
-    "traitMember"
+    "traitMember",
+    "typeAndEffect"
   ],
   "notes": {
     "CommentList": "The one elide this map keeps, and the one exception to elide-nothing-Flix-does-not. The reference emits CommentList wherever comments appear; this grammar routes comments to the COMMENTS and DOC_COMMENTS channels, so they never reach the parse tree and no rule of ours can stand for the node. That is a kind this consumer genuinely cannot produce, which docs/PROJECTION.md admits, rather than a structure we choose not to model. It goes when Projection.kt splices the off-channel tokens back into position -- the same work that would let token-accounting and token-positions run.",
@@ -194,6 +194,7 @@
     "nameLowercase": "The reference has one Ident kind and distinguishes case lexically rather than structurally, so all four name rules map onto it.",
     "operator": "Not a grammar rule: Projection.kt synthesises it for the unary and binary labels, grouping the operator tokens (plus nameMath, and the name between backticks) that the parse tree holds as bare tokens. The reference kinds are Expr.Binary (lhs, Operator, rhs) and Expr.Unary (Operator, operand); without this node every one would diverge on arity, since tokens are never emitted. The grammar keeps its precedence levels, which a shared binaryOp rule would have flattened.",
     "primaryExpr": "Every alternative is labelled (NamePrimary, LiteralPrimary, StringPrimary, HolePrimary, ...). Leaf labels map onto the kind flix-spec expects; container labels (block, record, collection, constraint set) stay ignored, as primaryExpr always was. Before the labels, a token-only leaf projected as a childless primaryExpr that ignored could only drop, which shifted every later sibling: the single largest divergence class. DebugPrimary and HoleVariablePrimary are ignored because their reference kinds are elided at every occurrence. The bare name stays ignored for recovery contexts.",
+    "typeAndEffect": "Flattened, like EffectAnnotatedType beneath it: a pure grouping node with no reference counterpart. While it was ignored (transparent only at arity <= 1) every `T \\ ef` stopped the walk here, which made it the top of the unmapped list once EffectAnnotatedType was flattened.",
     "usesOrImports": "The reference emits UsesOrImports.UseOrImportList on every file, empty or not; ANTLR omits an optional rule that matched nothing. Declared transparent on both sides, because handling only one side is worse than handling neither -- the other side's wrapper then faces a real node and reports a modelling difference as a disagreement."
   },
   "elide": [
