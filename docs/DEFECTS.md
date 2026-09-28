@@ -9,7 +9,7 @@ was opened. The gate now excludes `test/flix/resiliency/ford-fulkerson-prefix.fl
 Flix ships it truncated on purpose, to test its own recovery -- and fails if an excluded file
 ever parses, so the exclusion cannot go stale unnoticed.
 
-D1-D7, D9, D10 and D12-D14 are resolved. The entry that made the rest possible
+D1-D7, D9, D10 and D12-D14 are resolved; D15 (Flix v0.77.0 tight `::`) is open. The entry that made the rest possible
 is D4: the build was green and all 38 unit tests passed while the grammar rejected nine out of
 ten real Flix files, because the tests only ever exercised hand-written snippets.
 
@@ -263,6 +263,27 @@ with none excluded.
 **Worth keeping**: this was invisible to every gate except the token-tiling property, and the
 property itself was what reported it wrongly. A test that measures two things in different units
 can manufacture a defect that survives three rounds of investigation into the wrong component.
+
+## D15 — Tight `::` and `use` package paths (Flix v0.77.0) — OPEN
+
+Flix v0.77.0 adds `ColonColonTight`: `::` written without surrounding whitespace is its own token
+and separates a package path, as in `use flixball::Game.Board` or `use flixball::{Game, Board}`.
+Spaced `::` stays list cons. The parser gains `UsesOrImports.Package`.
+
+This grammar has neither. `COLON_COLON : '::' ;` (`FlixLexer.g4:166`) is a plain literal. `useClause`
+(`FlixParser.g4:26`) takes a `qname`, and `qname` joins segments only with `dot`, so `use a::b` is a
+syntax error today.
+
+The obvious fix has a hazard. Splitting the token without also admitting the tight form in
+`ConsExpr` (`FlixParser.g4:373`) and `ConsPattern` (`:591`) breaks every tight cons. The corpus
+holds exactly one, `List.point(42::Nil)` in `TestList.flix:537`, so that line is all that stands
+between the gate and a silent regression. Upstream hit the same trap from the other side: it left
+`("::", ColonColon)` in its operator table and decides tightness outside it.
+
+**Fix**: see step 6 of [FLIX-SPEC-MIGRATION.md](FLIX-SPEC-MIGRATION.md). Add `COLON_COLON_TIGHT`
+through a `classifyColonColon()` modelled on `classifyArrow()`, in both `FlixLexerBase.java` and
+`FlixLexerBase.ts`. Admit it in both cons rules, add a package-path alternative to `useClause`, and
+add positive and negative fixtures, because the corpus does not exercise the package form.
 
 ---
 

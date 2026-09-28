@@ -1,6 +1,7 @@
 # Migrating to Flix v0.77.0 and the current flix-spec
 
-Status: **not started.** `conformance/baseline.json` records, under `measuredAt`,
+Status: **not started.** Progress is tracked in the [checklist](#checklist) below; the parse
+defect it contains is [D15](DEFECTS.md). `conformance/baseline.json` records, under `measuredAt`,
 `flixSpecArtifact` 0.75.8 and `flixSpecPinCommit` `40949531b4d42e5eaf2e4b9997537eaf793c24e7`
 (Flix v0.75.2). That is two releases behind: v0.76.0 and v0.77.0.
 
