@@ -111,6 +111,17 @@ Several upstream changes are already handled here, or do not apply:
 
 ## What this repository must do
 
+The two targets are not affected equally. Projection and conformance exist **only on the JVM side**:
+`Projection.kt` is run by `:antlr4:projectFixtures` (`antlr4/build.gradle.kts:44`), and `antlr-ng/src`
+holds only `cli.ts` and `FlixLexerBase.ts`. Anything in the shared grammars or the lexer base classes
+reaches both targets and has to pass both corpus gates.
+
+| Step | `antlr4` (JVM) | `antlr-ng` (TS) |
+| --- | --- | --- |
+| Pin, elides, labelled names, synthetic `Operator`, diagnostics | yes | no |
+| `argumentList` (shared `FlixParser.g4`) | yes | yes: regenerate, corpus gate |
+| `COLON_COLON_TIGHT`, package path (shared grammars + both `FlixLexerBase`) | yes | yes: `FlixLexerBase.ts`, corpus gate |
+
 ### 1. Move the pin
 
 In `conformance/baseline.json`, update these fields under `measuredAt`:
