@@ -1,9 +1,9 @@
 # Migrating to Flix v0.77.0 and the current flix-spec
 
-Status: **not started.** Progress is tracked in the [checklist](#checklist) below; the parse
-defect it contains is [D15](DEFECTS.md). `conformance/baseline.json` records, under `measuredAt`,
-`flixSpecArtifact` 0.75.8 and `flixSpecPinCommit` `40949531b4d42e5eaf2e4b9997537eaf793c24e7`
-(Flix v0.75.2). That is two releases behind: v0.76.0 and v0.77.0.
+Status: **in progress, step 1 done.** Progress is tracked in the [checklist](#checklist) below;
+the parse defects it contains are [D15 and D16](DEFECTS.md). `conformance/baseline.json` now
+records flix-spec 0.77.1 against Flix v0.77.0 (`4a5b60a`). Before step 1 it recorded flix-spec
+0.75.8 against Flix v0.75.2, two releases behind.
 
 ## Terms
 
@@ -232,10 +232,15 @@ Starting figures (`conformance/baseline.json`, flix-spec 0.75.8): depth 41%, `fi
 76/138, `divergences` 81, `nodesUnmapped` 112. The corpus gate is at `rate: 1.0`
 (`fixtures/corpus-baseline.json`).
 
-- [ ] **1. Conformance pin.** Update `baseline.json` `measuredAt` and re-measure with no code change.
-      Done when: the script runs clean against flix-spec 0.77.0 and the new depth, agreement,
-      `nodesExpected` and `divergences` are recorded. Depth is expected to *rise* with no code
-      change, and the schema 6 and schema 7 figures are not comparable.
+- [x] **1. Conformance pin.** Update `baseline.json` `measuredAt` and re-measure with no code change.
+      Done when: the script runs clean against flix-spec 0.77.1 and the new depth, agreement,
+      `nodesExpected` and `divergences` are recorded. The schema 6 and schema 7 figures are not
+      comparable.
+      **Measured:** 75/147 agreeing, 107 divergences, depth 42% (907 of 2165 expected nodes), 112
+      unmapped. The +26 divergences are 21 in the 9 new fixtures and a net +5 on the old 138.
+      Depth did *not* rise as expected. Normalisation removed wrappers this grammar was already
+      skipping, so the compared and expected counts fell together. The depth problem is the
+      `unmapped` list (steps 4–5), not the contract.
 - [ ] **2. Elides.** Keep only `CommentList`, with its reason in `notes`. Done when: re-measured,
       and any rise in `divergences` is attributed to `Expr.Statement`/`Type.Apply` in the
       commit message.
@@ -283,12 +288,13 @@ In `conformance/baseline.json`, update these fields under `measuredAt`:
 
 ### 2. Reduce `elide` to what the grammar cannot produce
 
-The contract change matters most to a low-depth consumer, and this grammar sits at **41% depth**
-(`conformance/baseline.json`, `lanes.oracle_conformance.depthPercent`) because an unmapped node
+The contract change matters most to a low-depth consumer, and this grammar sat at **41% depth**
+before step 1 (42% after; `conformance/baseline.json`, `lanes.oracle_conformance.depthPercent`)
+because an unmapped node
 costs its entire subtree against the denominator. Normalisation now removes 51.4% of the canonical
 tree rather than 17.1%, so a large share of what this grammar was failing to reach no longer exists
-to be reached. Step 1's re-measurement shows how far the number moves on its own; record it before
-changing anything else.
+to be reached. That was the expectation. Step 1 measured a move of one point (41% to 42%), because
+most of what normalisation removed was already being skipped here.
 
 Then cut `elide` in `conformance/projection-map.json` down to one entry. The rule is the
 compatibility policy above: compare against the compiler's own tree as flix-spec normalises it, and

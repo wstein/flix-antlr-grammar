@@ -1,25 +1,26 @@
 {
   "note": "Divergence ratchets for scripts/flix-spec-conformance.sh. Lower them as divergences are fixed; never raise one without saying why in the commit message. The measurement is only comparable against the flix-spec inputs recorded below -- a different pin or fixture revision is a different question, not a regression. Read fixturesAgreeing together with depthPercent: a high agreement count at low depth is the number to distrust, because an unmapped node is skipped rather than compared, so a map that maps little agrees with almost everything.",
-  "divergences": 81,
+  "divergences": 107,
   "recoveryDivergences": 0,
   "measuredAt": {
     "flixAntlrGrammar": "HEAD",
-    "flixSpecPin": "v0.75.2",
-    "flixSpecPinCommit": "40949531b4d42e5eaf2e4b9997537eaf793c24e7",
-    "fixtureRevision": "21d3006f7299c0fe2cd97a4dd48f8d231299b662ca977e9414f1157ffa4ca49d",
-    "fixtures": 138,
-    "flixSpecArtifact": "0.75.8"
+    "flixSpecPin": "v0.77.0",
+    "flixSpecPinCommit": "4a5b60a31ac03bb762f68b554a0fc2b6f4d982b9",
+    "fixtureRevision": "648ce33ea86d074b1ac8911ddb50b19dd326a4a14f57669a13ea46811a19b7df",
+    "fixtures": 147,
+    "flixSpecArtifact": "0.77.1"
   },
   "lanes": {
     "oracle_conformance": {
       "verdict": "pass",
-      "fixturesAgreeing": 76,
-      "fixturesCompared": 138,
-      "divergenceCount": 81,
-      "nodesCompared": 825,
+      "fixturesAgreeing": 75,
+      "fixturesCompared": 147,
+      "divergenceCount": 107,
+      "nodesCompared": 907,
       "nodesUnmapped": 112,
-      "depthPercent": 41,
-      "comment": "Measured against flix-spec 0.75.8 (Flix v0.75.2, 138 fixtures). The depth figure is the number to read, and it moved 88% -> 41% without this grammar changing at all: flix-spec fixed the metric to use the expectation as its denominator rather than wherever the walk stopped, so an unmapped node no longer hides its whole subtree from both terms. 41% is the honest figure and it says plainly what 88% obscured -- 76/138 agreeing while well over half the canonical tree is never looked at is a much weaker claim than the old pair suggested. Closing that gap is mapping work, and the report's frequency-ranked `unmapped` list is the queue. lawDeclaration moved to `ignored`: Flix v0.75.2 removed law declarations, so Decl.Law left the inventory."
+      "depthPercent": 42,
+      "comment": "Measured against flix-spec 0.77.1 (Flix v0.77.0, 147 fixtures), report schemaVersion 7, with no change to the grammar, projection or map. 107 divergences, up from 81: 21 are in the 9 fixtures flix-spec added since 0.75.8 (package paths, effect type parameters, match/ematch recovery, annotations the corpus never uses), and the other 138 fixtures net +5 under the per-occurrence transparency contract. Depth moved 41% -> 42%, not the jump the contract change suggested: normalisation shrank the expected tree to 2165 nodes, but it removed wrappers this grammar was already skipping, so compared and expected fell together. The schema-6 and schema-7 depth figures are not strictly comparable. The unmapped list is unchanged at 112, led by expr and type -- that, not the contract, is the depth problem.",
+      "nodesExpected": 2165
     },
     "recovery_conformance": {
       "verdict": "not-applicable",
@@ -28,8 +29,12 @@
     "source_invariants": {
       "verdict": "pass",
       "checksEvaluated": 1,
-      "checksNotApplicable": 3,
-      "comment": "document-shape passes. The vocabulary checks stand down because a projection map is in play, and token-accounting stands down because the projection emits no token leaves. That is not laziness: this grammar routes comments to the COMMENTS and DOC_COMMENTS channels, and off-channel tokens never appear in the parse tree, so emitting what the tree holds would silently omit every comment and fail a check that should have stood down. Splicing the off-channel tokens back into position would let this consumer pass the one oracle-free check in the suite, which neither other structural consumer can."
+      "checksNotApplicable": 4,
+      "comment": "document-shape passes. token-positions (new in flix-spec 0.77.x) stands down for the same reason token-accounting does: the projection emits no tokens. The vocabulary checks stand down because a projection map is in play, and token-accounting stands down because the projection emits no token leaves. That is not laziness: this grammar routes comments to the COMMENTS and DOC_COMMENTS channels, and off-channel tokens never appear in the parse tree, so emitting what the tree holds would silently omit every comment and fail a check that should have stood down. Splicing the off-channel tokens back into position would let this consumer pass the one oracle-free check in the suite, which neither other structural consumer can."
+    },
+    "diagnostic_conformance": {
+      "verdict": "not-applicable",
+      "comment": "The projection writes an empty diagnostics list for every fixture, so the lane stands down. Emitting ANTLR lexer and parser errors (migration step 3) makes it measurable."
     }
   }
 }
