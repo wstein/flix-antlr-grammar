@@ -370,9 +370,9 @@ statement
 
 expr
     // --- postfix chain, tighter than every operator ---------------------
-    : expr LPAREN ( argument ( COMMA argument )* )? RPAREN  # ApplyExpr
-    | expr dot nameLowercase
-      ( LPAREN ( argument ( COMMA argument )* )? RPAREN )?  # FieldOrMethodExpr
+    : expr argumentList                                     # ApplyExpr
+    | expr dot nameLowercase argumentList                   # InvokeMethodExpr
+    | expr dot nameLowercase                                # GetFieldExpr
     | expr HASH nameLowercase                               # RecordSelectExpr
     | expr ARROW_TIGHT nameLowercase ( EQUAL expr )?        # StructFieldExpr
     | expr LBRACK expr RBRACK ( EQUAL expr )?               # IndexExpr
@@ -403,7 +403,7 @@ expr
     | EMATCH pattern ARROW_WS expr                          # EMatchLambdaExpr
     | EMATCH expr LBRACE matchRule* RBRACE                  # EMatchExpr
     | ( CHOOSE | CHOOSE_STAR ) expr LBRACE matchRule* RBRACE # ChooseExpr
-    | XVAR qname ( LPAREN ( expr ( COMMA expr )* )? RPAREN )? # ExtTagExpr
+    | XVAR qname argumentList?                              # ExtTagExpr
     | ( OPEN_VARIANT | OPEN_VARIANT_AS ) qname expr?        # OpenVariantExpr
     | FOREACH forFragments expr                             # ForeachExpr
     | ( FORA | FORM ) forFragments YIELD expr               # ForYieldExpr
@@ -418,9 +418,10 @@ expr
     | CHECKED_CAST LPAREN expr RPAREN                       # CheckedCastExpr
     | CHECKED_ECAST LPAREN expr RPAREN                      # CheckedEffectCastExpr
     | UNCHECKED_CAST LPAREN expr AS typeAndEffect RPAREN    # UncheckedCastExpr
-    | NEW qname typeArgs? ( AT expr )?
-      ( LBRACE newBody* RBRACE | LPAREN ( expr ( COMMA expr )* )? RPAREN )? # NewExpr
-    | SUPER ( dot nameLowercase )? LPAREN ( expr ( COMMA expr )* )? RPAREN # SuperExpr
+    | NEW qname typeArgs? ( AT expr )? argumentList         # InvokeConstructorExpr
+    | NEW qname typeArgs? ( AT expr )? ( LBRACE newBody* RBRACE )? # NewExpr
+    | SUPER dot nameLowercase argumentList                  # InvokeSuperMethodExpr
+    | SUPER argumentList                                    # InvokeSuperConstructorExpr
     | useClause SEMI expr                                   # UseExpr
     | fixpointExpr                                          # FixpointExpression
     | primaryExpr                                           # PrimaryExpression
@@ -429,6 +430,13 @@ expr
 lambdaParams
     : formalParams
     | variableName
+    ;
+
+// Parser2's arguments(), used alike by application, method and constructor calls, xvar and
+// super -- so every one of them takes named arguments, as it does here. A trailing comma is a
+// Parser2 error (TrailingSeparator) and a syntax error here.
+argumentList
+    : LPAREN ( argument ( COMMA argument )* )? RPAREN
     ;
 
 argument

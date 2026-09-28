@@ -8,7 +8,7 @@ Constraints such as duplicate modifiers, non-linear patterns and unknown annotat
 parse here and are rejected by a later validation pass, mirroring how the reference
 compiler separates `Parser2` from `Weeder2`.
 
-Parser rules: 89 · lexer rules: 136
+Parser rules: 90 · lexer rules: 136
 
 ## Parser rules
 
@@ -516,6 +516,14 @@ statement
 lambdaParams
     : formalParams
     | variableName
+    ;
+```
+
+### `argumentList`
+
+```antlr
+argumentList
+    : LPAREN ( argument ( COMMA argument )* )? RPAREN
     ;
 ```
 
