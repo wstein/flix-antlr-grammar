@@ -8,6 +8,7 @@ import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.RecognitionException
 import org.antlr.v4.runtime.Recognizer
+import org.antlr.v4.runtime.Token
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -75,7 +76,11 @@ object Projection {
             sb.append(",\"col\":").append(start.charPositionInLine + 1)
             sb.append("},\"end\":{\"line\":").append(stop.line)
             // ANTLR reports the stop token's *start* column; the end column is one past its text.
-            sb.append(",\"col\":").append(stop.charPositionInLine + 1 + (stop.text?.length ?: 0))
+            // EOF is zero-width. Its `text` is the literal string "<EOF>", so measuring the token
+            // the way every other token is measured pushes the root's end column five characters
+            // past the end of the file -- on every fixture, since every parse ends at EOF.
+            val width = if (stop.type == Token.EOF) 0 else (stop.text?.length ?: 0)
+            sb.append(",\"col\":").append(stop.charPositionInLine + 1 + width)
             sb.append("}}")
         }
 

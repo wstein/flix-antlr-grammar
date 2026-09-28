@@ -99,6 +99,19 @@ class ProjectionTest {
     }
 
     @Test
+    fun `the root span ends at the end of the file, not past it`() {
+        // EOF is zero-width but its `text` is the literal "<EOF>", so measuring it like any other
+        // token overshoots by five columns -- on every fixture, since every parse ends at EOF.
+        val file = write("eof.flix", "def f(): Unit = ()\n")
+        val tree = assertNotNull(Projection.project(file))
+
+        val end = Regex("\"end\":\\{\"line\":(\\d+),\"col\":(\\d+)\\}").find(tree)
+        assertNotNull(end, "the root must carry a span: $tree")
+        val col = end.groupValues[2].toInt()
+        assertTrue(col <= 19, "root end column $col overshoots a 18-character line: $tree")
+    }
+
+    @Test
     fun `run projects a fixture tree and reports where it wrote`() {
         val spec = createTempDirectory("flix-spec-stub").toFile()
         File(spec, "fixtures/positive").mkdirs()

@@ -44,6 +44,13 @@ if [ "$EXPECTED_PIN" != "$ACTUAL_PIN" ]; then
   exit 1
 fi
 
+# ...and the same for the fixture set. The pin says which compiler; the fixture revision says which
+# expectations, and the two move independently: fixtures are regenerated whenever a fixture source
+# changes, with the pin standing still. A baseline compared against a different fixture revision is
+# answering a different question, which is exactly what the recorded value is for -- it was recorded
+# and never read.
+EXPECTED_REV="$(jq -r '.measuredAt.fixtureRevision' "$REPO/conformance/baseline.json")"
+
 OUT="$REPO/build/flix-spec-projection"
 MAP="$REPO/conformance/projection-map.json"
 REPORT="$REPO/build/flix-spec-report.json"
@@ -65,6 +72,16 @@ if ! "$SPEC/gradlew" -p "$SPEC" -q :tools:project:conformance \
   echo "" >&2
   echo "error: conformance regressed against conformance/baseline.json" >&2
   echo "  baselines allow $BASELINE structural and $RECOVERY_BASELINE recovery divergences; see $REPORT" >&2
+  exit 1
+fi
+
+ACTUAL_REV="$(jq -r '.provenance.fixtureRevision' "$REPORT")"
+if [ "$EXPECTED_REV" != "$ACTUAL_REV" ]; then
+  echo "" >&2
+  echo "FATAL: this baseline was measured against fixture revision $EXPECTED_REV," >&2
+  echo "       but flix-spec produced $ACTUAL_REV." >&2
+  echo "A different fixture revision is a different question, not a regression: re-measure and" >&2
+  echo "record it, rather than reading the ratchet as if it still applied." >&2
   exit 1
 fi
 
