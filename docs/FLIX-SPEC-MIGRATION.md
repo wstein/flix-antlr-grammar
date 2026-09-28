@@ -196,8 +196,9 @@ Starting figures (`conformance/baseline.json`, flix-spec 0.75.8): depth 41%, `fi
       Done when: the script runs clean against flix-spec 0.77.0 and the new depth, agreement,
       `nodesExpected` and `divergences` are recorded. Depth is expected to *rise* with no code
       change, and the schema 6 and schema 7 figures are not comparable.
-- [ ] **2. Elides.** Drop the six redundant entries. Done when: re-measured, and `divergences` is no
-      higher than after step 1.
+- [ ] **2. Elides.** Keep only `CommentList`, with its reason in `notes`. Done when: re-measured,
+      and any rise in `divergences` is attributed to `Expr.Statement`/`Type.Apply` in the
+      commit message.
 - [ ] **3. Diagnostics.** Done when: `diagnostic_conformance` is no longer `not-applicable`, and
       accept/reject agreement is recorded as a new ratchet in `baseline.json`.
 - [ ] **4 + 5. Labelled names, `Operator`, `ArgumentList`.** Land them together. Done when:
@@ -238,7 +239,7 @@ In `conformance/baseline.json`, update these fields under `measuredAt`:
 - **After projecting and comparing**, it fails the run on a fixture-revision mismatch (`:77-85`).
   So a stale `fixtureRevision` costs a full run before the mismatch is reported.
 
-### 2. Drop the redundant `elide` entries
+### 2. Reduce `elide` to what the grammar cannot produce
 
 The contract change matters most to a low-depth consumer, and this grammar sits at **41% depth**
 (`conformance/baseline.json`, `lanes.oracle_conformance.depthPercent`) because an unmapped node
@@ -247,14 +248,22 @@ tree rather than 17.1%, so a large share of what this grammar was failing to rea
 to be reached. Step 1's re-measurement shows how far the number moves on its own; record it before
 changing anything else.
 
-Then delete the six now-redundant `elide` entries from `conformance/projection-map.json`:
+Then cut `elide` in `conformance/projection-map.json` down to one entry. The rule is the
+compatibility policy above: compare against the compiler's own tree as flix-spec normalises it, and
+elide nothing it does not. flix-spec's `docs/PROJECTION.md` deprecates `elide` apart from
+"a canonical kind that consumer genuinely cannot produce".
 
-```
-AnnotationList  Expr.Expr  ModifierList  Pattern.Pattern  QName  UsesOrImports.UseOrImportList
-```
+| Entry | Verdict | Why |
+| --- | --- | --- |
+| `AnnotationList`, `Expr.Expr`, `ModifierList`, `Pattern.Pattern`, `QName`, `UsesOrImports.UseOrImportList` | delete | Upstream now removes them exactly where Flix's tree carries no structure. A local elide would also hide the occurrences it keeps, such as 23 qualified `QName`s and 12 non-empty `ModifierList`s |
+| `Expr.Statement` | delete | Real structure in Flix's tree (14 occurrences in `fixtures/expected`). Eliding it hides divergences the reference would see, so it is mapping work for `statement` instead |
+| `Type.Apply` | delete | Real structure (15 occurrences). Map it from `# ApplyType` (`FlixParser.g4:236`) once step 4 emits labels |
+| `CommentList` | **keep** | The grammar genuinely cannot produce it: comments go to the `COMMENTS`/`DOC_COMMENTS` channels and never reach the parse tree (`Projection.kt` KDoc). Record that reason in the map's `notes` |
 
-`CommentList`, `Expr.Statement` and `Type.Apply` stay. The map has no mappings onto elided kinds, so
-nothing there needs review.
+Deleting `Expr.Statement` and `Type.Apply` will *raise* `divergences`. The comparison is not
+getting worse; divergences that were hidden become visible. Record the rise and its cause in the
+commit message, as the `baseline.json` note requires, and let step 4 bring the number back down.
+The map has no mappings onto elided kinds, so nothing else needs review.
 
 ### 3. Emit diagnostics
 
