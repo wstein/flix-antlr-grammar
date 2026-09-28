@@ -211,6 +211,8 @@ Starting figures (`conformance/baseline.json`, flix-spec 0.75.8): depth 41%, `fi
 - [ ] **6b. Tight `::` and package paths.** Tracked as D15 in `docs/DEFECTS.md`. Done when: both
       corpus gates are back at 1.0, the new positive and negative fixtures pass, and `42::Nil`
       still parses.
+- [ ] **6c. Free `law` and `lawful`.** Tracked as D16. Done when: both are ordinary names,
+      `fixtures/keywords.txt` holds 82 entries, and both corpus gates hold.
 - [ ] **7. `CLAUDE.md`.** Done when: the pin, the parse-rate headline and the traps match the new
       state.
 

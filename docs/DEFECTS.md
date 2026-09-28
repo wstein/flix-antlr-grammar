@@ -9,8 +9,8 @@ was opened. The gate now excludes `test/flix/resiliency/ford-fulkerson-prefix.fl
 Flix ships it truncated on purpose, to test its own recovery -- and fails if an excluded file
 ever parses, so the exclusion cannot go stale unnoticed.
 
-D1-D7, D9, D10 and D12-D14 are resolved; D15 (Flix v0.77.0 tight `::`) is open. The entry that made the rest possible
-is D4: the build was green and all 38 unit tests passed while the grammar rejected nine out of
+D1-D7, D9, D10 and D12-D14 are resolved. D15 (Flix v0.77.0 tight `::`) and D16 (stale
+`law`/`lawful` keywords) are open. The entry that made the rest possible is D4: the build was green and all 38 unit tests passed while the grammar rejected nine out of
 ten real Flix files, because the tests only ever exercised hand-written snippets.
 
 Do not raise the corpus baseline by hand; let the gate ratchet it.
@@ -288,6 +288,46 @@ through a `classifyColonColon()` modelled on `classifyArrow()`, in both `FlixLex
 `useClause` that also accepts spaced `::`, and report `Malformed` for that from a post-parse check
 rather than as a syntax error, so the node survives as it does in Flix. Add positive and negative
 fixtures, because the corpus does not exercise the package form.
+
+## D16 — `law` and `lawful` are still reserved (removed in Flix v0.75.2) — OPEN
+
+Flix v0.75.2 removed law declarations, and by v0.77.0 neither word is a keyword any more: the
+0.77.0 token vocabulary has no kind for either. Probed on the 0.77.0 release jar:
+
+| Input | Flix 0.77.0 | This grammar |
+| --- | --- | --- |
+| `let law = 1; law` | accepted, no diagnostic | 2 syntax errors |
+| `let lawful = 1; lawful` | accepted, no diagnostic | 2 syntax errors |
+| `law l: forall (x: a) . true` in a trait | `UnexpectedToken`, `FreeDot` | parses as `lawDeclaration` |
+| `lawful trait T[a] {}` | `UnexpectedToken` | parses (`modifier`) |
+
+So the grammar is both stricter and looser than Flix. It rejects valid programs that use the words
+as names, and it accepts syntax Flix removed. This breaks the compatibility policy in
+[FLIX-SPEC-MIGRATION.md](FLIX-SPEC-MIGRATION.md) in both directions. The `lawDeclaration` note in
+`conformance/projection-map.json` records the removal but keeps the rule on purpose ("the grammar
+still parses `law`"), which is exactly the looser half.
+
+Where the words still appear:
+
+- `LAW`/`LAWFUL` in `grammars/FlixLexer.g4:100-101`, and in `fixtures/keywords.txt:32-33`, which
+  pins the count at 84.
+- `lawDeclaration` in `grammars/FlixParser.g4:74`, used at `:58` and `:117`.
+- `LAWFUL` in `modifier` at `:156`.
+- `lawDeclaration` in the map's `ignored` list, and its `notes` entry.
+
+No fixture or test exercises either word.
+
+**Fix**:
+
+- Delete both tokens, `lawDeclaration` and the `LAWFUL` modifier alternative.
+- Drop the two lines from `fixtures/keywords.txt`, which leaves 82 keywords, and update the count in
+  `CLAUDE.md`.
+- Remove the map entries.
+- Add a positive fixture that uses `law` and `lawful` as names, and a negative one for each removed
+  form.
+
+Both targets consume the shared lexer, so both corpus gates must hold. The v0.77.0 corpus cannot
+contain a `law` declaration, so no drop is expected.
 
 ---
 
