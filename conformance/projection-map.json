@@ -78,6 +78,7 @@
     "enumDeclarationTail"
   ],
   "notes": {
+    "CommentList": "The one elide this map keeps, and the one exception to elide-nothing-Flix-does-not. The reference emits CommentList wherever comments appear; this grammar routes comments to the COMMENTS and DOC_COMMENTS channels, so they never reach the parse tree and no rule of ours can stand for the node. That is a kind this consumer genuinely cannot produce, which docs/PROJECTION.md admits, rather than a structure we choose not to model. It goes when Projection.kt splices the off-channel tokens back into position -- the same work that would let token-accounting and token-positions run.",
     "declaration": "A wrapper around every declaration together with its doc, annotations and modifiers, where the reference makes those direct children of Decl.Def. Transparent at arity <= 1 and spliced by `declPrefix` otherwise.",
     "definitionName": "A wrapper around the name rule, where the reference's Ident holds its token directly. Mapping both onto Ident gave Ident-inside-Ident and an arity divergence on every declaration -- 126 of them, the single largest class in the first measurement.",
     "expr": "Left unmapped deliberately. It is a precedence level, transparent at arity <= 1 via `ignored`; mapping the branching case to Expr.Binary raises depth 88% -> 94% and drops agreement 76 -> 40, which is the signature of a guess that is often wrong. flix-spec's guidance is explicit: leave it unmapped rather than guess, because a wrong mapping reports as agreement and is worse than a gap. What it needs is the positional analysis tree-sitter-flix did, not a name-level rule.",
@@ -88,14 +89,6 @@
     "usesOrImports": "The reference emits UsesOrImports.UseOrImportList on every file, empty or not; ANTLR omits an optional rule that matched nothing. Declared transparent on both sides, because handling only one side is worse than handling neither -- the other side's wrapper then faces a real node and reports a modelling difference as a disagreement."
   },
   "elide": [
-    "AnnotationList",
-    "CommentList",
-    "Expr.Expr",
-    "Expr.Statement",
-    "ModifierList",
-    "Pattern.Pattern",
-    "QName",
-    "Type.Apply",
-    "UsesOrImports.UseOrImportList"
+    "CommentList"
   ]
 }

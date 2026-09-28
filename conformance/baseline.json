@@ -1,6 +1,6 @@
 {
   "note": "Divergence ratchets for scripts/flix-spec-conformance.sh. Lower them as divergences are fixed; never raise one without saying why in the commit message. The measurement is only comparable against the flix-spec inputs recorded below -- a different pin or fixture revision is a different question, not a regression. Read fixturesAgreeing together with depthPercent: a high agreement count at low depth is the number to distrust, because an unmapped node is skipped rather than compared, so a map that maps little agrees with almost everything.",
-  "divergences": 107,
+  "divergences": 129,
   "recoveryDivergences": 0,
   "measuredAt": {
     "flixAntlrGrammar": "HEAD",
@@ -15,12 +15,12 @@
       "verdict": "pass",
       "fixturesAgreeing": 75,
       "fixturesCompared": 147,
-      "divergenceCount": 107,
-      "nodesCompared": 907,
-      "nodesUnmapped": 112,
-      "depthPercent": 42,
-      "comment": "Measured against flix-spec 0.77.1 (Flix v0.77.0, 147 fixtures), report schemaVersion 7, with no change to the grammar, projection or map. 107 divergences, up from 81: 21 are in the 9 fixtures flix-spec added since 0.75.8 (package paths, effect type parameters, match/ematch recovery, annotations the corpus never uses), and the other 138 fixtures net +5 under the per-occurrence transparency contract. Depth moved 41% -> 42%, not the jump the contract change suggested: normalisation shrank the expected tree to 2165 nodes, but it removed wrappers this grammar was already skipping, so compared and expected fell together. The schema-6 and schema-7 depth figures are not strictly comparable. The unmapped list is unchanged at 112, led by expr and type -- that, not the contract, is the depth problem.",
-      "nodesExpected": 2165
+      "divergenceCount": 129,
+      "nodesCompared": 886,
+      "nodesUnmapped": 108,
+      "depthPercent": 41,
+      "comment": "Measured against flix-spec 0.77.1 (Flix v0.77.0, 147 fixtures), report schemaVersion 7. Migration step 1 moved the pin with no code change: 75/147, 107 divergences, depth 42% (907 of 2165) -- 21 of the rise from 81 in the 9 new fixtures, the old 138 net +5, and depth flat because normalisation removed wrappers this grammar was already skipping. Step 2 cut elide to CommentList alone: 129 divergences, depth 41% (886 of 2180), 108 unmapped. All 22 new divergences come from AnnotationList (5) and ModifierList (13, plus their interaction): the contract only drops those lists when empty, and the old local elide was also hiding the non-empty ones, which this grammar has no node for (declPrefix is annotation* modifier*). They are real divergences, not a regression; annotationList/modifierList rules with dropWhenEmpty close them. Removing Expr.Expr, Pattern.Pattern, QName, UseOrImportList, Expr.Statement and Type.Apply changed nothing measurable: each sits below an unmapped expr/type/qname node where the walk already stops, so their divergences surface only once steps 4-5 map those.",
+      "nodesExpected": 2180
     },
     "recovery_conformance": {
       "verdict": "not-applicable",

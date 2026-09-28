@@ -241,9 +241,16 @@ Starting figures (`conformance/baseline.json`, flix-spec 0.75.8): depth 41%, `fi
       Depth did *not* rise as expected. Normalisation removed wrappers this grammar was already
       skipping, so the compared and expected counts fell together. The depth problem is the
       `unmapped` list (steps 4–5), not the contract.
-- [ ] **2. Elides.** Keep only `CommentList`, with its reason in `notes`. Done when: re-measured,
-      and any rise in `divergences` is attributed to `Expr.Statement`/`Type.Apply` in the
-      commit message.
+- [x] **2. Elides.** Keep only `CommentList`, with its reason in `notes`. Done when: re-measured,
+      and any rise in `divergences` is attributed in the commit message.
+      **Measured:** 75/147 agreeing, 129 divergences, depth 41% (886 of 2180), 108 unmapped.
+      The whole +22 comes from `AnnotationList` and `ModifierList`, not from the kinds this item
+      expected (see step 2).
+- [ ] **2b. `annotationList` and `modifierList`.** Split `declPrefix : annotation* modifier*`
+      (`FlixParser.g4:61`) into two list rules. Map them to `AnnotationList` and `ModifierList`,
+      and declare both in `dropWhenEmpty`. Done when: the 22 divergences from step 2 are gone, and
+      both corpus gates, the snapshots and the generated docs pass in the same commit. This is a
+      grammar change, so it lands with steps 4 + 5 rather than inside step 2.
 - [ ] **3. Diagnostics.** Done when: `diagnostic_conformance` is no longer `not-applicable`, and
       accept/reject agreement is recorded as a new ratchet in `baseline.json`.
 - [ ] **4 + 5. Labelled names, `Operator`, `ArgumentList`.** Land them together. Done when:
@@ -290,8 +297,7 @@ In `conformance/baseline.json`, update these fields under `measuredAt`:
 
 The contract change matters most to a low-depth consumer, and this grammar sat at **41% depth**
 before step 1 (42% after; `conformance/baseline.json`, `lanes.oracle_conformance.depthPercent`)
-because an unmapped node
-costs its entire subtree against the denominator. Normalisation now removes 51.4% of the canonical
+because an unmapped node costs its entire subtree against the denominator. Normalisation now removes 51.4% of the canonical
 tree rather than 17.1%, so a large share of what this grammar was failing to reach no longer exists
 to be reached. That was the expectation. Step 1 measured a move of one point (41% to 42%), because
 most of what normalisation removed was already being skipped here.
@@ -308,10 +314,18 @@ elide nothing it does not. flix-spec's `docs/PROJECTION.md` deprecates `elide` a
 | `Type.Apply` | delete | Real structure (15 occurrences). Map it from `# ApplyType` (`FlixParser.g4:236`) once step 4 emits labels |
 | `CommentList` | **keep** | The grammar genuinely cannot produce it: comments go to the `COMMENTS`/`DOC_COMMENTS` channels and never reach the parse tree (`Projection.kt` KDoc). Record that reason in the map's `notes` |
 
-Deleting `Expr.Statement` and `Type.Apply` will *raise* `divergences`. The comparison is not
-getting worse; divergences that were hidden become visible. Record the rise and its cause in the
-commit message, as the `baseline.json` note requires, and let step 4 bring the number back down.
-The map has no mappings onto elided kinds, so nothing else needs review.
+**What step 2 actually measured** (107 → 129 divergences, found by re-adding each entry in turn):
+
+| Entry removed | Effect | Why |
+| --- | --- | --- |
+| `ModifierList` | +13 | The contract drops these lists only when **empty** (`elide-empty`). The old local elide also hid the non-empty ones, and this grammar has no node for them: `declPrefix` is `annotation* modifier*`. flix-spec's validator lists both as "removable now", which overstates what upstream covers |
+| `AnnotationList` | +5 | Same cause |
+| (the two together) | +4 more | They interact: both shift the same declarations' children |
+| `Expr.Expr`, `Pattern.Pattern`, `QName`, `UsesOrImports.UseOrImportList`, `Expr.Statement`, `Type.Apply` | 0 | Each sits below an unmapped `expr`, `type` or `qname` node, where the walk already stops. Their divergences surface only once steps 4–5 map those nodes |
+
+The comparison is not getting worse: divergences that were hidden become visible. Step 2b removes
+the 22, and steps 4–5 will surface the rest before they bring the number down. The map has no
+mappings onto elided kinds, so nothing else needs review.
 
 ### 3. Emit diagnostics
 
