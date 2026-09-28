@@ -244,30 +244,35 @@ type
     | type ( RVADD | RVSUB ) type         # RvAddSubType
     | <assoc=right> type ARROW_WS type    # ArrowType
     | type BACKSLASH type                 # EffectAnnotatedType
-    | primaryType typeArgs*               # ApplyType
+    | primaryType typeArgs+               # ApplyType
+    | primaryType                         # SimpleType
     ;
 
+// Every alternative is labelled so the projection can name the reference's Type kind. A type
+// variable is NAME_LOWERCASE rather than nameLowercase (which is exactly NAME_LOWERCASE) because
+// the reference's Type.Variable holds its token directly, not an Ident. VariableType must precede
+// QNameType: a lone lowercase name also matches qname, and ANTLR resolves an ambiguous input in
+// favour of the first alternative.
 primaryType
-    : qname
-    | nameLowercase
-    | nameMath
-    | UNDERSCORE
-    | STATIC_UPPER
-    | UNIV
-    | TRUE
-    | FALSE
+    : NAME_LOWERCASE                         # VariableType
+    | qname                                  # QNameType
+    | nameMath                               # MathType
+    | UNDERSCORE                             # WildcardType
+    | STATIC_UPPER                           # StaticType
+    | UNIV                                   # UnivType
+    | ( TRUE | FALSE )                       # BoolType
     // A tuple type and a record-row type (`(y = Int32)`, `(x = Int32 | Tail)`, used where a
     // type alias splices into a `{...| tail}` record) share this same paren pair. The reference
     // dispatches upfront via lookahead (Parser2.scala's tupleOrRecordRowType); ANTLR's ALL(*)
     // does not need that, so both element shapes are just alternatives of one element rule.
-    | LPAREN ( recordFieldOrType ( COMMA recordFieldOrType )* )? ( BAR type )? RPAREN
-    | LBRACE BAR RBRACE
-    | LBRACE ( recordFieldType ( COMMA recordFieldType )* )? ( BAR type )? RBRACE
-    | LBRACE type ( COMMA type )* RBRACE
-    | HASH_LBRACE ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? RBRACE
-    | HASH_LPAREN ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? RPAREN
-    | HASH_BAR ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? BAR_HASH
-    | ANGLE_L qname ( COMMA qname )* ANGLE_R
+    | LPAREN ( recordFieldOrType ( COMMA recordFieldOrType )* )? ( BAR type )? RPAREN # TupleType
+    | LBRACE BAR RBRACE                                                         # EmptyRecordType
+    | LBRACE ( recordFieldType ( COMMA recordFieldType )* )? ( BAR type )? RBRACE # RecordType
+    | LBRACE type ( COMMA type )* RBRACE                                        # EffectSetType
+    | HASH_LBRACE ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? RBRACE    # SchemaType
+    | HASH_LPAREN ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? RPAREN    # SchemaRowType
+    | HASH_BAR ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? BAR_HASH     # ExtensibleType
+    | ANGLE_L qname ( COMMA qname )* ANGLE_R                                    # CaseSetType
     ;
 
 // Record types use `=`, never `:`. That is what keeps `{ a = t }` distinct

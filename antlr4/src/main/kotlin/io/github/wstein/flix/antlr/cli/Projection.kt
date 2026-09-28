@@ -79,8 +79,8 @@ object Projection {
     /**
      * Labels whose operator the reference wraps in an `Operator` node.
      *
-     * `Expr.Binary` is (lhs, `Operator`, rhs) and `Expr.Unary` is (`Operator`, operand), but the
-     * operator is a bare token here, and tokens are never emitted -- so without a synthetic node
+     * `Expr.Binary` and `Type.Binary` are (lhs, `Operator`, rhs) and the unary kinds are
+     * (`Operator`, operand), but the operator is a bare token here, and tokens are never emitted -- so without a synthetic node
      * every binary would project with two children against the reference's three. Synthesising it
      * in the projection keeps the grammar's precedence levels untouched: a shared `binaryOp` rule
      * would have flattened them.
@@ -102,6 +102,15 @@ object Projection {
             "AndExpr",
             "OrExpr",
             "InstanceOfExpr",
+            "UnaryType",
+            "AndType",
+            "OrType",
+            "XorType",
+            "EffectIntersectionType",
+            "EffectSumType",
+            "RvAndType",
+            "RvAddSubType",
+            "ArrowType",
         )
 
     /** The native kind of a synthesised operator node; the map sends it to `Operator`. */
