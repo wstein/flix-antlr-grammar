@@ -160,8 +160,27 @@ divergences.
   If the grammar route is ever preferred, it needs one operator rule per precedence level (`multOp`,
   `addOp`, `consOp`, …). `expr multOp expr` is still a binary alternative for ANTLR's left-recursion
   rewrite, so precedence survives.
-- `Expr.Apply` has canonical arity **2** (callee, `ArgumentList`) against `expr LPAREN argument* RPAREN`.
-  Extract an `argumentList` rule and map it to `ArgumentList`.
+- `Expr.Apply` has canonical arity **2** (callee, `ArgumentList`) against
+  `expr LPAREN ( argument ( COMMA argument )* )? RPAREN` (`FlixParser.g4:357`). Extract an
+  `argumentList` rule and map it to `ArgumentList`. This one is a grammar change, but a safe one:
+  the argument list is not left-recursive, so precedence is unaffected.
+
+  The list is written inline in **five** places, not one, and the extraction should cover all of
+  them:
+
+  | Alternative | Line | Elements |
+  | --- | --- | --- |
+  | `ApplyExpr` | 357 | `argument` |
+  | `FieldOrMethodExpr` | 359 | `argument` |
+  | `ExtTagExpr` | 390 | `expr` |
+  | `NewExpr` | 405 | `expr` |
+  | `SuperExpr` | 406 | `expr` |
+
+  Check each canonical parent in `fixtures/expected` (`Expr.ExtTag`, `Expr.InvokeConstructor`,
+  `Expr.InvokeSuperConstructor`, `Expr.InvokeSuperMethod`) before reusing one rule for all five. Where
+  the elements differ (`argument` vs `expr`), a shared rule changes what those three sites accept
+  unless it is parameterised. Because the rule is new, `fixtures/snapshots/`, `docs/SYNTAX.md` and
+  `docs/RAILROAD.md` change with it.
 
 This also settles the open question in your own `notes.expr`, which records that mapping `expr` to
 `Expr.Binary` *"drops agreement 76 → 40, which is the signature of a guess that is often wrong"*.
