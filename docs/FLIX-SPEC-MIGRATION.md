@@ -109,8 +109,27 @@ alternatives** (`# ApplyExpr`, `# AddExpr`, `# ConsExpr`, `# MatchExpr`, …): 4
 `type`.
 
 Those two rules are the top of your own `unmapped` list — `expr` 39, `type` 21, **60 of 112 stops**.
-Emitting the labelled context class name instead (`ctx::class.simpleName!!.removeSuffix("Context")`)
-and mapping the labels is a one-line change to the projection plus map entries.
+The fix is to emit the labelled alternative's name, but **not** by taking the class name unconditionally.
+`ctx::class.simpleName!!.removeSuffix("Context")` also renames every *unlabelled* rule —
+`BlockContext` becomes `Block` — and every key in `conformance/projection-map.json` (`block`,
+`defDeclaration`, all 41 `mappings`, plus `ignored` and `flatten`) is the camelCase rule name. Every
+existing mapping would stop matching at once.
+
+Use the class name only when it is a strict subclass of the rule's own context class, which is
+exactly what a labelled alternative is:
+
+```kotlin
+val kind =
+    if (ctx.javaClass.superclass != ParserRuleContext::class.java) {
+        ctx.javaClass.simpleName.removeSuffix("Context") // # AddExpr -> AddExpr
+    } else {
+        ruleNames[ctx.ruleIndex] // block -> block
+    }
+```
+
+ANTLR labels all of a rule's alternatives or none of them, so after this change `expr`, `type` and
+`pattern` are never emitted again. Their `ignored` entries go dead and should be replaced by entries
+for the labels themselves: each label is either mapped or declared `ignored`.
 
 ### 4. Two missing rules keep three of the largest canonical kinds unreachable
 
