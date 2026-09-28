@@ -58,8 +58,9 @@ own step (see the checklist). Two things to settle while doing it:
 - **`+UsesOrImports.Package`** (TreeKind 191 → 192). `use` now recognises a package path:
   `use flixball::Game.Board` and `use flixball::{Game, Board}`.
 - **`+ColonColonTight`** (TokenKind 158 → 159). `::` written **without surrounding whitespace**
-  lexes as a distinct token. Tight `::` is the package-path separator; spaced `::` remains list
-  cons. Writing the separator with whitespace is now a `Malformed` error.
+  lexes as a distinct token. Tight `::` is the package-path separator, and *both* forms are list
+  cons: the parser accepts `ColonColonTight` in cons position. Writing the separator with
+  whitespace is now a `Malformed` error.
 - Nothing was removed or re-parented. Both releases are additive at the vocabulary level.
 - Internally, Flix deleted its `Reader` phase and `shared.Input`. That broke `flix-spec`'s own
   adapter and is fixed there; it does not reach consumers.
@@ -372,20 +373,43 @@ Add `COLON_COLON_TIGHT` to `tokens {}` and a `classifyColonColon()` to **both** 
 Pitfalls:
 
 - **Cons must keep working.** `ConsExpr` (`FlixParser.g4:373`) and `ConsPattern` (`:591`) match
-  `COLON_COLON`. Following *parse the superset*, they should accept `COLON_COLON_TIGHT` too and
-  leave the spacing error to validation. Otherwise every tight cons such as `x::xs` becomes a parse
-  error. This is the same trap as the "bites quietly" note above, pointed at this repository.
+  `COLON_COLON`, and they must accept `COLON_COLON_TIGHT` too. This is not a superset
+  concession: the reference parser itself accepts tight cons with no diagnostic. Otherwise every
+  tight cons such as `x::xs` becomes a parse error. This is the same trap as the "bites quietly"
+  note above, pointed at this repository.
 - **`use a::b` does not parse today at all.** `useClause` (`:26`) is `USE qname …` and `qname`
   (`:291`) joins segments only with `dot`. The package form needs a new alternative that produces a
   node mapped to `UsesOrImports.Package`.
+- **The package is a single segment.** A package is one lowercase name plus the tight separator,
+  and it prefixes either a qualified name or a braced list. The braced list follows `::` directly,
+  with no `.` before `{`:
+
+  ```
+  use flixball::Game.Board     Use[use, Package[Ident, ::], QName[Game . Board]]
+  use flixball::{Game, Board}  Use[use, Package[Ident, ::], UseMany[{ Game , Board }]]
+  use a::b::C                  UnexpectedToken: only one package segment
+  use flixball :: Game.Board   Malformed: "Write '::' without whitespace"
+  ```
+
+  A shape that matches: `usePackage : nameLowercase COLON_COLON_TIGHT ;` and
+  `useClause : USE usePackage? ( qname ( dot useMany )? | useMany ) ;`, where `useMany` is the
+  braced list extracted from the current `useClause`. The spaced form is rejected by the reference
+  *parser*, not by `Weeder2`, so rejecting it here as well keeps `diagnostic_conformance`'s
+  accept/reject in agreement; parse-the-superset does not apply to it.
 - **The corpus barely exercises it.** On the v0.76.0 corpus, 154 files use spaced `::`. Tight `::`
   appears in 8 files, and all but one occurrence is inside a string literal. The one in code is a
   tight *cons*, `List.point(42::Nil)` (`main/test/ca/uwaterloo/flix/library/TestList.flix:537`). It
   is the only corpus line that catches a broken `ConsExpr`, and nothing in the corpus exercises the
   package path. Add fixtures to `fixtures/positive/` and `fixtures/negative/` and lexer tests;
   `FlixLexerTest.kt:216-219` covers only spaced `::`.
-- **Open question: tight `:::`.** Decide from `Lexer.scala` at `4a5b60a` whether it gets a tight
-  variant as well. `COLON_COLON_COLON` sits at `FlixLexer.g4:165`.
+- **Tight `:::` has no variant of its own.** `Nil:::Nil` and `Nil ::: Nil` both lex as
+  `ColonColonColon`, so `COLON_COLON_COLON` (`FlixLexer.g4:165`) stays as it is.
+- **"Tight" means no whitespace on either side,** the same rule `classifyArrow()` applies:
+  `42 ::Nil` lexes as spaced `ColonColon`.
+
+All of the above was observed by running the v0.77.0 release jar (sha256 `20007d79…`, the digest
+in flix-spec's `pin.json`) on single-construct probes through flix-spec's
+`./gradlew :tools:project:extract`, which drives `Lexer` and `Parser2` directly.
 
 ### 7. Update `CLAUDE.md`
 
