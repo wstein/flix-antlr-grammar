@@ -58,8 +58,19 @@ declaration
     | lawDeclaration
     ;
 
+// Accepts exactly `annotation* modifier*`. The lists are separate rules so the tree carries the
+// reference's AnnotationList and ModifierList, and optional so an absent list leaves no node --
+// matching the reference, whose contract drops those lists only when empty.
 declPrefix
-    : annotation* modifier*
+    : annotationList? modifierList?
+    ;
+
+annotationList
+    : annotation+
+    ;
+
+modifierList
+    : modifier+
     ;
 
 modDeclaration

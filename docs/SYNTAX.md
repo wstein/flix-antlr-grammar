@@ -8,7 +8,7 @@ Constraints such as duplicate modifiers, non-linear patterns and unknown annotat
 parse here and are rejected by a later validation pass, mirroring how the reference
 compiler separates `Parser2` from `Weeder2`.
 
-Parser rules: 85 · lexer rules: 136
+Parser rules: 87 · lexer rules: 136
 
 ## Parser rules
 
@@ -73,7 +73,23 @@ declaration
 
 ```antlr
 declPrefix
-    : annotation* modifier*
+    : annotationList? modifierList?
+    ;
+```
+
+### `annotationList`
+
+```antlr
+annotationList
+    : annotation+
+    ;
+```
+
+### `modifierList`
+
+```antlr
+modifierList
+    : modifier+
     ;
 ```
 

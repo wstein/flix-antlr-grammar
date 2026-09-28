@@ -246,11 +246,15 @@ Starting figures (`conformance/baseline.json`, flix-spec 0.75.8): depth 41%, `fi
       **Measured:** 75/147 agreeing, 129 divergences, depth 41% (886 of 2180), 108 unmapped.
       The whole +22 comes from `AnnotationList` and `ModifierList`, not from the kinds this item
       expected (see step 2).
-- [ ] **2b. `annotationList` and `modifierList`.** Split `declPrefix : annotation* modifier*`
-      (`FlixParser.g4:61`) into two list rules. Map them to `AnnotationList` and `ModifierList`,
-      and declare both in `dropWhenEmpty`. Done when: the 22 divergences from step 2 are gone, and
-      both corpus gates, the snapshots and the generated docs pass in the same commit. This is a
-      grammar change, so it lands with steps 4 + 5 rather than inside step 2.
+- [x] **2b. `annotationList` and `modifierList`.** Split `declPrefix : annotation* modifier*`
+      into `annotationList? modifierList?`, with each list non-empty (`annotation+`, `modifier+`),
+      and map them to `AnnotationList` and `ModifierList`. Done when: the 22 divergences from step 2
+      are gone, and both corpus gates, the snapshots and the generated docs pass in the same commit.
+      **Measured:** 129 → 107 divergences, 886 → 916 nodes compared, depth 42%. Both corpus gates
+      are at 711/711. `dropWhenEmpty` was the planned tool but cannot work here: it counts token
+      children, this projection emits none, so a list holding only `pub` would read as empty.
+      Making the lists optional in the grammar gets the same result, since an absent list leaves no
+      node.
 - [ ] **3. Diagnostics.** Done when: `diagnostic_conformance` is no longer `not-applicable`, and
       accept/reject agreement is recorded as a new ratchet in `baseline.json`.
 - [ ] **4 + 5. Labelled names, `Operator`, `ArgumentList`.** Land them together. Done when:
