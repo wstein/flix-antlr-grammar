@@ -190,8 +190,37 @@ It is not a bad guess — it is a **missing node**.
 
 `grammars/FlixLexer.g4` must distinguish tight `::` from spaced `::`, and the parser must produce a
 node mapping to `UsesOrImports.Package` for `use flixball::Game.Board` and `use flixball::{Game, Board}`.
-ANTLR's lexer has no whitespace-sensitivity by default, so this needs an explicit token or a
-predicate — it will not fall out of the existing `COLON_COLON` rule.
+It will not fall out of the existing rule: `COLON_COLON : '::' ;` (`FlixLexer.g4:166`) is a plain
+literal.
+
+**Reuse the existing machinery for whitespace-sensitive tokens rather than a predicate.** `->` is
+already split this way:
+
+- `ARROW : '->' { classifyArrow(); }` (`FlixLexer.g4:188`) re-types the token as `ARROW_WS` or
+  `ARROW_TIGHT`.
+- Those two are virtual tokens in the `tokens {}` block (`FlixLexer.g4:7-13`).
+- The classification uses `isWhitespaceBefore()`/`isWhitespaceAfter()`, in
+  `FlixLexerBase.java:86-87,108-130` and its mirror `antlr-ng/src/FlixLexerBase.ts:38-42,110-120`.
+
+Add `COLON_COLON_TIGHT` to `tokens {}` and a `classifyColonColon()` to **both** base classes.
+
+Pitfalls:
+
+- **Cons must keep working.** `ConsExpr` (`FlixParser.g4:373`) and `ConsPattern` (`:591`) match
+  `COLON_COLON`. Following *parse the superset*, they should accept `COLON_COLON_TIGHT` too and leave
+  the spacing error to validation. Otherwise every `x::xs` in the corpus becomes a parse error. This
+  is the same trap as the "bites quietly" note above, pointed at this repository.
+- **`use a::b` does not parse today at all.** `useClause` (`:26`) is `USE qname …` and `qname`
+  (`:291`) joins segments only with `dot`. The package form needs a new alternative that produces a
+  node mapped to `UsesOrImports.Package`.
+- **The corpus barely exercises it.** On the v0.76.0 corpus, 154 files use spaced `::`. Tight `::`
+  appears in 8 files, and all but one occurrence is inside a string literal. The one in code is a
+  tight *cons*, `List.point(42::Nil)` (`main/test/ca/uwaterloo/flix/library/TestList.flix:537`). It
+  is the only corpus line that catches a broken `ConsExpr`, and nothing in the corpus exercises the
+  package path. Add fixtures to `fixtures/positive/` and `fixtures/negative/` and lexer tests;
+  `FlixLexerTest.kt:216-219` covers only spaced `::`.
+- **Open question: tight `:::`.** Decide from `Lexer.scala` at `4a5b60a` whether it gets a tight
+  variant as well. `COLON_COLON_COLON` sits at `FlixLexer.g4:165`.
 
 ### 6. The diagnostic lane is your cheapest win
 
