@@ -257,10 +257,25 @@ Starting figures (`conformance/baseline.json`, flix-spec 0.75.8): depth 41%, `fi
       node.
 - [ ] **3. Diagnostics.** Done when: `diagnostic_conformance` is no longer `not-applicable`, and
       accept/reject agreement is recorded as a new ratchet in `baseline.json`.
-- [ ] **4 + 5. Labelled names, `Operator`, `ArgumentList`.** Land them together. Done when:
-      `nodesUnmapped` is well below 112 (the `expr`/`type` share alone is 60), depth rises, and
-      `fixturesAgreeing` does not fall. For `argumentList`, the JVM and TS corpus gates must hold and
-      the snapshots and generated docs must be regenerated in the same commit.
+- [ ] **4 + 5. Labelled names, `Operator`, `ArgumentList`.** Done when: `nodesUnmapped` is well
+      below 112 (the `expr`/`type` share alone is 60), depth rises, and `fixturesAgreeing` does not
+      fall. For `argumentList`, the JVM and TS corpus gates must hold and the snapshots and
+      generated docs must be regenerated in the same commit.
+      **Done so far**, one commit per row:
+
+      | Change | Agreeing | Divergences | Depth | Unmapped |
+      | --- | --- | --- | --- | --- |
+      | after step 2b | 75/147 | 107 | 42% | 112 |
+      | labels keyed, all `ignored` (neutral) | 75/147 | 107 | 42% | 112 |
+      | `primaryExpr` alternatives labelled and mapped | 97/147 | 93 | 46% | 132 |
+      | synthetic `Operator`; unary/binary labels mapped; casts split | 96/147 | 94 | 51% | 118 |
+      | type labels, `VariableType` first, `EffectAnnotatedType` flattened | 100/147 | 88 | 54% | 115 |
+      | `typeAndEffect` flattened | **108/147** | **76** | **57%** | **101** |
+
+      Remaining: `argumentList` (`ApplyExpr` still stops the walk), and the other expression labels
+      (`LambdaExpr`, `LetExpr`, `MatchExpr`, …), which are still `ignored`. The two divergences the
+      `Operator` step surfaced are recorded in `baseline.json`: the lexer splits an unterminated
+      block comment, and an arrow's effect is not folded into its `Type.Binary`.
 - [ ] **6a. Corpus pin.** Move `ci.yml:56,117` and `fixtures/corpus-baseline.json` to v0.77.0 with
       no grammar change. Done when: both gates report their rate against the new corpus. A drop
       here is a real v0.77.0 gap to fix in 6b, not a regression.
