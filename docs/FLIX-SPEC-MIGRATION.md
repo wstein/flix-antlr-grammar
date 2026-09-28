@@ -87,7 +87,7 @@ kinds every structural consumer was already eliding for itself: `Expr.Expr`, `Pa
 `QName`, `UsesOrImports.UseOrImportList`. A third rule, `elide-empty`, drops empty `AnnotationList`
 and `ModifierList` without splicing their tokens.
 
-Normalisation now removes **2285 of 4449 nodes (51.4%)** (flix-spec `docs/MIGRATION-v0.77.0.md`,
+Normalisation now removes **2301 of 4484 nodes (51.3%)** at 0.77.1 (2285 of 4449 at 0.77.0; flix-spec `docs/MIGRATION-v0.77.0.md`,
 "Validation"), up from 753 of 4398 (17.1%) under the previous contract. Canonical trees are
 substantially smaller and every baseline is stale.
 
@@ -132,20 +132,16 @@ New projection-map keys, both optional: `dropWhenEmpty` (the consumer-side count
 - **The fixture suite is 147**, not 146 — one fixture covers the three annotations Flix's own
   corpus never uses.
 - **`validateProjectionMap` now reports deprecated keys.** `elide` and `flattenCanonical` are
-  marked deprecated in the schema; the run prints a `NOTE:` naming them. They still work, and this
-  repository's `elide` reduction (step 2) is what clears it.
+  marked deprecated in the schema; the run prints a `NOTE:` naming them. Step 2 does **not** clear
+  it — the note fires for as long as the key is present at all. What step 2 does is reduce it to
+  one justified key: `CommentList`, the single canonical kind this grammar cannot produce, and the
+  one exception to "elide nothing Flix does not". The note now lists removable and remaining
+  entries separately, so the residue is visible.
 
-**And the item that touches the policy below:** flix-spec now runs `Weeder2` over its own positive
-fixtures, advisory only, and the first run found a reference defect — recorded as **FLIX-0002**.
-`Parser2` has a dedicated `BinaryOp.NameMath` and lists `NameMath` in `FIRST_BINARY_OP`, so
-`a ⊆ b` parses cleanly into `Expr.Binary`; `Weeder2`'s operator match omits `NameMath` and throws
-`InternalCompilerException`. Confirmed against the released v0.77.0 jar, which prints the
-compiler's own bug-report banner.
-
-That matters here because "accepts the same programs as Flix 0.77.0" has no answer for an input the
-compiler *crashes* on. Treat `Parser2` as the authority for those: this repository should accept
-`a ⊆ b`, exactly as flix-spec's fixture does, and neither reject it nor try to reproduce the crash.
-The defect is upstream's and is recorded rather than modelled.
+- **A reference defect, FLIX-0002**, found by flix-spec's new advisory `Weeder2` run. It is an
+  exception to the compatibility policy and is stated there, below, rather than here. The
+  `Weeder2` run itself is advisory only in flix-spec: no lane, no report field, no schema change,
+  so there is nothing to consume.
 
 ## Compatibility policy: not stricter, not looser
 
@@ -164,6 +160,16 @@ compiles or it does not. So:
 | **Deprecated library API** (`@Deprecated`) | `CodeHint.Deprecated`, `Severity.Info`, shown only in the IDE | Out of scope: a matter of names, not syntax |
 | **Removed syntax** | Gone, and its words become free. `law` and `lawful` are ordinary names in 0.77.0 | Reject, and free the words (D16) |
 | **Malformed but recognisable** | Keeps the node and reports the error. Spaced `use a :: B` still yields `UsesOrImports.Package`, plus `Malformed` | Parse it, build the same node, and report the same error from the validation pass |
+| **Compiler crash** (`InternalCompilerException`) | Neither accepts nor rejects: it aborts. `a ⊆ b` — a math-name operator used infix — parses cleanly and then throws (flix-spec `FLIX-0002`) | **Exception to the rule above.** Follow `Parser2`, accept the program, report nothing, and cite the flix-spec defect ID |
+
+**An `InternalCompilerException` is not a verdict.** "Accepts the same programs as Flix 0.77.0" has
+no answer for an input the compiler aborts on, so the policy needs this clause rather than an
+implicit reading. `Parser2` is the authority for those inputs: it has a dedicated `BinaryOp.NameMath`
+and lists `NameMath` in `FIRST_BINARY_OP`, so `a ⊆ b` is well-formed and this grammar already
+accepts it (`FlixParser.g4:367`). `Weeder2`'s operator match omits `NameMath` and throws. Accept,
+do not reproduce the crash, and do not treat it as a rejection. Upstream draft and a standalone
+reproduction: <https://github.com/wstein/flix-fork/issues/4>,
+<https://github.com/wstein/flix-repro-namemath-infix-crash>.
 
 These were observed by running the 0.77.0 release jar through flix-spec's `extract` task. Every
 deprecated or removed case above was probed, not inferred.
