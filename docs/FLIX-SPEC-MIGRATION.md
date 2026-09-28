@@ -418,14 +418,25 @@ Pitfalls:
   use flixball::Game.Board     Use[use, Package[Ident, ::], QName[Game . Board]]
   use flixball::{Game, Board}  Use[use, Package[Ident, ::], UseMany[{ Game , Board }]]
   use a::b::C                  UnexpectedToken: only one package segment
-  use flixball :: Game.Board   Malformed: "Write '::' without whitespace"
+  use flixball :: Game.Board   Use[use, Package[Ident, ::], QName] + Malformed: "Write '::' without whitespace"
   ```
 
-  A shape that matches: `usePackage : nameLowercase COLON_COLON_TIGHT ;` and
+  A shape that matches: `usePackage : nameLowercase ( COLON_COLON_TIGHT | COLON_COLON ) ;` and
   `useClause : USE usePackage? ( qname ( dot useMany )? | useMany ) ;`, where `useMany` is the
-  braced list extracted from the current `useClause`. The spaced form is rejected by the reference
-  *parser*, not by `Weeder2`, so rejecting it here as well keeps `diagnostic_conformance`'s
-  accept/reject in agreement; parse-the-superset does not apply to it.
+  braced list extracted from the current `useClause`.
+
+  **Accept the spaced separator in the grammar, and report it after parsing.** Flix keeps the
+  `UsesOrImports.Package` node for `use flixball :: Game.Board` and attaches a `Malformed`
+  diagnostic to it. Following the compatibility policy, this grammar should build the same node and
+  report the same error, not throw a syntax error that loses the node.
+
+  There is no validation pass to report it from yet: `cli/Main.kt` reports only ANTLR's own syntax
+  errors. The smallest honest home is a post-parse check shared by `Main.kt` and `Projection.kt`: a
+  `usePackage` whose separator is `COLON_COLON` yields `{kind: "Malformed", line, col, message}`.
+  It is then emitted beside the syntax errors in step 3's `diagnostics` list, so
+  `diagnostic_conformance` agrees with Flix on accept/reject for this input, and on kind and line
+  too once `diagnosticMappings` is in place. `use a::b::C` has no node to keep (Flix reports
+  `UnexpectedToken`), so an ordinary syntax error is the right result there.
 - **The corpus barely exercises it.** On the v0.76.0 corpus, 154 files use spaced `::`. Tight `::`
   appears in 8 files, and all but one occurrence is inside a string literal. The one in code is a
   tight *cons*, `List.point(42::Nil)` (`main/test/ca/uwaterloo/flix/library/TestList.flix:537`). It

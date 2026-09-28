@@ -269,8 +269,8 @@ can manufacture a defect that survives three rounds of investigation into the wr
 Flix v0.77.0 adds `ColonColonTight`: `::` written without surrounding whitespace is its own token
 and separates a package path, as in `use flixball::Game.Board` or `use flixball::{Game, Board}`.
 Both tight and spaced `::` are list cons, and `:::` has no tight variant. The parser gains
-`UsesOrImports.Package`: a single lowercase segment plus the tight separator. It rejects spaced
-`::` in that position. All of this was verified against the v0.77.0 release jar.
+`UsesOrImports.Package`: a single lowercase segment plus the tight separator. Spaced `::` in that
+position still yields the `Package` node, plus a `Malformed` error. All of this was verified against the v0.77.0 release jar.
 
 This grammar has neither. `COLON_COLON : '::' ;` (`FlixLexer.g4:166`) is a plain literal. `useClause`
 (`FlixParser.g4:26`) takes a `qname`, and `qname` joins segments only with `dot`, so `use a::b` is a
@@ -284,8 +284,10 @@ between the gate and a silent regression. Upstream hit the same trap from the ot
 
 **Fix**: see step 6 of [FLIX-SPEC-MIGRATION.md](FLIX-SPEC-MIGRATION.md). Add `COLON_COLON_TIGHT`
 through a `classifyColonColon()` modelled on `classifyArrow()`, in both `FlixLexerBase.java` and
-`FlixLexerBase.ts`. Admit it in both cons rules, add an optional single-segment package prefix to `useClause`, and
-add positive and negative fixtures, because the corpus does not exercise the package form.
+`FlixLexerBase.ts`. Admit it in both cons rules. Add an optional single-segment package prefix to
+`useClause` that also accepts spaced `::`, and report `Malformed` for that from a post-parse check
+rather than as a syntax error, so the node survives as it does in Flix. Add positive and negative
+fixtures, because the corpus does not exercise the package form.
 
 ---
 
