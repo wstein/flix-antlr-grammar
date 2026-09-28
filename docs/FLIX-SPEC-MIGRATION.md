@@ -312,7 +312,7 @@ The map has no mappings onto elided kinds, so nothing else needs review.
 This is the cheapest win in the migration. `recovery_conformance` is `not-applicable` here — ANTLR's
 recovery inserts nodes the parse tree does not name — so this repository currently produces one
 derived signal. The new lane needs no tree and no map: emitting one diagnostic per ANTLR syntax
-error gives accept/reject agreement across all 147 fixtures of flix-spec 0.77.1 (the current
+error *measures* accept/reject across all 147 fixtures of flix-spec 0.77.1 (the current
 baseline measured 138). With `diagnosticMappings` translating ANTLR's error names, kind and line
 compare too.
 
@@ -508,3 +508,40 @@ three places once this lands:
   the same style, saying that tight `::` is `COLON_COLON_TIGHT` (package separator) and spaced `::`
   is cons, and that the parser accepts both in cons position. The "`:` has no `GenericOperator`
   fallback" entry lists `::` as merely reserved; point it at the new entry.
+
+## Two guards worth adding while you are here
+
+Neither is required by the release. Both close gaps this migration exposed.
+
+### Emit only diagnostics the lexer or `Parser2` would raise
+
+flix-spec's pipeline stops after `Parser2`: `ProjectionExtractor` collects
+`lexerErrors ++ parserErrors` and nothing else, and `docs/CONFORMANCE.md` calls `Weeder2` errors
+"out of scope by construction, not a gap".
+
+So `diagnostic_conformance` compares against a **parse-phase-only** set. A spaced `::` reported as
+`Malformed` is fine, because `Parser2` raises it. But every validation-level check you later write
+into the projection output — duplicate modifiers, arity rules, anything `Weeder2` would own — adds a
+diagnostic the canonical side does not have, and breaks `kind`/`line` agreement on exactly the
+negative fixtures the lane is there to measure.
+
+Tag each check with the phase that owns it: parse-phase diagnostics go into the projection,
+validation-only diagnostics go to your CLI and stay out of it.
+
+### Assert the vocabulary digests, not just the pin commit
+
+`law` and `lawful` stopped being keywords at Flix v0.75.2 and went stale here without anyone
+noticing, because a commit SHA moving tells you *that* the vocabulary changed, never *what*
+changed — and nothing compared the names.
+
+Record `treeKindDigest` and `tokenKindDigest` from `pin.json` alongside the pin you already track,
+and fail on a mismatch. It costs two fields and forces a review at the next vocabulary change
+instead of after it.
+
+Two cheap follow-ons, now that `ast/retired.json` exists:
+
+- assert that nothing in your keyword or token table matches a `Keyword*` entry in
+  `ast/retired.json` — that pins the `law`/`lawful` class of staleness as a regression test;
+- remember the digest cannot see an existing kind's *extension* being re-partitioned. It caught
+  `ColonColonTight` only because a **new name** appeared. When a name is added, ask what it took
+  from; the answer belongs in a fixture.
