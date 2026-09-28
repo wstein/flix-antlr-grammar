@@ -8,7 +8,7 @@ Constraints such as duplicate modifiers, non-linear patterns and unknown annotat
 parse here and are rejected by a later validation pass, mirroring how the reference
 compiler separates `Parser2` from `Weeder2`.
 
-Parser rules: 87 · lexer rules: 136
+Parser rules: 89 · lexer rules: 136
 
 ## Parser rules
 
@@ -690,24 +690,21 @@ predicateAtom
 ```antlr
 primaryExpr
     : qname
-    | INT_LITERAL
-    | FLOAT_LITERAL
-    | HEX_LITERAL
-    | CHAR_LITERAL
-    | REGEX_LITERAL
-    | stringLiteral
+    | ( INT_LITERAL | FLOAT_LITERAL | HEX_LITERAL | CHAR_LITERAL
+    | REGEX_LITERAL | TRUE | FALSE | NULL )
+    | plainString
+    | interpolatedString
     | DEBUG_INTERPOLATOR stringLiteral
     | HOLE_ANONYMOUS
     | HOLE_NAMED
     | HOLE_VARIABLE
     | BUILT_IN
-    | TRUE
-    | FALSE
-    | NULL
-    | STATIC_UPPER
-    | STATIC_LOWER
+    | ( STATIC_UPPER | STATIC_LOWER )
     | UNDERSCORE
-    | LPAREN ( argument ( COLON typeAndEffect )? ( COMMA argument )* )? RPAREN
+    | LPAREN RPAREN
+    | LPAREN argument RPAREN
+    | LPAREN argument COLON typeAndEffect RPAREN
+    | LPAREN argument ( COLON typeAndEffect )? ( COMMA argument )+ RPAREN
     | LPAREN genericOperator RPAREN
     | constraintSet
     | HASH_LPAREN ( predicateParam ( COMMA predicateParam )* )? RPAREN ARROW_WS expr
@@ -765,7 +762,25 @@ recordOpField
 
 ```antlr
 stringLiteral
-    : STRING_START ( STRING_CONTENT | INTERPOLATION_START expr INTERPOLATION_END )* STRING_END
+    : plainString
+    | interpolatedString
+    ;
+```
+
+### `plainString`
+
+```antlr
+plainString
+    : STRING_START STRING_CONTENT* STRING_END
+    ;
+```
+
+### `interpolatedString`
+
+```antlr
+interpolatedString
+    : STRING_START STRING_CONTENT* INTERPOLATION_START expr INTERPOLATION_END
+( STRING_CONTENT | INTERPOLATION_START expr INTERPOLATION_END )* STRING_END
     ;
 ```
 

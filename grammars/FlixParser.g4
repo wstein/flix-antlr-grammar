@@ -536,32 +536,34 @@ predicateAtom
 // Primary expressions
 // =====================================================================
 
+// Every alternative is labelled so the projection can tell a literal from a hole from a tuple:
+// token-only alternatives have no rule child, and unlabelled they would all project as one
+// childless `primaryExpr` that the conformance map can only drop. The four parenthesised
+// alternatives together accept exactly `LPAREN ( argument ( COLON typeAndEffect )?
+// ( COMMA argument )* )? RPAREN`, split the way the reference distinguishes them.
 primaryExpr
-    : qname
-    | INT_LITERAL
-    | FLOAT_LITERAL
-    | HEX_LITERAL
-    | CHAR_LITERAL
-    | REGEX_LITERAL
-    | stringLiteral
-    | DEBUG_INTERPOLATOR stringLiteral
-    | HOLE_ANONYMOUS
-    | HOLE_NAMED
-    | HOLE_VARIABLE
-    | BUILT_IN
-    | TRUE
-    | FALSE
-    | NULL
-    | STATIC_UPPER
-    | STATIC_LOWER
-    | UNDERSCORE
-    | LPAREN ( argument ( COLON typeAndEffect )? ( COMMA argument )* )? RPAREN
-    | LPAREN genericOperator RPAREN
-    | constraintSet
-    | HASH_LPAREN ( predicateParam ( COMMA predicateParam )* )? RPAREN ARROW_WS expr
-    | collectionLiteral
-    | recordOperation
-    | block
+    : qname                                                      # NamePrimary
+    | ( INT_LITERAL | FLOAT_LITERAL | HEX_LITERAL | CHAR_LITERAL
+      | REGEX_LITERAL | TRUE | FALSE | NULL )                    # LiteralPrimary
+    | plainString                                                # StringPrimary
+    | interpolatedString                                         # InterpolationPrimary
+    | DEBUG_INTERPOLATOR stringLiteral                           # DebugPrimary
+    | HOLE_ANONYMOUS                                             # HolePrimary
+    | HOLE_NAMED                                                 # NamedHolePrimary
+    | HOLE_VARIABLE                                              # HoleVariablePrimary
+    | BUILT_IN                                                   # IntrinsicPrimary
+    | ( STATIC_UPPER | STATIC_LOWER )                            # StaticPrimary
+    | UNDERSCORE                                                 # WildcardPrimary
+    | LPAREN RPAREN                                              # UnitPrimary
+    | LPAREN argument RPAREN                                     # ParenPrimary
+    | LPAREN argument COLON typeAndEffect RPAREN                 # AscribePrimary
+    | LPAREN argument ( COLON typeAndEffect )? ( COMMA argument )+ RPAREN # TuplePrimary
+    | LPAREN genericOperator RPAREN                              # OperatorSectionPrimary
+    | constraintSet                                              # ConstraintSetPrimary
+    | HASH_LPAREN ( predicateParam ( COMMA predicateParam )* )? RPAREN ARROW_WS expr # PredicateLambdaPrimary
+    | collectionLiteral                                          # CollectionPrimary
+    | recordOperation                                            # RecordPrimary
+    | block                                                      # BlockPrimary
     ;
 
 predicateParam
@@ -590,8 +592,21 @@ recordOpField
     : ( PLUS | MINUS )? nameLowercase ( EQUAL expr )?
     ;
 
+// Accepts exactly `STRING_START ( STRING_CONTENT | INTERPOLATION_START expr INTERPOLATION_END )*
+// STRING_END`, split on whether an interpolation occurs: the reference makes a plain string an
+// Expr.Literal and an interpolated one an Expr.StringInterpolation.
 stringLiteral
-    : STRING_START ( STRING_CONTENT | INTERPOLATION_START expr INTERPOLATION_END )* STRING_END
+    : plainString
+    | interpolatedString
+    ;
+
+plainString
+    : STRING_START STRING_CONTENT* STRING_END
+    ;
+
+interpolatedString
+    : STRING_START STRING_CONTENT* INTERPOLATION_START expr INTERPOLATION_END
+      ( STRING_CONTENT | INTERPOLATION_START expr INTERPOLATION_END )* STRING_END
     ;
 
 // =====================================================================
