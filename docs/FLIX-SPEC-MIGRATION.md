@@ -149,6 +149,56 @@ The steps are ordered by value against effort and risk:
 4. Grammar and lexer changes come last, because they are the only steps that can move the corpus
    rate.
 
+### Checklist
+
+Commit each step separately. The commit message states the metric change, as `CLAUDE.md` requires
+for grammar changes.
+
+Commands:
+
+```bash
+CORPUS="$(cd ../../flix/flix/main && pwd)"   # a flix/flix checkout at the CI corpus pin
+
+FLIX_SPEC=../flix-spec scripts/flix-spec-conformance.sh              # conformance, all lanes
+./gradlew build -Dflix.corpus="$CORPUS"                              # JVM: tests, snapshots, corpus gate
+(cd antlr-ng && npm run generate && FLIX_CORPUS="$CORPUS" npm test)  # TS corpus gate
+node tools/gen-docs.mjs && git diff --exit-code -- docs/SYNTAX.md docs/RAILROAD.md
+```
+
+Starting figures (`conformance/baseline.json`, flix-spec 0.75.8): depth 41%, `fixturesAgreeing`
+76/138, `divergences` 81, `nodesUnmapped` 112. The corpus gate is at `rate: 1.0`
+(`fixtures/corpus-baseline.json`).
+
+- [ ] **1. Conformance pin.** Update `baseline.json` `measuredAt` and re-measure with no code change.
+      Done when: the script runs clean against flix-spec 0.77.0 and the new depth, agreement,
+      `nodesExpected` and `divergences` are recorded. Depth is expected to *rise* with no code
+      change, and the schema 6 and schema 7 figures are not comparable.
+- [ ] **2. Elides.** Drop the six redundant entries. Done when: re-measured, and `divergences` is no
+      higher than after step 1.
+- [ ] **3. Diagnostics.** Done when: `diagnostic_conformance` is no longer `not-applicable`, and
+      accept/reject agreement is recorded as a new ratchet in `baseline.json`.
+- [ ] **4 + 5. Labelled names, `Operator`, `ArgumentList`.** Land them together. Done when:
+      `nodesUnmapped` is well below 112 (the `expr`/`type` share alone is 60), depth rises, and
+      `fixturesAgreeing` does not fall. For `argumentList`, the JVM and TS corpus gates must hold and
+      the snapshots and generated docs must be regenerated in the same commit.
+- [ ] **6a. Corpus pin.** Move `ci.yml:56,117` and `fixtures/corpus-baseline.json` to v0.77.0 with
+      no grammar change. Done when: both gates report their rate against the new corpus. A drop
+      here is a real v0.77.0 gap to fix in 6b, not a regression.
+- [ ] **6b. Tight `::` and package paths.** Tracked as D15 in `docs/DEFECTS.md`. Done when: both
+      corpus gates are back at 1.0, the new positive and negative fixtures pass, and `42::Nil`
+      still parses.
+- [ ] **7. `CLAUDE.md`.** Done when: the pin, the parse-rate headline and the traps match the new
+      state.
+
+Gates, applied to every step:
+
+- **Corpus rate.** It must not drop on either target, except at 6a, which re-baselines on purpose.
+- **Ratchets.** `divergences` and `fixturesAgreeing` must not get worse unless the commit message
+  says why, per the `baseline.json` note.
+- **Rollback.** Revert any step that fails a gate, rather than lowering a baseline to fit it.
+  Steps 1–5 touch only `conformance/`, `Projection.kt` and, for `argumentList`, the grammar.
+  Reverting the commit is a complete rollback.
+
 ### 1. Move the conformance pin and re-measure
 
 In `conformance/baseline.json`, update these fields under `measuredAt`:
