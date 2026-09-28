@@ -93,6 +93,22 @@ between them is only whitespace or the `$` escape. It stands down for consumers 
 New projection-map keys, both optional: `dropWhenEmpty` (the consumer-side counterpart of
 `elide-empty`) and `diagnosticMappings`.
 
+## What this repository does not need to do
+
+Several upstream changes are already handled here, or do not apply:
+
+- **Effect type parameters (v0.76.0).** `effDeclaration` (`FlixParser.g4:140`) already accepts
+  `typeParams?`. `opDeclaration` (`:144`) accepts them as well. That operations are still illegal is
+  a weeding error (`IllegalOperationTypeParams`), and parse-the-superset keeps it out of the grammar.
+- **`match`/`ematch` recovery (v0.76.0).** This is a recovery-shape change. `recovery_conformance` is
+  `not-applicable` for this grammar, so nothing here is compared against it.
+- **Flix's `Reader` / `shared.Input` removal (v0.77.0).** This was internal to Flix, and flix-spec
+  absorbs it.
+- **`token-positions` (flix-spec).** It stands down for consumers that emit no tokens, and
+  `Projection.kt` emits rule nodes only; see its KDoc. The `CommentList` elide stays for the same
+  reason.
+- **Mappings onto newly elided kinds.** There are none to review.
+
 ## What this repository must do
 
 ### 1. Move the pin
