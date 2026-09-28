@@ -56,6 +56,33 @@ class ProjectionTest {
     }
 
     @Test
+    fun `a binary expression carries a synthesised operator between its operands`() {
+        // Expr.Binary is (lhs, Operator, rhs) in the reference. The operator is a bare token here,
+        // and tokens are never emitted, so without the synthetic node every binary has arity 2.
+        val file = write("binary.flix", "def f(x: Int32): Int32 = x + 1\n")
+        val tree = assertNotNull(Projection.project(file))
+        val add = tree.substring(tree.indexOf("{\"kind\":\"AddExpr\""))
+
+        assertTrue(
+            Regex(
+                """^\{"kind":"AddExpr".*?"children":\[\{"kind":"PrimaryExpression".*?\{"kind":"operator"""",
+            ).containsMatchIn(add),
+            "the operator must follow the left operand: $add",
+        )
+    }
+
+    @Test
+    fun `a math-name operator is the operator, not an operand name`() {
+        // The reference holds NameMath as a token inside Operator, never as an Ident beside it.
+        val file = write("math.flix", "def f(a: Int32, b: Int32): Bool = a ⊆ b\n")
+        val tree = assertNotNull(Projection.project(file))
+        val userOp = tree.substring(tree.indexOf("{\"kind\":\"UserOpExpr\""))
+
+        assertTrue(userOp.contains("{\"kind\":\"operator\""), "a synthetic operator must be emitted: $userOp")
+        assertFalse(userOp.contains("\"kind\":\"nameMath\""), "nameMath must not appear as a child: $userOp")
+    }
+
+    @Test
     fun `emits no token leaves`() {
         // Token leaves would make source_invariants' token-accounting check evaluate a fiction:
         // comments live on the COMMENTS and DOC_COMMENTS channels and never enter the parse tree,

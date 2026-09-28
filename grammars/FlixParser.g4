@@ -410,7 +410,8 @@ expr
     | SPAWN expr ( AT expr )?                               # SpawnExpr
     | PAR LPAREN parFragment ( SEMI parFragment )* RPAREN YIELD expr # ParYieldExpr
     | SELECT LBRACE selectRule* RBRACE                      # SelectExpr
-    | ( CHECKED_CAST | CHECKED_ECAST ) LPAREN expr RPAREN   # CheckedCastExpr
+    | CHECKED_CAST LPAREN expr RPAREN                       # CheckedCastExpr
+    | CHECKED_ECAST LPAREN expr RPAREN                      # CheckedEffectCastExpr
     | UNCHECKED_CAST LPAREN expr AS typeAndEffect RPAREN    # UncheckedCastExpr
     | NEW qname typeArgs? ( AT expr )?
       ( LBRACE newBody* RBRACE | LPAREN ( expr ( COMMA expr )* )? RPAREN )? # NewExpr

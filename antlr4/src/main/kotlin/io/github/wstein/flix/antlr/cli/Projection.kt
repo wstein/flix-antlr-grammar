@@ -9,6 +9,8 @@ import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.RecognitionException
 import org.antlr.v4.runtime.Recognizer
 import org.antlr.v4.runtime.Token
+import org.antlr.v4.runtime.tree.ParseTree
+import org.antlr.v4.runtime.tree.TerminalNode
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -75,6 +77,94 @@ object Projection {
         }
 
     /**
+     * Labels whose operator the reference wraps in an `Operator` node.
+     *
+     * `Expr.Binary` is (lhs, `Operator`, rhs) and `Expr.Unary` is (`Operator`, operand), but the
+     * operator is a bare token here, and tokens are never emitted -- so without a synthetic node
+     * every binary would project with two children against the reference's three. Synthesising it
+     * in the projection keeps the grammar's precedence levels untouched: a shared `binaryOp` rule
+     * would have flattened them.
+     */
+    private val operatorLabels =
+        setOf(
+            "NotExpr",
+            "SignExpr",
+            "LazyForceExpr",
+            "DiscardExpr",
+            "UserOpExpr",
+            "InfixCallExpr",
+            "AngledPlusExpr",
+            "MultExpr",
+            "AddExpr",
+            "ConsExpr",
+            "CompareExpr",
+            "EqualityExpr",
+            "AndExpr",
+            "OrExpr",
+            "InstanceOfExpr",
+        )
+
+    /** The native kind of a synthesised operator node; the map sends it to `Operator`. */
+    internal const val OPERATOR_KIND = "operator"
+
+    /**
+     * Whether [child] is part of an operator spelling rather than an operand.
+     *
+     * A token always is. So is `nameMath` in `UserOpExpr`, which the reference holds as a
+     * `NameMath` token inside the `Operator`, not as an `Ident`. A rule child between two tokens --
+     * the name in `` a `f` b `` -- is part of the operator too, which is where the reference puts
+     * its `Ident`. A rule child after the last operator token, as in `x instanceof T`, is an operand.
+     */
+    private fun isOperatorPart(
+        ctx: ParserRuleContext,
+        i: Int,
+    ): Boolean {
+        val child = ctx.getChild(i)
+        return child is TerminalNode ||
+            child is FlixParser.NameMathContext ||
+            (
+                child is ParserRuleContext &&
+                    child !is FlixParser.ExprContext &&
+                    i > 0 &&
+                    ctx.getChild(i - 1) is TerminalNode &&
+                    i + 1 < ctx.childCount &&
+                    ctx.getChild(i + 1) is TerminalNode
+            )
+    }
+
+    private fun appendSpan(
+        sb: StringBuilder,
+        start: Token?,
+        stop: Token?,
+    ) {
+        if (start == null || stop == null) return
+        sb.append(",\"span\":{\"start\":{\"line\":").append(start.line)
+        sb.append(",\"col\":").append(start.charPositionInLine + 1)
+        sb.append("},\"end\":{\"line\":").append(stop.line)
+        // ANTLR reports the stop token's *start* column; the end column is one past its text.
+        // EOF is zero-width. Its `text` is the literal string "<EOF>", so measuring the token
+        // the way every other token is measured pushes the root's end column five characters
+        // past the end of the file -- on every fixture, since every parse ends at EOF.
+        val width = if (stop.type == Token.EOF) 0 else (stop.text?.length ?: 0)
+        sb.append(",\"col\":").append(stop.charPositionInLine + 1 + width)
+        sb.append("}}")
+    }
+
+    private fun firstToken(tree: ParseTree): Token? =
+        when (tree) {
+            is TerminalNode -> tree.symbol
+            is ParserRuleContext -> tree.start
+            else -> null
+        }
+
+    private fun lastToken(tree: ParseTree): Token? =
+        when (tree) {
+            is TerminalNode -> tree.symbol
+            is ParserRuleContext -> tree.stop
+            else -> null
+        }
+
+    /**
      * Renders one rule node and its rule children.
      *
      * `span` is advisory and not compared, but it is emitted because ANTLR has it exactly and a
@@ -87,31 +177,41 @@ object Projection {
     ) {
         val kind = kindOf(ctx, ruleNames)
         sb.append("{\"kind\":\"").append(esc(kind)).append("\"")
-
-        val start = ctx.start
-        val stop = ctx.stop
-        if (start != null && stop != null) {
-            sb.append(",\"span\":{\"start\":{\"line\":").append(start.line)
-            sb.append(",\"col\":").append(start.charPositionInLine + 1)
-            sb.append("},\"end\":{\"line\":").append(stop.line)
-            // ANTLR reports the stop token's *start* column; the end column is one past its text.
-            // EOF is zero-width. Its `text` is the literal string "<EOF>", so measuring the token
-            // the way every other token is measured pushes the root's end column five characters
-            // past the end of the file -- on every fixture, since every parse ends at EOF.
-            val width = if (stop.type == Token.EOF) 0 else (stop.text?.length ?: 0)
-            sb.append(",\"col\":").append(stop.charPositionInLine + 1 + width)
-            sb.append("}}")
-        }
+        appendSpan(sb, ctx.start, ctx.stop)
 
         sb.append(",\"children\":[")
         var first = true
-        for (i in 0 until ctx.childCount) {
+        val synthesiseOperator = kind in operatorLabels
+        var i = 0
+        while (i < ctx.childCount) {
+            if (synthesiseOperator && isOperatorPart(ctx, i)) {
+                var j = i
+                while (j + 1 < ctx.childCount && isOperatorPart(ctx, j + 1)) j++
+                if (!first) sb.append(",")
+                first = false
+                sb.append("{\"kind\":\"").append(OPERATOR_KIND).append("\"")
+                appendSpan(sb, firstToken(ctx.getChild(i)), lastToken(ctx.getChild(j)))
+                sb.append(",\"children\":[")
+                var innerFirst = true
+                for (k in i..j) {
+                    val part = ctx.getChild(k)
+                    if (part is ParserRuleContext && part !is FlixParser.NameMathContext) {
+                        if (!innerFirst) sb.append(",")
+                        innerFirst = false
+                        render(part, ruleNames, sb)
+                    }
+                }
+                sb.append("]}")
+                i = j + 1
+                continue
+            }
             val child = ctx.getChild(i)
             if (child is ParserRuleContext) {
                 if (!first) sb.append(",")
                 first = false
                 render(child, ruleNames, sb)
             }
+            i++
         }
         sb.append("]}")
     }
