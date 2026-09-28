@@ -1,11 +1,13 @@
 # Migrating to Flix v0.77.0 and the current flix-spec
 
-Status: **not started.** `conformance/baseline.json` records `flixSpecArtifact` 0.75.8 and
-`flixSpecPinCommit` `40949531...` (Flix v0.75.2), two releases behind.
+Status: **not started.** `conformance/baseline.json` records, under `measuredAt`,
+`flixSpecArtifact` 0.75.8 and `flixSpecPinCommit` `40949531b4d42e5eaf2e4b9997537eaf793c24e7`
+(Flix v0.75.2). That is two releases behind: v0.76.0 and v0.77.0.
 
 ## What changed in Flix
 
-This repository is pinned to Flix **v0.75.2** (`40949531`). The reference has moved twice since.
+This repository is pinned to Flix **v0.75.2** (`40949531b4d42e5eaf2e4b9997537eaf793c24e7`). The
+reference has moved twice since.
 
 ### v0.75.2 → v0.76.0
 
@@ -75,9 +77,19 @@ New projection-map keys, both optional: `dropWhenEmpty` (the consumer-side count
 
 ### 1. Move the pin
 
-`conformance/baseline.json` — `flixSpecArtifact` and `flixSpecPinCommit` to
-`4a5b60a31ac03bb762f68b554a0fc2b6f4d982b9`. `scripts/flix-spec-conformance.sh` refuses to run on a
-pin or fixture-revision mismatch, so it will stop you first.
+In `conformance/baseline.json`, update these fields under `measuredAt`:
+
+- `flixSpecArtifact` → `0.77.0`
+- `flixSpecPin` → `v0.77.0`
+- `flixSpecPinCommit` → `4a5b60a31ac03bb762f68b554a0fc2b6f4d982b9`
+- `fixtures` → `146` (was 138)
+- `fixtureRevision` → the value in the new report's `provenance.fixtureRevision`
+
+`scripts/flix-spec-conformance.sh` guards these fields at two different points:
+
+- **Before running**, it refuses on a pin mismatch (`:38-44`).
+- **After projecting and comparing**, it fails the run on a fixture-revision mismatch (`:77-85`).
+  So a stale `fixtureRevision` costs a full run before you are told.
 
 ### 2. The contract change helps you more than anyone
 
@@ -106,7 +118,7 @@ val kind = ruleNames[ctx.ruleIndex]
 `ctx.ruleIndex` is identical across every labelled alternative of a rule, so all 49 labelled
 alternatives of `expr` collapse back to the string `expr`. The grammar already carries **62 labelled
 alternatives** (`# ApplyExpr`, `# AddExpr`, `# ConsExpr`, `# MatchExpr`, …): 49 on `expr`, 11 on
-`type`.
+`type`, 2 on `pattern`.
 
 Those two rules are the top of your own `unmapped` list — `expr` 39, `type` 21, **60 of 112 stops**.
 The fix is to emit the labelled alternative's name, but **not** by taking the class name unconditionally.
@@ -183,7 +195,7 @@ divergences.
   `docs/RAILROAD.md` change with it.
 
 This also settles the open question in your own `notes.expr`, which records that mapping `expr` to
-`Expr.Binary` *"drops agreement 76 → 40, which is the signature of a guess that is often wrong"*.
+`Expr.Binary` *"drops agreement 76 -> 40, which is the signature of a guess that is often wrong"*.
 It is not a bad guess — it is a **missing node**.
 
 ### 5. `::` and the package path
@@ -227,4 +239,4 @@ Pitfalls:
 `recovery_conformance` is `not-applicable` here — ANTLR's recovery inserts nodes the parse tree does
 not name — so this repository currently produces one derived signal. The new lane needs no tree and
 no map: emitting one diagnostic per ANTLR syntax error gives accept/reject agreement across all 146
-fixtures. With `diagnosticMappings` translating ANTLR's error names, kind and line compare too.
+fixtures of flix-spec 0.77.0 (the current baseline measured 138). With `diagnosticMappings` translating ANTLR's error names, kind and line compare too.
