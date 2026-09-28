@@ -6,8 +6,28 @@ Status: **not started.** `conformance/baseline.json` records, under `measuredAt`
 
 ## What changed in Flix
 
-This repository is pinned to Flix **v0.75.2** (`40949531b4d42e5eaf2e4b9997537eaf793c24e7`). The
-reference has moved twice since.
+This repository names **three** Flix revisions, and they answer different questions:
+
+| Pin | Where | Answers |
+| --- | --- | --- |
+| `318bb51` (Flix 0.75.1) | `CLAUDE.md` "Source of truth", `docs/DEFECTS.md` | Which `Lexer.scala`/`Parser2.scala` the grammar was transliterated from |
+| `debf7df0fdd63f2b76b7a539ebbff5243070ca6e` | `.github/workflows/ci.yml:56,117`, `fixtures/corpus-baseline.json` | Which corpus the parse-rate gate runs over |
+| `40949531b4d42e5eaf2e4b9997537eaf793c24e7` (v0.75.2) | `conformance/baseline.json` `measuredAt` | Which flix-spec expectations the conformance lanes compare against |
+
+Only the conformance pin is at v0.75.2. The upstream reference has moved twice since.
+
+This migration moves all three to v0.77.0 (`4a5b60a31ac03bb762f68b554a0fc2b6f4d982b9`), each in its
+own step (see the checklist). Two things to settle while doing it:
+
+- **Two parse-rate figures are in circulation, and they agree.** `fixtures/corpus-baseline.json`
+  records `rate: 1.0`. `CLAUDE.md` says 99.85% (687/688). The gate excludes one file that Flix ships
+  truncated on purpose (`test/flix/resiliency/ford-fulkerson-prefix.flix`, see `docs/DEFECTS.md`);
+  1.0 is the rate without it and 687/688 is the rate with it. State which one is meant wherever the
+  number is quoted.
+- **The corpus pin could not be found locally.** `debf7df` is absent from the local `flix/flix`
+  checkout, which is at v0.76.0, and from `flix-fork`. `actions/checkout` resolves any commit in the
+  repository network, fork commits included. So before re-pinning, confirm that the new ref is an
+  upstream tag: `v0.77.0` is.
 
 ### v0.75.2 → v0.76.0
 
