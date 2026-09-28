@@ -131,14 +131,35 @@ ANTLR labels all of a rule's alternatives or none of them, so after this change 
 `pattern` are never emitted again. Their `ignored` entries go dead and should be replaced by entries
 for the labels themselves: each label is either mapped or declared `ignored`.
 
-### 4. Two missing rules keep three of the largest canonical kinds unreachable
+### 4. Two missing nodes keep three of the largest canonical kinds unreachable
 
 Do this together with (3), not after — on its own, (3) turns some kind divergences into arity
 divergences.
 
 - `Expr.Binary` has canonical arity **3** (lhs, `Operator`, rhs). `Projection.kt` emits only
   `ParserRuleContext` children, and `expr ( PLUS | MINUS ) expr` gives the operator no context, so a
-  labelled `AddExpr` renders with 2 children. Extract a `binaryOp` rule and map it to `Operator`.
+  labelled `AddExpr` renders with 2 children.
+
+  **Do not extract a shared `binaryOp` rule.** `expr` gets its precedence from the *order* of its
+  alternatives (`FlixParser.g4:355-395`). A single `expr binaryOp expr` alternative collapses every
+  level into one. Putting `binaryOp` into every level instead makes each level accept every operator,
+  and the rule becomes ambiguous.
+
+  Synthesise the node in the projection instead. When a labelled binary context has a
+  `TerminalNode` between two `ExprContext` children, `Projection.kt` emits `{"kind":"Operator"}`
+  with that token's span. That leaves the grammar untouched: the corpus rate cannot move, and
+  `fixtures/snapshots/`, `docs/SYNTAX.md` and `docs/RAILROAD.md` do not change. The cost is a small,
+  explicit special case in the projection code rather than a declarative map entry. The binary
+  labels are `UserOpExpr`, `AngledPlusExpr`, `MultExpr`, `AddExpr`, `ConsExpr`, `CompareExpr`,
+  `EqualityExpr`, `AndExpr` and `OrExpr`. Two of them need a decision of their own:
+  - `UserOpExpr`'s `nameMath` operator is already a rule child, mapped to `Ident`. It has to become
+    the `Operator` rather than sit beside it.
+  - `InfixCallExpr` (`` a `f` b ``) has no single operator token. Check its shape in flix-spec's
+    `fixtures/expected` before mapping it.
+
+  If the grammar route is ever preferred, it needs one operator rule per precedence level (`multOp`,
+  `addOp`, `consOp`, …). `expr multOp expr` is still a binary alternative for ANTLR's left-recursion
+  rewrite, so precedence survives.
 - `Expr.Apply` has canonical arity **2** (callee, `ArgumentList`) against `expr LPAREN argument* RPAREN`.
   Extract an `argumentList` rule and map it to `ArgumentList`.
 
