@@ -61,6 +61,17 @@ produce token-set-dump diagnostics.
 Corollary: do **not** enumerate annotation names or intrinsic names in the grammar. `@Name`
 and `%%NAME%%` are single tokens.
 
+**Not stricter, not looser.** The grammar and the validation pass, taken together, accept exactly
+what the pinned Flix accepts. Flix has no warning severity (`Error`/`Info`/`Hint`, the last two
+LSP-only), so:
+- deprecated syntax is accepted silently;
+- removed syntax is rejected, and its keywords are freed as names;
+- a malformed-but-recognisable construct is parsed into the reference's node, and the error is
+  reported by validation.
+
+Probe the release jar through flix-spec's `extract` task rather than inferring. See
+`docs/FLIX-SPEC-MIGRATION.md`, "Compatibility policy".
+
 ## Documented traps
 
 These cost real time to discover. Do not re-derive them.

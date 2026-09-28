@@ -113,6 +113,27 @@ between them is only whitespace or the `$` escape. It stands down for consumers 
 New projection-map keys, both optional: `dropWhenEmpty` (the consumer-side counterpart of
 `elide-empty`) and `diagnosticMappings`.
 
+## Compatibility policy: not stricter, not looser
+
+The target is "accepts the same programs as Flix 0.77.0". The grammar and the validation pass,
+taken together, should accept and reject exactly what `Parser2` and `Weeder2` do. *Parse the
+superset* decides which of the two layers reports an error; it never decides whether an error is
+reported.
+
+Flix has no warnings. `errors/Severity.scala` has `Error`, `Info` and `Hint`, and `Info`/`Hint`
+come from `CodeHinter`, which only the LSP servers run. From the command line a program either
+compiles or it does not. So:
+
+| Construct | What Flix does | What this grammar does |
+| --- | --- | --- |
+| **Deprecated syntax** | Accepts it silently. The only case is `pub redef` (`Weeder2.scala:339`), and `--Xno-deprecated` turns it into an error | Accept silently. A `--no-deprecated` switch may turn it into an error, and a hint is fine in an editor context. Never put it in the conformance projection, because Flix reports nothing there |
+| **Deprecated library API** (`@Deprecated`) | `CodeHint.Deprecated`, `Severity.Info`, shown only in the IDE | Out of scope: a matter of names, not syntax |
+| **Removed syntax** | Gone, and its words become free. `law` and `lawful` are ordinary names in 0.77.0 | Reject, and free the words (D16) |
+| **Malformed but recognisable** | Keeps the node and reports the error. Spaced `use a :: B` still yields `UsesOrImports.Package`, plus `Malformed` | Parse it, build the same node, and report the same error from the validation pass |
+
+These were observed by running the 0.77.0 release jar through flix-spec's `extract` task. Every
+deprecated or removed case above was probed, not inferred.
+
 ## What this repository does not need to do
 
 Several upstream changes are already handled here, or do not apply:
