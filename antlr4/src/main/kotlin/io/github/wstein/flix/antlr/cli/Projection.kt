@@ -56,6 +56,25 @@ object Projection {
     }
 
     /**
+     * The node kind the projection map is keyed by.
+     *
+     * A labelled alternative (`# AddExpr`) is a strict subclass of its rule's context class, and its
+     * label is the distinction the map needs: `ruleIndex` is shared by every alternative of a rule, so
+     * keying on it collapses all 49 labelled alternatives of `expr` into the one string `expr`. An
+     * unlabelled rule's context extends [ParserRuleContext] directly and keeps its camelCase rule
+     * name, which is what every existing key in the map is.
+     */
+    internal fun kindOf(
+        ctx: ParserRuleContext,
+        ruleNames: Array<String>,
+    ): String =
+        if (ctx.javaClass.superclass != ParserRuleContext::class.java) {
+            ctx.javaClass.simpleName.removeSuffix("Context")
+        } else {
+            ruleNames[ctx.ruleIndex]
+        }
+
+    /**
      * Renders one rule node and its rule children.
      *
      * `span` is advisory and not compared, but it is emitted because ANTLR has it exactly and a
@@ -66,7 +85,7 @@ object Projection {
         ruleNames: Array<String>,
         sb: StringBuilder,
     ) {
-        val kind = ruleNames[ctx.ruleIndex]
+        val kind = kindOf(ctx, ruleNames)
         sb.append("{\"kind\":\"").append(esc(kind)).append("\"")
 
         val start = ctx.start

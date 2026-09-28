@@ -43,6 +43,19 @@ class ProjectionTest {
     }
 
     @Test
+    fun `labelled alternatives are keyed by label, unlabelled rules by rule name`() {
+        // `ruleIndex` is shared by every alternative of a rule, so keying on it collapsed all of
+        // expr's labelled alternatives into the one string "expr". Keying on the class name alone
+        // would PascalCase every unlabelled rule and orphan every camelCase key in the map.
+        val file = write("labels.flix", "def f(x: Int32): Int32 = x + 1\n")
+        val tree = assertNotNull(Projection.project(file))
+
+        assertTrue(tree.contains("\"kind\":\"AddExpr\""), "the labelled alternative must be named: $tree")
+        assertTrue(tree.contains("\"kind\":\"defDeclaration\""), "an unlabelled rule keeps its name: $tree")
+        assertFalse(tree.contains("\"kind\":\"DefDeclaration\""), "no unlabelled rule may be PascalCased: $tree")
+    }
+
+    @Test
     fun `emits no token leaves`() {
         // Token leaves would make source_invariants' token-accounting check evaluate a fiction:
         // comments live on the COMMENTS and DOC_COMMENTS channels and never enter the parse tree,
