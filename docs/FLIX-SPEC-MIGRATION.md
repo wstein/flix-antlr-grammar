@@ -41,9 +41,9 @@ own step (see the checklist). Two things to settle while doing it:
 
 - **`+UsesOrImports.Package`** (TreeKind 191 → 192). `use` now recognises a package path:
   `use flixball::Game.Board` and `use flixball::{Game, Board}`.
-- **`+ColonColonTight`** (TokenKind 158 → 159). `::` written **without surrounding whitespace** lexes
-  as a distinct token. Tight `::` is the package-path separator; spaced `::` remains list cons.
-  Writing the separator with whitespace is now a `Malformed` error.
+- **`+ColonColonTight`** (TokenKind 158 → 159). `::` written **without surrounding whitespace**
+  lexes as a distinct token. Tight `::` is the package-path separator; spaced `::` remains list
+  cons. Writing the separator with whitespace is now a `Malformed` error.
 - Nothing was removed or re-parented. Both releases are additive at the vocabulary level.
 - Internally, Flix deleted its `Reader` phase and `shared.Input`. That broke `flix-spec`'s own
   adapter and is fixed there; it does not reach consumers.
@@ -55,7 +55,8 @@ own step (see the checklist). Two things to settle while doing it:
 
 ## What changed in flix-spec
 
-Beyond the pin, the release you are moving to changes four things that affect consumers.
+Beyond the pin, flix-spec 0.77.0 changes four things that reach this repository. Sources:
+flix-spec's `docs/MIGRATION-v0.77.0.md`, `docs/CONFORMANCE.md` and `docs/PROJECTION.md` §4.1.
 
 **1. The transparency contract is stated per occurrence, and is much larger.**
 It used to admit a kind only if *every* occurrence had at most one child. It now fires per
@@ -64,19 +65,21 @@ kinds every structural consumer was already eliding for itself: `Expr.Expr`, `Pa
 `QName`, `UsesOrImports.UseOrImportList`. A third rule, `elide-empty`, drops empty `AnnotationList`
 and `ModifierList` without splicing their tokens.
 
-Normalisation now removes **2285 of 4449 nodes (51.4%)**, up from 753 of 4398 (17.1%). Canonical
-trees are substantially smaller and every baseline is stale.
+Normalisation now removes **2285 of 4449 nodes (51.4%)** (flix-spec `docs/MIGRATION-v0.77.0.md`,
+"Validation"), up from 753 of 4398 (17.1%) under the previous contract. Canonical trees are
+substantially smaller and every baseline is stale.
 
 Because the rules fire per occurrence, an elided kind is **not always absent**: `QName` survives
-wherever a name is qualified (23 occurrences), and `ModifierList` wherever it holds a modifier (12).
+wherever a name is qualified (23 occurrences), and `ModifierList` wherever it holds a modifier (12);
+both counted over flix-spec 0.77.0's `fixtures/expected`.
 Mappings onto those are legitimate, and `validateProjectionMap` now decides that by measuring
 `fixtures/expected` rather than inferring it from the rule name.
 
 **2. A fourth lane: `diagnostic_conformance`.**
 It compares whether the same units are **rejected**, and whether each carries the same gated
-`kind`/`line`. Accept/reject needs no tree, no projection map and no shared vocabulary. If your
-diagnostic names are your own, declare `diagnosticMappings` in your projection map; without it the
-lane compares accept/reject alone and says so. A consumer that emits no diagnostics at all is
+`kind`/`line`. Accept/reject needs no tree, no projection map and no shared vocabulary. A consumer
+whose diagnostic names are its own declares `diagnosticMappings` in its projection map; without it
+the lane compares accept/reject alone and says so. A consumer that emits no diagnostics at all is
 `not-applicable`, not failed.
 
 **3. Depth is published and can be gated.**
@@ -99,9 +102,10 @@ Several upstream changes are already handled here, or do not apply:
 
 - **Effect type parameters (v0.76.0).** `effDeclaration` (`FlixParser.g4:140`) already accepts
   `typeParams?`. `opDeclaration` (`:144`) accepts them as well. That operations are still illegal is
-  a weeding error (`IllegalOperationTypeParams`), and parse-the-superset keeps it out of the grammar.
-- **`match`/`ematch` recovery (v0.76.0).** This is a recovery-shape change. `recovery_conformance` is
-  `not-applicable` for this grammar, so nothing here is compared against it.
+  a weeding error (`IllegalOperationTypeParams`), and parse-the-superset keeps it out of the
+  grammar.
+- **`match`/`ematch` recovery (v0.76.0).** This is a recovery-shape change. `recovery_conformance`
+  is `not-applicable` for this grammar, so nothing here is compared against it.
 - **Flix's `Reader` / `shared.Input` removal (v0.77.0).** This was internal to Flix, and flix-spec
   absorbs it.
 - **`token-positions` (flix-spec).** It stands down for consumers that emit no tokens, and
@@ -112,9 +116,9 @@ Several upstream changes are already handled here, or do not apply:
 ## What this repository must do
 
 The two targets are not affected equally. Projection and conformance exist **only on the JVM side**:
-`Projection.kt` is run by `:antlr4:projectFixtures` (`antlr4/build.gradle.kts:44`), and `antlr-ng/src`
-holds only `cli.ts` and `FlixLexerBase.ts`. Anything in the shared grammars or the lexer base classes
-reaches both targets and has to pass both corpus gates.
+`Projection.kt` is run by `:antlr4:projectFixtures` (`antlr4/build.gradle.kts:44`), and
+`antlr-ng/src` holds only `cli.ts` and `FlixLexerBase.ts`. Anything in the shared grammars or the
+lexer base classes reaches both targets and has to pass both corpus gates.
 
 | Step | `antlr4` (JVM) | `antlr-ng` (TS) |
 | --- | --- | --- |
@@ -130,7 +134,7 @@ The steps are ordered by value against effort and risk:
 4. Grammar and lexer changes come last, because they are the only steps that can move the corpus
    rate.
 
-### 1. Move the pin
+### 1. Move the conformance pin and re-measure
 
 In `conformance/baseline.json`, update these fields under `measuredAt`:
 
@@ -144,14 +148,16 @@ In `conformance/baseline.json`, update these fields under `measuredAt`:
 
 - **Before running**, it refuses on a pin mismatch (`:38-44`).
 - **After projecting and comparing**, it fails the run on a fixture-revision mismatch (`:77-85`).
-  So a stale `fixtureRevision` costs a full run before you are told.
+  So a stale `fixtureRevision` costs a full run before the mismatch is reported.
 
-### 2. The contract change helps you more than anyone
+### 2. Drop the redundant `elide` entries
 
-This grammar sits at **41% depth** — by far the lowest of the structural consumers — because an
-unmapped node costs its entire subtree against the denominator. Normalisation now removes 51.4% of
-the canonical tree rather than 17.1%, so a large share of what you were failing to reach no longer
-exists to be reached. Re-measure before doing any other work: the number will move on its own.
+The contract change matters most to a low-depth consumer, and this grammar sits at **41% depth**
+(`conformance/baseline.json`, `lanes.oracle_conformance.depthPercent`) because an unmapped node
+costs its entire subtree against the denominator. Normalisation now removes 51.4% of the canonical
+tree rather than 17.1%, so a large share of what this grammar was failing to reach no longer exists
+to be reached. Step 1's re-measurement shows how far the number moves on its own; record it before
+changing anything else.
 
 Then delete the six now-redundant `elide` entries from `conformance/projection-map.json`:
 
@@ -159,16 +165,17 @@ Then delete the six now-redundant `elide` entries from `conformance/projection-m
 AnnotationList  Expr.Expr  ModifierList  Pattern.Pattern  QName  UsesOrImports.UseOrImportList
 ```
 
-`CommentList`, `Expr.Statement` and `Type.Apply` stay. You have no mappings onto elided kinds, so
+`CommentList`, `Expr.Statement` and `Type.Apply` stay. The map has no mappings onto elided kinds, so
 nothing there needs review.
 
-### 3. The diagnostic lane is your cheapest win
+### 3. Emit diagnostics
 
-`recovery_conformance` is `not-applicable` here — ANTLR's recovery inserts nodes the parse tree does
-not name — so this repository currently produces one derived signal. The new lane needs no tree and
-no map: emitting one diagnostic per ANTLR syntax error gives accept/reject agreement across all 146
-fixtures of flix-spec 0.77.0 (the current baseline measured 138). With `diagnosticMappings`
-translating ANTLR's error names, kind and line compare too.
+This is the cheapest win in the migration. `recovery_conformance` is `not-applicable` here — ANTLR's
+recovery inserts nodes the parse tree does not name — so this repository currently produces one
+derived signal. The new lane needs no tree and no map: emitting one diagnostic per ANTLR syntax
+error gives accept/reject agreement across all 146 fixtures of flix-spec 0.77.0 (the current
+baseline measured 138). With `diagnosticMappings` translating ANTLR's error names, kind and line
+compare too.
 
 It is cheap because the errors are already collected and then thrown away:
 
@@ -185,8 +192,9 @@ reference's names later through `diagnosticMappings`. The projection document's 
 It is independent of every other step: no grammar change, no map change. That is why it comes
 before the structural work.
 
-### 4. The real depth problem is one line, and it is not the contract
+### 4. Emit labelled-alternative names
 
+The real depth problem is not the contract.
 `antlr4/src/main/kotlin/io/github/wstein/flix/antlr/cli/Projection.kt:69` uses
 
 ```kotlin
@@ -198,12 +206,13 @@ alternatives of `expr` collapse back to the string `expr`. The grammar already c
 alternatives** (`# ApplyExpr`, `# AddExpr`, `# ConsExpr`, `# MatchExpr`, …): 49 on `expr`, 11 on
 `type`, 2 on `pattern`.
 
-Those two rules are the top of your own `unmapped` list — `expr` 39, `type` 21, **60 of 112 stops**.
-The fix is to emit the labelled alternative's name, but **not** by taking the class name unconditionally.
-`ctx::class.simpleName!!.removeSuffix("Context")` also renames every *unlabelled* rule —
-`BlockContext` becomes `Block` — and every key in `conformance/projection-map.json` (`block`,
-`defDeclaration`, all 41 `mappings`, plus `ignored` and `flatten`) is the camelCase rule name. Every
-existing mapping would stop matching at once.
+Those two rules are the top of this repository's `unmapped` list — `expr` 39, `type` 21, **60 of 112
+stops** (`build/flix-spec-report.json`, schemaVersion 6, `oracle_conformance.unmapped` and
+`nodesUnmapped`). The fix is to emit the labelled alternative's name, but **not** by taking the
+class name unconditionally. `ctx::class.simpleName!!.removeSuffix("Context")` also renames every
+*unlabelled* rule — `BlockContext` becomes `Block` — and every key in
+`conformance/projection-map.json` (`block`, `defDeclaration`, all 41 `mappings`, plus `ignored` and
+`flatten`) is the camelCase rule name. Every existing mapping would stop matching at once.
 
 Use the class name only when it is a strict subclass of the rule's own context class, which is
 exactly what a labelled alternative is:
@@ -221,10 +230,10 @@ ANTLR labels all of a rule's alternatives or none of them, so after this change 
 `pattern` are never emitted again. Their `ignored` entries go dead and should be replaced by entries
 for the labels themselves: each label is either mapped or declared `ignored`.
 
-### 5. Two missing nodes keep three of the largest canonical kinds unreachable
+### 5. Add the `Operator` and `ArgumentList` nodes
 
-Do this together with (4), not after — on its own, (4) turns some kind divergences into arity
-divergences.
+Two missing nodes keep three of the largest canonical kinds unreachable. Do this together with (4),
+not after — on its own, (4) turns some kind divergences into arity divergences.
 
 - `Expr.Binary` has canonical arity **3** (lhs, `Operator`, rhs). `Projection.kt` emits only
   `ParserRuleContext` children, and `expr ( PLUS | MINUS ) expr` gives the operator no context, so a
@@ -232,8 +241,8 @@ divergences.
 
   **Do not extract a shared `binaryOp` rule.** `expr` gets its precedence from the *order* of its
   alternatives (`FlixParser.g4:355-395`). A single `expr binaryOp expr` alternative collapses every
-  level into one. Putting `binaryOp` into every level instead makes each level accept every operator,
-  and the rule becomes ambiguous.
+  level into one. Putting `binaryOp` into every level instead makes each level accept every
+  operator, and the rule becomes ambiguous.
 
   Synthesise the node in the projection instead. When a labelled binary context has a
   `TerminalNode` between two `ExprContext` children, `Projection.kt` emits `{"kind":"Operator"}`
@@ -267,21 +276,21 @@ divergences.
   | `SuperExpr` | 406 | `expr` |
 
   Check each canonical parent in `fixtures/expected` (`Expr.ExtTag`, `Expr.InvokeConstructor`,
-  `Expr.InvokeSuperConstructor`, `Expr.InvokeSuperMethod`) before reusing one rule for all five. Where
-  the elements differ (`argument` vs `expr`), a shared rule changes what those three sites accept
-  unless it is parameterised. Because the rule is new, `fixtures/snapshots/`, `docs/SYNTAX.md` and
-  `docs/RAILROAD.md` change with it.
+  `Expr.InvokeSuperConstructor`, `Expr.InvokeSuperMethod`) before reusing one rule for all five.
+  Where the elements differ (`argument` vs `expr`), a shared rule changes what those three sites
+  accept unless it is parameterised. Because the rule is new, `fixtures/snapshots/`,
+  `docs/SYNTAX.md` and `docs/RAILROAD.md` change with it.
 
-This also settles the open question in your own `notes.expr`, which records that mapping `expr` to
-`Expr.Binary` *"drops agreement 76 -> 40, which is the signature of a guess that is often wrong"*.
-It is not a bad guess — it is a **missing node**.
+This also settles the open question in `projection-map.json`'s `notes.expr`, which records that
+mapping `expr` to `Expr.Binary` *"drops agreement 76 -> 40, which is the signature of a guess that
+is often wrong"*. It is not a bad guess — it is a **missing node**.
 
-### 6. `::` and the package path
+### 6. Lex tight `::` and parse package paths
 
 `grammars/FlixLexer.g4` must distinguish tight `::` from spaced `::`, and the parser must produce a
-node mapping to `UsesOrImports.Package` for `use flixball::Game.Board` and `use flixball::{Game, Board}`.
-It will not fall out of the existing rule: `COLON_COLON : '::' ;` (`FlixLexer.g4:166`) is a plain
-literal.
+node mapping to `UsesOrImports.Package` for `use flixball::Game.Board` and
+`use flixball::{Game, Board}`. It will not fall out of the existing rule: `COLON_COLON : '::' ;`
+(`FlixLexer.g4:166`) is a plain literal.
 
 **Reuse the existing machinery for whitespace-sensitive tokens rather than a predicate.** `->` is
 already split this way:
@@ -297,9 +306,9 @@ Add `COLON_COLON_TIGHT` to `tokens {}` and a `classifyColonColon()` to **both** 
 Pitfalls:
 
 - **Cons must keep working.** `ConsExpr` (`FlixParser.g4:373`) and `ConsPattern` (`:591`) match
-  `COLON_COLON`. Following *parse the superset*, they should accept `COLON_COLON_TIGHT` too and leave
-  the spacing error to validation. Otherwise every `x::xs` in the corpus becomes a parse error. This
-  is the same trap as the "bites quietly" note above, pointed at this repository.
+  `COLON_COLON`. Following *parse the superset*, they should accept `COLON_COLON_TIGHT` too and
+  leave the spacing error to validation. Otherwise every tight cons such as `x::xs` becomes a parse
+  error. This is the same trap as the "bites quietly" note above, pointed at this repository.
 - **`use a::b` does not parse today at all.** `useClause` (`:26`) is `USE qname …` and `qname`
   (`:291`) joins segments only with `dot`. The package form needs a new alternative that produces a
   node mapped to `UsesOrImports.Package`.
