@@ -287,3 +287,18 @@ Pitfalls:
 not name — so this repository currently produces one derived signal. The new lane needs no tree and
 no map: emitting one diagnostic per ANTLR syntax error gives accept/reject agreement across all 146
 fixtures of flix-spec 0.77.0 (the current baseline measured 138). With `diagnosticMappings` translating ANTLR's error names, kind and line compare too.
+
+### 7. Update `CLAUDE.md`
+
+`CLAUDE.md` is the agent-facing record of the grammar's authority and its traps, and it is stale in
+three places once this lands:
+
+- `CLAUDE.md:38`: "Reference: `flix/flix@318bb51` (Flix 0.75.1)". Move it to v0.77.0
+  (`4a5b60a`), and re-check the line citations in the "Source of truth" table against that revision.
+  `docs/DESIGN-DEBATE.md:5` cites the same pin, but it is a historical record and stays.
+- `CLAUDE.md:7`: the parse-rate headline. Restate it against the new corpus pin, and say whether the
+  figure includes the excluded truncated file (see "What changed in Flix" above).
+- `CLAUDE.md:93` and `:143`: "`->` and `.` are whitespace-sensitive" gains `::`. Add a trap entry in
+  the same style, saying that tight `::` is `COLON_COLON_TIGHT` (package separator) and spaced `::`
+  is cons, and that the parser accepts both in cons position. The "`:` has no `GenericOperator`
+  fallback" entry lists `::` as merely reserved; point it at the new entry.
