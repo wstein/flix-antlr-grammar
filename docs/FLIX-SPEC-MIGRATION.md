@@ -18,7 +18,7 @@ flix-spec's vocabulary, as this document uses it. The full definitions are in fl
 | **unmapped / stop** | A native node that is neither mapped nor ignored. The comparison stops there, skipping it and its whole subtree. `nodesUnmapped` counts these. |
 | **depth** (`depthPercent`) | Nodes actually compared as a share of `nodesExpected`, the canonical tree's size after normalisation. Read it together with `fixturesAgreeing`: a map that maps little agrees with almost everything. |
 | **kind / arity divergence** | A compared node whose canonical kind differs, or whose child count differs. |
-| **`schemaVersion`** | Per artifact. Reports are at 7 with flix-spec 0.77.0 (6 before). The projection documents this repository writes are at 2. |
+| **`schemaVersion`** | Per artifact. Reports are at 7 with flix-spec 0.77.0 and unchanged in 0.77.1 (6 before). The projection documents this repository writes are at 2. |
 
 ## What changed in Flix
 
@@ -75,6 +75,11 @@ own step (see the checklist). Two things to settle while doing it:
 Beyond the pin, flix-spec 0.77.0 changes four things that reach this repository. Sources:
 flix-spec's `docs/MIGRATION-v0.77.0.md`, `docs/CONFORMANCE.md` and `docs/PROJECTION.md` §4.1.
 
+**Adopt 0.77.1, not 0.77.0.** It carries the same upstream pin and is additive: same three
+vocabularies, same report `schemaVersion` 7, both fixture forms unchanged in shape. What it adds is
+described in "What 0.77.1 adds" below, and one of those items bears directly on the compatibility
+policy this repository has adopted.
+
 **1. The transparency contract is stated per occurrence, and is much larger.**
 It used to admit a kind only if *every* occurrence had at most one child. It now fires per
 occurrence — dropped when empty, replaced when singular, kept when branching — which admitted four
@@ -112,6 +117,35 @@ between them is only whitespace or the `$` escape. It stands down for consumers 
 
 New projection-map keys, both optional: `dropWhenEmpty` (the consumer-side counterpart of
 `elide-empty`) and `diagnosticMappings`.
+
+### What 0.77.1 adds
+
+- **`ast/annotation.json`** — the 16 annotations the reference defines, digest-pinned. A third
+  vocabulary, because the lexer emits a single `TokenKind.Annotation` for all of them and the name
+  lives in the token's `text`, where no `TokenKind` digest can see it change. It is a **coverage**
+  vocabulary and never a validity check: the token is genuinely open, because Java interop
+  annotations lex identically and upstream models that with `Annotation.Error`. Nothing is required
+  of this grammar, which already treats an annotation as one token.
+- **`ast/retired.json`** — vocabulary the reference has removed, with the tag each went at:
+  `Decl.Law`, `KeywordLaw`, `KeywordLawful`, all gone at v0.75.2. This is the file D16 wanted; a
+  removal otherwise leaves nothing behind but a digest that stopped matching.
+- **The fixture suite is 147**, not 146 — one fixture covers the three annotations Flix's own
+  corpus never uses.
+- **`validateProjectionMap` now reports deprecated keys.** `elide` and `flattenCanonical` are
+  marked deprecated in the schema; the run prints a `NOTE:` naming them. They still work, and this
+  repository's `elide` reduction (step 2) is what clears it.
+
+**And the item that touches the policy below:** flix-spec now runs `Weeder2` over its own positive
+fixtures, advisory only, and the first run found a reference defect — recorded as **FLIX-0002**.
+`Parser2` has a dedicated `BinaryOp.NameMath` and lists `NameMath` in `FIRST_BINARY_OP`, so
+`a ⊆ b` parses cleanly into `Expr.Binary`; `Weeder2`'s operator match omits `NameMath` and throws
+`InternalCompilerException`. Confirmed against the released v0.77.0 jar, which prints the
+compiler's own bug-report banner.
+
+That matters here because "accepts the same programs as Flix 0.77.0" has no answer for an input the
+compiler *crashes* on. Treat `Parser2` as the authority for those: this repository should accept
+`a ⊆ b`, exactly as flix-spec's fixture does, and neither reject it nor try to reproduce the crash.
+The defect is upstream's and is recorded rather than modelled.
 
 ## Compatibility policy: not stricter, not looser
 
@@ -229,10 +263,10 @@ Gates, applied to every step:
 
 In `conformance/baseline.json`, update these fields under `measuredAt`:
 
-- `flixSpecArtifact` → `0.77.0`
+- `flixSpecArtifact` → `0.77.1`
 - `flixSpecPin` → `v0.77.0`
 - `flixSpecPinCommit` → `4a5b60a31ac03bb762f68b554a0fc2b6f4d982b9`
-- `fixtures` → `146` (was 138)
+- `fixtures` → `147` (was 138)
 - `fixtureRevision` → the value in the new report's `provenance.fixtureRevision`
 
 `scripts/flix-spec-conformance.sh` guards these fields at two different points:
@@ -272,7 +306,7 @@ The map has no mappings onto elided kinds, so nothing else needs review.
 This is the cheapest win in the migration. `recovery_conformance` is `not-applicable` here — ANTLR's
 recovery inserts nodes the parse tree does not name — so this repository currently produces one
 derived signal. The new lane needs no tree and no map: emitting one diagnostic per ANTLR syntax
-error gives accept/reject agreement across all 146 fixtures of flix-spec 0.77.0 (the current
+error gives accept/reject agreement across all 147 fixtures of flix-spec 0.77.1 (the current
 baseline measured 138). With `diagnosticMappings` translating ANTLR's error names, kind and line
 compare too.
 
