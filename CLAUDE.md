@@ -4,11 +4,11 @@ An ANTLR4 grammar for Flix, transliterated from the reference compiler.
 
 ## Implementation status
 
-**Measured corpus parse rate: 99.85% (687 / 688), both targets.** Run the gate before and after
+**Measured corpus parse rate: 100.00% (716 / 716), both targets; 717 pinned files with one intentional truncation excluded.** Run the gate before and after
 every grammar change and state the delta in the commit message.
 
 - [x] Build, CI, Dependabot, release workflow.
-- [x] Lexer: 84 keywords pinned by `fixtures/keywords.txt`, operator runs, holes,
+- [x] Lexer: 82 keywords pinned by `fixtures/keywords.txt`, operator runs, holes,
       interpolation modes, whitespace-sensitive `->` and `.`.
 - [x] Parser: declarations, types, expressions, patterns, Datalog, effect handlers.
 - [x] Validation CLI and a ratcheting corpus gate, on both the `antlr4` (JVM) and `antlr-ng`
@@ -35,7 +35,7 @@ acceptance criterion. See [docs/DEFECTS.md](docs/DEFECTS.md).
 
 ## Source of truth
 
-Reference: `flix/flix@318bb51` (Flix 0.75.1). Paths below are relative to
+Reference: `flix/flix@36d923ca325dc466b28c63419667e6026a80f920` (Flix 0.79.0). Paths below are relative to
 `main/src/ca/uwaterloo/flix/language/`.
 
 | File | Authority for |
