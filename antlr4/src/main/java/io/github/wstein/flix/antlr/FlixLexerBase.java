@@ -76,6 +76,11 @@ public abstract class FlixLexerBase extends Lexer {
     // Whitespace-sensitive tokens
     // ---------------------------------------------------------------------
 
+    /** Classifies the whitespace-sensitive package separator; either token also serves list cons. */
+    protected void classifyColonColon() {
+        setType(isWhitespaceBefore() || isWhitespaceAfter() ? FlixLexer.COLON_COLON : FlixLexer.COLON_COLON_TIGHT);
+    }
+
     /**
      * Assigns the token type for {@code ->}.
      *

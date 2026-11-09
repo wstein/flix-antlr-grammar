@@ -124,7 +124,7 @@ class FlixParserDatalogAndEffectsTest {
     @Test
     fun comprehensionForms() {
         assertNull(parseExpr("foreach (x <- xs; if p(x)) body").exception)
-        assertNull(parseExpr("forM (x <- xs; let y = f(x)) yield y").exception)
+        assertNull(parseExpr("forM (x <- xs; y = f(x)) yield y").exception)
         assertNull(parseExpr("forA (x <- xs) yield x").exception)
     }
 

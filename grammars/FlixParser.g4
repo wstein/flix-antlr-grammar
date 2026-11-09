@@ -23,7 +23,12 @@ usesOrImports
     ;
 
 useClause
-    : USE qname ( dot LBRACE useName ( COMMA useName )* COMMA? RBRACE )?
+    : USE packageName COLON_COLON_TIGHT ( qname ( dot LBRACE useName ( COMMA useName )* COMMA? RBRACE )? | LBRACE useName ( COMMA useName )* COMMA? RBRACE )
+    | USE qname ( dot LBRACE useName ( COMMA useName )* COMMA? RBRACE )?
+    ;
+
+packageName
+    : nameLowercase | nameUppercase
     ;
 
 importClause
@@ -55,7 +60,6 @@ declaration
     | instanceDeclaration
     | effDeclaration
     | aliasDeclaration
-    | lawDeclaration
     ;
 
 declPrefix
@@ -69,11 +73,6 @@ modDeclaration
 defDeclaration
     : declPrefix ( DEF | REDEF ) definitionName typeParams? formalParams
       ( COLON typeAndEffect )? withClause? whereClause? ( EQUAL statement )?
-    ;
-
-lawDeclaration
-    : declPrefix LAW definitionName COLON FORALL typeParams? formalParams?
-      withClause? whereClause? ( EQUAL? statement )?
     ;
 
 // A restrictable enum's index parameter (`Expr[_][t]`'s first `[_]`) is its own single-name
@@ -114,7 +113,6 @@ traitDeclaration
 
 traitMember
     : defDeclaration
-    | lawDeclaration
     | assocTypeDeclaration
     ;
 
@@ -153,7 +151,7 @@ annotation
     ;
 
 modifier
-    : PUB | SEALED | LAWFUL | MUT
+    : PUB | SEALED | MUT
     ;
 
 // `with` introduces trait constraints on definitions and derivations on enums;
@@ -253,9 +251,9 @@ primaryType
     | LBRACE BAR RBRACE
     | LBRACE ( recordFieldType ( COMMA recordFieldType )* )? ( BAR type )? RBRACE
     | LBRACE type ( COMMA type )* RBRACE
-    | HASH_LBRACE ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? RBRACE
-    | HASH_LPAREN ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? RPAREN
-    | HASH_BAR ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? BAR_HASH
+    | HASH_LBRACE ( schemaTerm ( COMMA schemaTerm )* )? ( BAR type )? RBRACE
+    | HASH_LPAREN ( schemaTerm ( COMMA schemaTerm )* )? ( BAR type )? RPAREN
+    | HASH_BAR ( schemaTerm ( COMMA schemaTerm )* )? ( BAR type )? BAR_HASH
     | ANGLE_L qname ( COMMA qname )* ANGLE_R
     ;
 
@@ -370,7 +368,7 @@ expr
     | expr ANGLED_PLUS expr                                 # AngledPlusExpr
     | expr ( STAR | SLASH ) expr                            # MultExpr
     | expr ( PLUS | MINUS ) expr                            # AddExpr
-    | <assoc=right> expr ( COLON_COLON | COLON_COLON_COLON ) expr # ConsExpr
+    | <assoc=right> expr ( COLON_COLON | COLON_COLON_TIGHT | COLON_COLON_COLON ) expr # ConsExpr
     | expr ( ANGLE_L | ANGLE_R | ANGLE_L_EQUAL | ANGLE_R_EQUAL ) expr # CompareExpr
     | expr ( EQUAL_EQUAL | BANG_EQUAL | ANGLED_EQUAL ) expr # EqualityExpr
     | expr AND expr                                         # AndExpr
@@ -455,8 +453,7 @@ forFragments
 
 forFragment
     : IF expr
-    | LET pattern EQUAL expr
-    | pattern ARROW_THIN_L expr
+    | pattern ( EQUAL | ARROW_THIN_L ) expr
     ;
 
 parFragment
@@ -588,7 +585,7 @@ stringLiteral
 // =====================================================================
 
 pattern
-    : <assoc=right> pattern COLON_COLON pattern # ConsPattern
+    : <assoc=right> pattern ( COLON_COLON | COLON_COLON_TIGHT ) pattern # ConsPattern
     | primaryPattern                            # PrimaryPat
     ;
 

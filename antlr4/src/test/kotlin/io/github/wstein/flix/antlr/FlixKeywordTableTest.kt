@@ -52,7 +52,7 @@ class FlixKeywordTableTest {
             phantom.isEmpty(),
             "Keywords defined in FlixLexer.g4 that are not Flix keywords: $phantom",
         )
-        assertEquals(84, expected.size, "Flix 0.75.1 has 84 keywords")
+        assertEquals(82, expected.size, "Flix 0.79.0 has 82 keywords")
     }
 
     @Test

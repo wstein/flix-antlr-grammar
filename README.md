@@ -5,7 +5,7 @@
 [![ANTLR](https://img.shields.io/badge/ANTLR-4.13.2-c92a2a.svg)](https://www.antlr.org)
 [![Java](https://img.shields.io/badge/Java-21%2B-orange.svg)](https://adoptium.net)
 [![Gradle](https://img.shields.io/badge/Gradle-9.6.1-02303A.svg?logo=gradle&logoColor=white)](https://gradle.org)
-[![Flix](https://img.shields.io/badge/Flix-0.75.1-blueviolet.svg)](https://flix.dev)
+[![Flix](https://img.shields.io/badge/Flix-0.79.0-blueviolet.svg)](https://flix.dev)
 [![Corpus](https://img.shields.io/badge/corpus%20parse%20rate-100%25-brightgreen.svg)](fixtures/corpus-baseline.json)
 
 An [ANTLR4](https://www.antlr.org) grammar for the [Flix](https://flix.dev) programming
@@ -22,7 +22,7 @@ stale unnoticed. The rate is enforced by a ratcheting gate; see [Verification](#
 | Area | State |
 | --- | --- |
 | Build, CI, Dependabot, release | done |
-| Lexer: 84 keywords, operator runs, holes, interpolation modes | done |
+| Lexer: 82 keywords, operator runs, holes, interpolation modes | done |
 | Parser: declarations, types, expressions, patterns | done |
 | Parser: Datalog, fixpoint, effect handlers | done |
 | Validation CLI and corpus gate, JVM and TypeScript targets | done |
@@ -106,10 +106,16 @@ rate; a divergence between them means the antlr-ng target's TypeScript-adaptatio
 (`tools/gen-antlr-ng.mjs`) changed grammar behaviour, not just syntax. Raise the baseline when
 the rate improves; never lower it.
 
+The [conformance gate](docs/CONFORMANCE.md) binds immutable published Flix 0.79 data
+and runner artifacts, all 166 fixture identities, separate historical/canonical depth
+checks, and the exact remaining structural differences. Run
+`scripts/flix-spec-conformance.sh`; recovery, diagnostics and token correctness remain
+explicitly unmeasured by this rule-node projection.
+
 ## Source of truth
 
 All syntax decisions trace to the reference compiler
-(fork [`flix/flix@318bb51`](https://github.com/flix/flix), Flix 0.75.1):
+([`flix/flix@36d923c`](https://github.com/flix/flix/tree/36d923ca325dc466b28c63419667e6026a80f920), Flix 0.79.0):
 
 | File | Authority for |
 | --- | --- |

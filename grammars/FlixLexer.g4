@@ -6,6 +6,7 @@ options {
 
 tokens {
     // Whitespace-sensitive tokens classified by FlixLexerBase
+    COLON_COLON_TIGHT,
     ARROW_WS,
     ARROW_TIGHT,
     DOT,
@@ -97,8 +98,6 @@ INJECT           : 'inject' { !isNameCharFollow() }? ;
 INSTANCEOF       : 'instanceof' { !isNameCharFollow() }? ;
 INSTANCE         : 'instance' { !isNameCharFollow() }? ;
 INTO             : 'into' { !isNameCharFollow() }? ;
-LAW              : 'law' { !isNameCharFollow() }? ;
-LAWFUL           : 'lawful' { !isNameCharFollow() }? ;
 LAZY             : 'lazy' { !isNameCharFollow() }? ;
 LET              : 'let' { !isNameCharFollow() }? ;
 MATCH            : 'match' { !isNameCharFollow() }? ;
@@ -163,7 +162,7 @@ RBRACE           : '}' { if (exitBrace()) { popMode(); setType(INTERPOLATION_END
 COMMA            : ',' ;
 SEMI             : ';' ;
 COLON_COLON_COLON: ':::' ;
-COLON_COLON      : '::' ;
+COLON_COLON      : '::' { classifyColonColon(); } ;
 COLON_MINUS      : ':-' ;
 COLON            : ':' ;
 HASH             : '#' ;

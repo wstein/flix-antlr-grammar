@@ -53,18 +53,23 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: flix/flix
-          ref: debf7df0fdd63f2b76b7a539ebbff5243070ca6e
+          ref: 36d923ca325dc466b28c63419667e6026a80f920
           path: corpus
 
       - name: Verify the corpus is the pinned revision
         run: |
           test -d corpus/main || { echo "corpus/main missing"; exit 1; }
-          COUNT=$(find corpus/main -name '*.flix' | wc -l | tr -d ' ')
+          COUNT=$(find corpus/main -type f -name '*.flix' | wc -l | tr -d ' ')
           echo "corpus files: $COUNT"
-          test "$COUNT" -ge 690 || { echo "unexpected corpus size $COUNT"; exit 1; }
+          test "$COUNT" -eq 717 || { echo "unexpected corpus size $COUNT"; exit 1; }
 
       - name: Build, test and verify coverage
         run: ./gradlew build -Dflix.corpus="$GITHUB_WORKSPACE/corpus/main"
+
+      - name: Check immutable conformance binding
+        run: |
+          python3 -m unittest discover -s scripts -p test_conformance_binding.py
+          scripts/flix-spec-conformance.sh
 
       - name: Verify generated documentation is current
         run: |
@@ -114,7 +119,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: flix/flix
-          ref: debf7df0fdd63f2b76b7a539ebbff5243070ca6e
+          ref: 36d923ca325dc466b28c63419667e6026a80f920
           path: corpus
 
       - name: Test

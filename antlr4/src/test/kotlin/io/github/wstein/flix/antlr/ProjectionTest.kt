@@ -44,9 +44,8 @@ class ProjectionTest {
 
     @Test
     fun `emits no token leaves`() {
-        // Token leaves would make source_invariants' token-accounting check evaluate a fiction:
-        // comments live on the COMMENTS and DOC_COMMENTS channels and never enter the parse tree,
-        // so concatenating what the tree holds would silently lose them.
+        // Comment groups do not turn this rule-only projection into a token stream.
+        // Ordinary terminals and hidden whitespace remain absent, so token accounting is N/A.
         val file = write("commented.flix", "/// doc\n// line\ndef f(): Unit = ()\n")
         val tree = assertNotNull(Projection.project(file))
 
@@ -141,5 +140,97 @@ class ProjectionTest {
         // than here, which is exactly the kind of late failure this asserts away.
         assertTrue(tree.contains("\"span\":{\"start\":{\"line\":1,\"col\":1}"), tree)
         assertFalse(Regex("\"col\":0").containsMatchIn(tree), "columns are one-indexed: $tree")
+    }
+
+    @Test
+    fun `documentation belongs to the following declaration and plain comments survive`() {
+        val tree =
+            assertNotNull(Projection.project(write("docs.flix", "// lead\n/// docs\ndef f(): Int32 = 1 // trailing\n")))
+        assertEquals(2, Regex("\"kind\":\"plainComment\"").findAll(tree).count(), tree)
+        assertEquals(1, Regex("\"kind\":\"docComment\"").findAll(tree).count(), tree)
+        assertTrue(tree.contains("\"children\":[{\"kind\":\"docComment\""), tree)
+    }
+
+    @Test
+    fun `multiline token spans end at the native final line`() {
+        val tree = assertNotNull(Projection.project(write("multiline.flix", "/* first\nsecond */\ndef f(): Unit = ()")))
+        assertTrue(tree.contains("\"end\":{\"line\":2,\"col\":10}"), tree)
+    }
+
+    @Test
+    fun `inline and orphan docs remain plain comments`() {
+        val tree =
+            assertNotNull(Projection.project(write("misplaced.flix", "def f(): Unit = () /// inline\n/// orphan\n")))
+        assertEquals(2, Regex("\"kind\":\"plainComment\"").findAll(tree).count(), tree)
+        assertFalse(tree.contains("\"kind\":\"docComment\""), tree)
+    }
+
+    @Test
+    fun `CRLF documentation attaches to both outer and local definitions`() {
+        val source = "/// outer\r\n@Deprecated\r\npub def f(): Unit = {\r\n/// local\r\ndef g(): Unit = ();\r\ng()\r\n}"
+        val tree = assertNotNull(Projection.project(write("local.flix", source)))
+        assertEquals(2, Regex("\"kind\":\"docComment\"").findAll(tree).count(), tree)
+        assertTrue(tree.contains("\"end\":{\"line\":7,\"col\":2}"), tree)
+    }
+
+    @Test
+    fun `projection retains concrete scalar literals type variables and schema forms`() {
+        val source =
+            """
+            def f(x: a): a = 1
+            type alias S[r] = #{A(Int32) | r}
+            type alias R[r] = #(A(Int32) | r)
+            type alias E[r] = #|A(Int32) | r|#
+            """.trimIndent()
+        val tree = assertNotNull(Projection.project(write("concrete.flix", source)))
+        for (kind in listOf(
+            "literalExpression",
+            "variableType",
+            "schemaType",
+            "schemaRowType",
+            "extensibleType",
+            "predicateTypes",
+        )) {
+            assertTrue(tree.contains("\"kind\":\"$kind\""), "$kind missing: $tree")
+        }
+    }
+
+    @Test
+    fun `projection groups uses and distinguishes declaration roles`() {
+        val source =
+            """
+            use A.f
+            use B.g
+            use pkg::{Game, Board}
+            import java.lang.{String, Integer}
+            trait T[a] { def f(x: a): a }
+            instance T[Int32] { redef f(x: Int32): Int32 = x }
+            restrictable enum E[s] { case A }
+            """.trimIndent()
+        val tree = assertNotNull(Projection.project(write("roles.flix", source)))
+        for (kind in listOf(
+            "useList",
+            "useMany",
+            "importMany",
+            "signatureDeclaration",
+            "redefDeclaration",
+            "restrictableEnumDeclaration",
+        )) {
+            assertTrue(tree.contains("\"kind\":\"$kind\""), "$kind missing: $tree")
+        }
+    }
+
+    @Test
+    fun `enum payloads retain case body grouping`() {
+        val source = "enum E { case A(Int32) case B(Int32, Int32) }\nenum S(Int32)"
+        val tree = assertNotNull(Projection.project(write("cases.flix", source)))
+        assertEquals(3, Regex("\"kind\":\"caseBody\"").findAll(tree).count(), tree)
+    }
+
+    @Test
+    fun `documentation after a leading enum comma belongs to the case`() {
+        val source = "enum E { ,\n/// documents A\ncase A }"
+        val tree = assertNotNull(Projection.project(write("case-doc.flix", source)))
+        assertEquals(1, Regex("\"kind\":\"docComment\"").findAll(tree).count(), tree)
     }
 }

@@ -24,3 +24,6 @@ dist/
 build/
 generated/
 tmp/
+
+# Standard-library conformance adapter test bytecode.
+__pycache__/
