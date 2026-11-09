@@ -26,8 +26,7 @@ declaration ::= modDeclaration
     | traitDeclaration
     | instanceDeclaration
     | effDeclaration
-    | aliasDeclaration
-    | lawDeclaration ;
+    | aliasDeclaration ;
 ```
 
 ## `defDeclaration`
@@ -92,9 +91,9 @@ primaryType ::= qname
     | LBRACE BAR RBRACE
     | LBRACE ( recordFieldType ( COMMA recordFieldType )* )? ( BAR type )? RBRACE
     | LBRACE type ( COMMA type )* RBRACE
-    | HASH_LBRACE ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? RBRACE
-    | HASH_LPAREN ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? RPAREN
-    | HASH_BAR ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? BAR_HASH
+    | HASH_LBRACE ( schemaTerm ( COMMA schemaTerm )* )? ( BAR type )? RBRACE
+    | HASH_LPAREN ( schemaTerm ( COMMA schemaTerm )* )? ( BAR type )? RPAREN
+    | HASH_BAR ( schemaTerm ( COMMA schemaTerm )* )? ( BAR type )? BAR_HASH
     | ANGLE_L qname ( COMMA qname )* ANGLE_R ;
 ```
 
@@ -102,7 +101,7 @@ primaryType ::= qname
 
 ```mermaid
 railroad-ebnf-beta
-pattern ::= <assoc=right> pattern COLON_COLON pattern
+pattern ::= <assoc=right> pattern ( COLON_COLON | COLON_COLON_TIGHT ) pattern
     | primaryPattern ;
 ```
 
@@ -164,6 +163,5 @@ matchRule ::= CASE pattern ( IF expr )? ARROW_THICK_R statement COMMA? ;
 ```mermaid
 railroad-ebnf-beta
 forFragment ::= IF expr
-    | LET pattern EQUAL expr
-    | pattern ARROW_THIN_L expr ;
+    | pattern ( EQUAL | ARROW_THIN_L ) expr ;
 ```

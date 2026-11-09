@@ -35,6 +35,11 @@ export abstract class FlixLexerBase extends Lexer {
         super(input);
     }
 
+    protected classifyColonColon(): void {
+        this.type = this.isWhitespaceBefore() || this.isWhitespaceAfter()
+            ? (this.constructor as any).COLON_COLON : (this.constructor as any).COLON_COLON_TIGHT;
+    }
+
     protected classifyArrow(): void {
         const arrowType = (this.isWhitespaceBefore() || this.isWhitespaceAfter())
             ? (this.constructor as any).ARROW_WS

@@ -25,7 +25,7 @@ const out = join(pkg, "src", "generated");
 
 /** Helpers defined on FlixLexerBase; unqualified in Java, `this.`-qualified in TypeScript. */
 const HELPERS = [
-    "isNameCharFollow", "classifyArrow", "classifyDot", "classifyOperator",
+    "isNameCharFollow", "classifyColonColon", "classifyArrow", "classifyDot", "classifyOperator",
     "enterBrace", "exitBrace", "openInterpolation", "stripEscape", "popMode",
 ];
 

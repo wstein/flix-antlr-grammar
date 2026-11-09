@@ -8,7 +8,7 @@ Constraints such as duplicate modifiers, non-linear patterns and unknown annotat
 parse here and are rejected by a later validation pass, mirroring how the reference
 compiler separates `Parser2` from `Weeder2`.
 
-Parser rules: 85 · lexer rules: 136
+Parser rules: 85 · lexer rules: 134
 
 ## Parser rules
 
@@ -33,7 +33,16 @@ usesOrImports
 
 ```antlr
 useClause
-    : USE qname ( dot LBRACE useName ( COMMA useName )* COMMA? RBRACE )?
+    : USE packageName COLON_COLON_TIGHT ( qname ( dot LBRACE useName ( COMMA useName )* COMMA? RBRACE )? | LBRACE useName ( COMMA useName )* COMMA? RBRACE )
+    | USE qname ( dot LBRACE useName ( COMMA useName )* COMMA? RBRACE )?
+    ;
+```
+
+### `packageName`
+
+```antlr
+packageName
+    : nameLowercase | nameUppercase
     ;
 ```
 
@@ -65,7 +74,6 @@ declaration
     | instanceDeclaration
     | effDeclaration
     | aliasDeclaration
-    | lawDeclaration
     ;
 ```
 
@@ -91,15 +99,6 @@ modDeclaration
 defDeclaration
     : declPrefix ( DEF | REDEF ) definitionName typeParams? formalParams
 ( COLON typeAndEffect )? withClause? whereClause? ( EQUAL statement )?
-    ;
-```
-
-### `lawDeclaration`
-
-```antlr
-lawDeclaration
-    : declPrefix LAW definitionName COLON FORALL typeParams? formalParams?
-withClause? whereClause? ( EQUAL? statement )?
     ;
 ```
 
@@ -161,7 +160,6 @@ traitDeclaration
 ```antlr
 traitMember
     : defDeclaration
-    | lawDeclaration
     | assocTypeDeclaration
     ;
 ```
@@ -228,7 +226,7 @@ annotation
 
 ```antlr
 modifier
-    : PUB | SEALED | LAWFUL | MUT
+    : PUB | SEALED | MUT
     ;
 ```
 
@@ -363,9 +361,9 @@ primaryType
     | LBRACE BAR RBRACE
     | LBRACE ( recordFieldType ( COMMA recordFieldType )* )? ( BAR type )? RBRACE
     | LBRACE type ( COMMA type )* RBRACE
-    | HASH_LBRACE ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? RBRACE
-    | HASH_LPAREN ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? RPAREN
-    | HASH_BAR ( schemaTerm ( COMMA schemaTerm )* )? ( BAR name )? BAR_HASH
+    | HASH_LBRACE ( schemaTerm ( COMMA schemaTerm )* )? ( BAR type )? RBRACE
+    | HASH_LPAREN ( schemaTerm ( COMMA schemaTerm )* )? ( BAR type )? RPAREN
+    | HASH_BAR ( schemaTerm ( COMMA schemaTerm )* )? ( BAR type )? BAR_HASH
     | ANGLE_L qname ( COMMA qname )* ANGLE_R
     ;
 ```
@@ -575,8 +573,7 @@ forFragments
 ```antlr
 forFragment
     : IF expr
-    | LET pattern EQUAL expr
-    | pattern ARROW_THIN_L expr
+    | pattern ( EQUAL | ARROW_THIN_L ) expr
     ;
 ```
 
@@ -757,7 +754,7 @@ stringLiteral
 
 ```antlr
 pattern
-    : <assoc=right> pattern COLON_COLON pattern
+    : <assoc=right> pattern ( COLON_COLON | COLON_COLON_TIGHT ) pattern
     | primaryPattern
     ;
 ```

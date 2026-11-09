@@ -29,8 +29,6 @@ inject
 instance
 instanceof
 into
-law
-lawful
 lazy
 let
 List#
