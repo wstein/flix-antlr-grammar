@@ -62,8 +62,18 @@ declaration
     | aliasDeclaration
     ;
 
+// Nonempty lists remain explicit nodes; absent lists leave no empty context.
+// The accepted annotation/modifier repetitions and their ordering are unchanged.
 declPrefix
-    : annotation* modifier*
+    : annotationList? modifierList?
+    ;
+
+annotationList
+    : annotation+
+    ;
+
+modifierList
+    : modifier+
     ;
 
 modDeclaration
@@ -103,7 +113,7 @@ structDeclaration
     ;
 
 structField
-    : modifier* nameLowercase COLON type
+    : modifierList? nameLowercase COLON type
     ;
 
 traitDeclaration
@@ -378,7 +388,7 @@ expr
     | lambdaParams ARROW_WS expr                            # LambdaExpr
     | IF LPAREN expr RPAREN expr ( ELSE expr )?             # IfExpr
     | LET pattern ( COLON typeAndEffect )? EQUAL statement  # LetExpr
-    | annotation* DEF definitionName formalParams ( COLON typeAndEffect )? EQUAL statement # LocalDefExpr
+    | annotationList? DEF definitionName formalParams ( COLON typeAndEffect )? EQUAL statement # LocalDefExpr
     | REGION variableName block?                            # RegionExpr
     | MATCH expr LBRACE matchRule* RBRACE                   # MatchExpr
     | MATCH pattern ARROW_WS expr                           # MatchLambdaExpr
@@ -451,7 +461,7 @@ selectRule
 // `new` there is the literal keyword, not a name, so it cannot go through `definitionName`
 // (jvmMethod) at all. Unlike jvmMethod, the reference does not accept annotations on it.
 newBody
-    : annotation* DEF definitionName formalParams ( COLON typeAndEffect )? EQUAL statement
+    : annotationList? DEF definitionName formalParams ( COLON typeAndEffect )? EQUAL statement
     | DEF NEW LPAREN RPAREN COLON typeAndEffect EQUAL statement
     | nameLowercase EQUAL expr COMMA?
     ;

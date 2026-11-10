@@ -8,7 +8,7 @@ Constraints such as duplicate modifiers, non-linear patterns and unknown annotat
 parse here and are rejected by a later validation pass, mirroring how the reference
 compiler separates `Parser2` from `Weeder2`.
 
-Parser rules: 88 · lexer rules: 134
+Parser rules: 90 · lexer rules: 134
 
 ## Parser rules
 
@@ -81,7 +81,23 @@ declaration
 
 ```antlr
 declPrefix
-    : annotation* modifier*
+    : annotationList? modifierList?
+    ;
+```
+
+### `annotationList`
+
+```antlr
+annotationList
+    : annotation+
+    ;
+```
+
+### `modifierList`
+
+```antlr
+modifierList
+    : modifier+
     ;
 ```
 
@@ -142,7 +158,7 @@ structDeclaration
 
 ```antlr
 structField
-    : modifier* nameLowercase COLON type
+    : modifierList? nameLowercase COLON type
     ;
 ```
 
@@ -562,7 +578,7 @@ selectRule
 
 ```antlr
 newBody
-    : annotation* DEF definitionName formalParams ( COLON typeAndEffect )? EQUAL statement
+    : annotationList? DEF definitionName formalParams ( COLON typeAndEffect )? EQUAL statement
     | DEF NEW LPAREN RPAREN COLON typeAndEffect EQUAL statement
     | nameLowercase EQUAL expr COMMA?
     ;

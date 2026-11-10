@@ -57,6 +57,7 @@
     "UserOpExpr": "Expr.Binary",
     "XorType": "Type.Binary",
     "aliasDeclaration": "Decl.TypeAlias",
+    "annotationList": "AnnotationList",
     "argumentList": "ArgumentList",
     "assocTypeDeclaration": "Decl.AssociatedTypeSig",
     "associatedTypeDefinition": "Decl.AssociatedTypeDef",
@@ -86,6 +87,7 @@
     "literalExpression": "Expr.Literal",
     "matchRule": "Expr.MatchRuleFragment",
     "modDeclaration": "Decl.Module",
+    "modifierList": "ModifierList",
     "nameLowercase": "Ident",
     "nameMath": "Ident",
     "nameUppercase": "Ident",
@@ -213,15 +215,9 @@
     "EffectAnnotatedType": "Flattened, not mapped: the reference has no node for `T \\ ef` and places the type and the effect side by side in the parent (Decl.Def, the cast forms). An arrow with an effect is the exception -- the reference folds the effect into the arrow`s Type.Binary -- which this flattening does not reproduce.",
     "variableType": "A lone lowercase token is Type.Variable; qualified and uppercase names retain their identifier children.",
     "recordRowType": "Parser2 dispatches empty parentheses, a leading bar, and a leading field assignment to Type.RecordRow; other parenthesized types are Type.Tuple.",
-    "DebugPrimary": "Flix 0.79 retains its Expr.Expr wrapper around the interpolated string; preserve that outer debug marker shape instead of collapsing it."
+    "DebugPrimary": "Flix 0.79 retains its Expr.Expr wrapper around the interpolated string; preserve that outer debug marker shape instead of collapsing it.",
+    "annotationList": "Optional nonempty annotations are explicit list nodes; absent lists create no node. Annotation names remain unconstrained parser input.",
+    "modifierList": "Optional nonempty modifiers are explicit list nodes. Individual modifier tokens remain unprojected, so a present list stays even when its ignored modifier children disappear."
   },
-  "elide": [
-    "AnnotationList",
-    "Expr.Expr",
-    "Expr.Statement",
-    "ModifierList",
-    "Pattern.Pattern",
-    "QName",
-    "UsesOrImports.UseOrImportList"
-  ]
+  "elide": []
 }
