@@ -72,11 +72,11 @@ its scratch map removes only the retired canonical `Decl.Law` and `CommentList` 
 | 166 / syntax migration | 1207 / 2412 | 50% | 135 | 90% | 65 |
 | 135 common paths / original | 792 / 2010 | 39% | 111 | 88% | 77 |
 | 135 common paths / syntax migration | 892 / 2010 | 44% | 122 | 88% | 50 |
-| 166 / structure port | 1436 / 2412 | 60% | 133 | 92% | 60 |
-| 135 common paths / structure port | 1090 / 2010 | 54% | 123 | 90% | 46 |
+| 166 / structure port | 1574 / 2412 | 65% | 108 | 94% | 48 |
+| 135 common paths / structure port | 1223 / 2010 | 61% | 102 | 92% | 31 |
 
-Both fixed sets now gate independently: structural limits 60 and 46, canonical-depth
-floors 60% and 54%, and walk-depth floors 92% and 90%. Denominators 2412 and 2010
+Both fixed sets now gate independently: structural limits 48 and 31, canonical-depth
+floors 65% and 61%, and walk-depth floors 94% and 92%. Denominators 2412 and 2010
 are bound separately, preventing denominator shrinkage from masquerading as improvement.
 `conformance/legacy-fixture-paths.json` records all 135 surviving paths and the one
 retired trait-law fixture out of the original 136, including its replacement.
@@ -86,7 +86,8 @@ retired trait-law fixture out of the original 136, including its replacement.
 
 Labelled expression alternatives retain call roles, argument lists and synthetic
 operator groups, including math-name and backtick operators. The projection retains
-concrete literal/Unit nodes, type variables, schema forms,
+concrete literal/Unit nodes, type applications, tuples, operators, constants,
+type variables, record rows and schema forms,
 enum payloads, declaration roles and grouped uses/imports. Comments are reconstructed
 from native token positions. Leading docs attach to the outermost documentable node
 starting at the next token; same-line trailing and orphan docs remain plain comments.
@@ -94,11 +95,14 @@ Enum commas remain outside the documentable case boundary. Multiline, CRLF and E
 positions follow native token positions and code points.
 
 The inherited canonical `elide` classes remain `AnnotationList`, `Expr.Expr`,
-`Expr.Statement`, `ModifierList`, `Pattern.Pattern`, `QName`, `Type.Apply` and
+`Expr.Statement`, `ModifierList`, `Pattern.Pattern`, `QName` and
 `UsesOrImports.UseOrImportList`; empty/singular occurrences collapse, branching ones
 remain. Removed `CommentList` is retired vocabulary, not a newly hidden comment class.
 The raw `useList` follows the same empty/singular policy as its canonical counterpart.
-The full pre-elision canonical denominator remains binding.
+Type applications are retained; simple types use a separate transparent alternative.
+Type/effect grouping rules flatten without adding a canonical wrapper. Empty braces
+are an effect set; empty/field/tail-only parentheses are record rows, following
+`Parser2.scala`'s dispatch. The full pre-elision canonical denominator remains binding.
 
 Recovery agreement remains N/A: no recovery marker vocabulary is declared.
 Diagnostic agreement remains N/A: projected diagnostic arrays remain empty.

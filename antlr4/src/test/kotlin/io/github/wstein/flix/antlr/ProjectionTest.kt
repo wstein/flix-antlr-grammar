@@ -113,6 +113,54 @@ class ProjectionTest {
     }
 
     @Test
+    fun `type alternatives distinguish simple application tuple and constants`() {
+        val root = projected("type alias T = (Int32, Bool)\ntype alias A = List[Int32]\ntype alias U = Univ")
+        val tuple = find(root, "TupleType")
+        assertEquals(listOf("recordFieldOrType", "recordFieldOrType"), tuple.children.map { it.kind })
+        val application = find(root, "ApplyType")
+        assertEquals(listOf("QNameType", "typeArgs"), application.children.map { it.kind })
+        assertEquals("List", application.children[0].start.text)
+        val constant = find(root, "UnivType")
+        assertTrue(constant.children.isEmpty())
+        assertEquals("Univ", constant.start.text)
+        assertTrue(descendants(root).any { it.kind == "SimpleType" })
+    }
+
+    @Test
+    fun `empty tail-only and field record rows retain their own role`() {
+        for (source in listOf(
+            "type alias T = ()",
+            "type alias T[r] = (| Rows[r])",
+            "type alias T[r] = (x = Int32 | Rows[r])",
+        )) {
+            val row = find(projected(source), "recordRowType")
+            assertEquals("(", row.start.text)
+            assertEquals(")", row.stop.text)
+        }
+        assertEquals("TupleType", find(projected("type alias T = (Int32, Bool)"), "TupleType").kind)
+    }
+
+    @Test
+    fun `empty braces in type position are an effect set`() {
+        val empty = find(projected("type alias T = {}"), "EffectSetType")
+        assertTrue(empty.children.isEmpty())
+        assertEquals("{", empty.start.text)
+        assertEquals("}", empty.stop.text)
+    }
+
+    @Test
+    fun `type operators retain their operand order and native operator span`() {
+        val source = "type alias T = not a and b"
+        val binary = find(projected(source), "AndType")
+        assertEquals(listOf("UnaryType", "operator", "SimpleType"), binary.children.map { it.kind })
+        assertEquals("and", binary.children[1].start.text)
+        assertEquals(source.indexOf("and"), binary.children[1].start.charPositionInLine)
+        val unary = binary.children[0]
+        assertEquals(listOf("operator", "SimpleType"), unary.children.map { it.kind })
+        assertEquals("not", unary.children[0].start.text)
+    }
+
+    @Test
     fun `emits no token leaves`() {
         // Comment groups do not turn this rule-only projection into a token stream.
         // Ordinary terminals and hidden whitespace remain absent, so token accounting is N/A.

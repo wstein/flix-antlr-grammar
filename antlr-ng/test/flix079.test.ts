@@ -25,6 +25,29 @@ describe("Flix 0.79 syntax", () => {
             expect(parser.numberOfSyntaxErrors).toBe(0);
         });
     }
+    it("preserves type boundaries and rejects missing delimiters and trailing argument separators", () => {
+        const positive = [
+            "type alias T = {}",
+            "type alias T = {|}",
+            "type alias T[r] = {| r}",
+            "type alias T[r] = {x = Int32 | Rows[r]}",
+            "type alias T = ()",
+            "type alias T[r] = (x = Int32 | Rows[r])",
+            "type alias T[r] = (| Rows[r])",
+            "type alias T = (Int32, Bool)",
+        ];
+        const negative = [
+            "type alias T[r] = {| r",
+            "type alias T = {",
+            "def f(): Unit = super(1,)",
+        ];
+        for (const source of [...positive, ...negative]) {
+            const parser = new FlixParser(new CommonTokenStream(new FlixLexer(CharStream.fromString(source))));
+            parser.removeErrorListeners();
+            parser.compilationUnit();
+            expect(parser.numberOfSyntaxErrors === 0, source).toBe(positive.includes(source));
+        }
+    });
     it("has exactly the pinned 82 keywords", () => {
         const actual = FlixLexer.literalNames.filter((s): s is string => Boolean(s))
             .map(s => s.slice(1, -1)).filter(s => /^[a-zA-Z][a-zA-Z0-9_#*]+$/.test(s));

@@ -1,9 +1,9 @@
 {
   "note": "Immutable Flix 0.79 inputs. Structure ratchets and exact remaining identities are binding. New walk-depth gates preserve the historical measured 88% using its definition: compared/(compared+unmapped), half-up rounded percent, separately on the full and surviving legacy fixture sets. The old shell gate enforced no depth floor. Schema-9 canonical depth is an additional new gate with a denominator fixed to the complete reference tree before consumer elision. Neither percentage means language coverage. See docs/CONFORMANCE.md for definitions and same-runner paired measurements.",
-  "divergences": 60,
+  "divergences": 48,
   "recoveryDivergences": 0,
-  "depthFloor": 60,
-  "legacyWalkDepthFloor": 92,
+  "depthFloor": 65,
+  "legacyWalkDepthFloor": 94,
   "measuredAt": {
     "flixAntlrGrammar": "HEAD",
     "flixSpecArtifact": "0.79.0-20261109.125843-3",
@@ -20,10 +20,10 @@
     "runnerSha256": "989d4117462ddd7b3a5d8de57e21e0ca5c82f121e9e5d2fdc239c7ccbfa0f1ed"
   },
   "legacyFixtureSet": {
-    "divergences": 46,
+    "divergences": 31,
     "recoveryDivergences": 0,
-    "depthFloor": 54,
-    "legacyWalkDepthFloor": 90,
+    "depthFloor": 61,
+    "legacyWalkDepthFloor": 92,
     "measuredAt": {
       "reportSchemaVersion": 9,
       "fixtureRevision": "2028e3a14c3dac6ca9327d2350dcd9bdc284e27880e5e0b7f71184170b372175",
@@ -43,13 +43,13 @@
   "lanes": {
     "oracle_conformance": {
       "verdict": "pass",
-      "fixturesAgreeing": 133,
+      "fixturesAgreeing": 139,
       "fixturesCompared": 166,
-      "divergenceCount": 60,
-      "nodesCompared": 1436,
+      "divergenceCount": 48,
+      "nodesCompared": 1574,
       "nodesExpected": 2412,
-      "nodesUnmapped": 133,
-      "depthPercent": 60
+      "nodesUnmapped": 108,
+      "depthPercent": 65
     },
     "recovery_conformance": {
       "verdict": "not-applicable",

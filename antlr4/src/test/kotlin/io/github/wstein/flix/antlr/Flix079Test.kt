@@ -66,6 +66,33 @@ class Flix079Test {
     }
 
     @Test
+    fun typeBoundariesFollowParser2() {
+        val positive =
+            listOf(
+                "type alias T = {}",
+                "type alias T = {|}",
+                "type alias T[r] = {| r}",
+                "type alias T[r] = {x = Int32 | Rows[r]}",
+                "type alias T = ()",
+                "type alias T[r] = (x = Int32 | Rows[r])",
+                "type alias T[r] = (| Rows[r])",
+                "type alias T = (Int32, Bool)",
+            )
+        val negative =
+            listOf(
+                "type alias T[r] = {| r",
+                "type alias T = {",
+                "def f(): Unit = super(1,)",
+            )
+        for (source in positive + negative) {
+            val parser = FlixParser(CommonTokenStream(FlixLexer(CharStreams.fromString(source))))
+            parser.removeErrorListeners()
+            parser.compilationUnit()
+            assertEquals(source in positive, parser.numberOfSyntaxErrors == 0, source)
+        }
+    }
+
+    @Test
     fun tightConsHasItsOwnToken() {
         for ((source, expected) in listOf(
             "a::b" to FlixLexer.COLON_COLON_TIGHT,
