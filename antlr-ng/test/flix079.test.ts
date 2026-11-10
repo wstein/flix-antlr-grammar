@@ -7,6 +7,7 @@ import { FlixParser } from "../src/generated/FlixParser.js";
 describe("Flix 0.79 syntax", () => {
     for (const source of [
         "def law(lawful: Int32): Int32 = lawful",
+        "/// docs\n@Deprecated\n@Unknown\npub pub def f(): Unit = ()",
         "def f(): Unit = super(x = 1)",
         "def f(): Unit = super.method(x = 1)",
         "use flixball::Game.Board",

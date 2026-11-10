@@ -1,48 +1,8 @@
 [
   {
     "lane": "oracle_conformance",
-    "fixture": "declarations__annotations-not-used-by-the-corpus.json",
-    "path": "fixtures/positive/declarations__annotations-not-used-by-the-corpus.flix.Root[2]",
-    "expected": "5 children",
-    "actual": "4 children",
-    "reason": "arity"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "declarations__annotations-not-used-by-the-corpus.json",
-    "path": "fixtures/positive/declarations__annotations-not-used-by-the-corpus.flix.Root[2].Decl.Def[0]",
-    "expected": "AnnotationList",
-    "actual": "Ident",
-    "reason": "kind"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "declarations__annotations-not-used-by-the-corpus.json",
-    "path": "fixtures/positive/declarations__annotations-not-used-by-the-corpus.flix.Root[2].Decl.Def[1]",
-    "expected": "Ident",
-    "actual": "ParameterList",
-    "reason": "kind"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "declarations__annotations-not-used-by-the-corpus.json",
-    "path": "fixtures/positive/declarations__annotations-not-used-by-the-corpus.flix.Root[2].Decl.Def[2]",
-    "expected": "ParameterList",
-    "actual": "Ident",
-    "reason": "kind"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "declarations__annotations-not-used-by-the-corpus.json",
-    "path": "fixtures/positive/declarations__annotations-not-used-by-the-corpus.flix.Root[2].Decl.Def[3]",
-    "expected": "Ident",
-    "actual": "Expr.Literal",
-    "reason": "kind"
-  },
-  {
-    "lane": "oracle_conformance",
     "fixture": "declarations__function-with-type-parameters-and-constraints.json",
-    "path": "fixtures/positive/declarations__function-with-type-parameters-and-constraints.flix.Root[0].Decl.Def[1].ParameterList[0]",
+    "path": "fixtures/positive/declarations__function-with-type-parameters-and-constraints.flix.Root[0].Decl.Def[2].ParameterList[0]",
     "expected": "2 children",
     "actual": "3 children",
     "reason": "arity"
@@ -50,34 +10,10 @@
   {
     "lane": "oracle_conformance",
     "fixture": "declarations__function-with-type-parameters-and-constraints.json",
-    "path": "fixtures/positive/declarations__function-with-type-parameters-and-constraints.flix.Root[0].Decl.Def[1].ParameterList[0].Parameter[1]",
+    "path": "fixtures/positive/declarations__function-with-type-parameters-and-constraints.flix.Root[0].Decl.Def[2].ParameterList[0].Parameter[1]",
     "expected": "4 children",
     "actual": "3 children",
     "reason": "arity"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "declarations__multiple-prefixes.json",
-    "path": "fixtures/positive/declarations__multiple-prefixes.flix.Root[0]",
-    "expected": "4 children",
-    "actual": "2 children",
-    "reason": "arity"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "declarations__multiple-prefixes.json",
-    "path": "fixtures/positive/declarations__multiple-prefixes.flix.Root[0].Decl.Trait[0]",
-    "expected": "AnnotationList",
-    "actual": "Ident",
-    "reason": "kind"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "declarations__multiple-prefixes.json",
-    "path": "fixtures/positive/declarations__multiple-prefixes.flix.Root[0].Decl.Trait[1]",
-    "expected": "ModifierList",
-    "actual": "TypeParameterList",
-    "reason": "kind"
   },
   {
     "lane": "oracle_conformance",
@@ -115,14 +51,14 @@
     "lane": "oracle_conformance",
     "fixture": "declarations__trait-and-instance-with-an-operator-signature.json",
     "path": "fixtures/negative/declarations__trait-and-instance-with-an-operator-signature.flix.Root[0].Decl.Trait[2]",
-    "expected": "2 children",
-    "actual": "3 children",
+    "expected": "3 children",
+    "actual": "4 children",
     "reason": "arity"
   },
   {
     "lane": "oracle_conformance",
     "fixture": "declarations__trait-and-instance-with-an-operator-signature.json",
-    "path": "fixtures/negative/declarations__trait-and-instance-with-an-operator-signature.flix.Root[0].Decl.Trait[2].Decl.Signature[1]",
+    "path": "fixtures/negative/declarations__trait-and-instance-with-an-operator-signature.flix.Root[0].Decl.Trait[2].Decl.Signature[2]",
     "expected": "0 children",
     "actual": "2 children",
     "reason": "arity"

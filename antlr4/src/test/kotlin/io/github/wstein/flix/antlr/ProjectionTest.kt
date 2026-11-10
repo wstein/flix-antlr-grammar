@@ -196,6 +196,56 @@ class ProjectionTest {
     }
 
     @Test
+    fun `nonempty annotation and modifier lists retain order and doc ownership`() {
+        val root = projected("/// docs\n@Deprecated\n@Unknown\npub pub def f(): Unit = ()")
+        val definition = find(root, "defDeclaration")
+        assertEquals("docComment", definition.children.first().kind)
+        assertEquals(
+            1,
+            definition.children
+                .first()
+                .start.line,
+        )
+        val prefix = find(root, "declPrefix")
+        assertEquals(listOf("annotationList", "modifierList"), prefix.children.map { it.kind })
+        assertEquals(listOf("annotation", "annotation"), prefix.children[0].children.map { it.kind })
+        assertEquals(listOf("modifier", "modifier"), prefix.children[1].children.map { it.kind })
+        assertEquals(listOf("@Deprecated", "@Unknown"), prefix.children[0].children.map { it.start.text })
+        assertEquals(listOf("pub", "pub"), prefix.children[1].children.map { it.start.text })
+    }
+
+    @Test
+    fun `absent declaration lists leave no empty list nodes`() {
+        for ((source, kinds) in listOf(
+            "def f(): Unit = ()" to emptyList(),
+            "@Unknown def f(): Unit = ()" to listOf("annotationList"),
+            "pub def f(): Unit = ()" to listOf("modifierList"),
+        )) {
+            val prefix = find(projected(source), "declPrefix")
+            assertEquals(kinds, prefix.children.map { it.kind }, source)
+            assertTrue(prefix.children.all { it.children.isNotEmpty() }, source)
+        }
+    }
+
+    @Test
+    fun `struct field modifiers and local method annotations also keep their lists`() {
+        val field = find(projected("struct S[r] { mut value: Int32 }"), "structField")
+        assertEquals(listOf("modifierList", "nameLowercase", "SimpleType"), field.children.map { it.kind })
+        assertEquals(
+            "mut",
+            field.children
+                .first()
+                .children
+                .single()
+                .start.text,
+        )
+        val local = find(projected("def f(): Unit = { @Unknown def g(): Unit = (); g() }"), "LocalDefExpr")
+        assertEquals("annotationList", local.children.first().kind)
+        val method = find(projected("def f(): Unit = new Foo { @Unknown def g(): Unit = () }"), "newBody")
+        assertEquals("annotationList", method.children.first().kind)
+    }
+
+    @Test
     fun `emits no token leaves`() {
         // Comment groups do not turn this rule-only projection into a token stream.
         // Ordinary terminals and hidden whitespace remain absent, so token accounting is N/A.

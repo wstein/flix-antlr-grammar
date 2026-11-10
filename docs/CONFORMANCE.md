@@ -65,6 +65,9 @@ Both percentages round half up, matching the runner; neither is language coverag
 The following paired runs use the same published 0.79 data, schema-9 runner and
 fixture identities on both sides. The original grammar is commit `5a1853430f05d226f2c46d18bbdbe8d3e55d8955`;
 its scratch map removes only the retired canonical `Decl.Law` and `CommentList` targets.
+The syntax-migration rows reproduce current Main
+`3e43a8427dae288a7bed94d7f2c8aa94bac50ca7`; the structure-port rows use the
+same schema-9 runner, published fixture identities and canonical denominators.
 
 | Fixed set / parser | Compared / canonical nodes | Canonical depth | Unmapped | Walk depth | Divergences |
 | --- | --- | --- | --- | --- | --- |
@@ -72,11 +75,11 @@ its scratch map removes only the retired canonical `Decl.Law` and `CommentList` 
 | 166 / syntax migration | 1207 / 2412 | 50% | 135 | 90% | 65 |
 | 135 common paths / original | 792 / 2010 | 39% | 111 | 88% | 77 |
 | 135 common paths / syntax migration | 892 / 2010 | 44% | 122 | 88% | 50 |
-| 166 / structure port | 1588 / 2412 | 66% | 103 | 94% | 48 |
-| 135 common paths / structure port | 1234 / 2010 | 61% | 98 | 93% | 31 |
+| 166 / structure port | 1609 / 2412 | 67% | 103 | 94% | 40 |
+| 135 common paths / structure port | 1244 / 2010 | 62% | 98 | 93% | 31 |
 
-Both fixed sets now gate independently: structural limits 48 and 31, canonical-depth
-floors 66% and 61%, and walk-depth floors 94% and 93%. Denominators 2412 and 2010
+Both fixed sets now gate independently: structural limits 40 and 31, canonical-depth
+floors 67% and 62%, and walk-depth floors 94% and 93%. Denominators 2412 and 2010
 are bound separately, preventing denominator shrinkage from masquerading as improvement.
 `conformance/legacy-fixture-paths.json` records all 135 surviving paths and the one
 retired trait-law fixture out of the original 136, including its replacement.
@@ -95,12 +98,14 @@ starting at the next token; same-line trailing and orphan docs remain plain comm
 Enum commas remain outside the documentable case boundary. Multiline, CRLF and EOF
 positions follow native token positions and code points.
 
-The inherited canonical `elide` classes remain `AnnotationList`, `Expr.Expr`,
-`Expr.Statement`, `ModifierList`, `Pattern.Pattern`, `QName` and
-`UsesOrImports.UseOrImportList`; empty/singular occurrences collapse, branching ones
-remain. Removed `CommentList` is retired vocabulary, not a newly hidden comment class.
-The raw `useList` follows the same empty/singular policy as its canonical counterpart.
-Type applications are retained; simple types use a separate transparent alternative.
+The consumer has no additional canonical `elide` classes. The pinned transparency
+contract handles reference wrappers; raw `useList` retains Main's empty/singular
+policy, preserving a real branching list. Removing the five remaining inherited
+consumer overrides produces identical oracle lanes on both fixed sets. Removed
+`CommentList` is retired vocabulary, not a newly hidden comment class.
+Nonempty annotation/modifier lists are retained, including fields, local definitions
+and JVM methods. Absent lists create no node; individual modifier tokens remain
+unprojected. Type applications are retained; simple types use a separate transparent alternative.
 Type/effect grouping rules flatten without adding a canonical wrapper. Empty braces
 are an effect set; empty/field/tail-only parentheses are record rows, following
 `Parser2.scala`'s dispatch. The full pre-elision canonical denominator remains binding.
