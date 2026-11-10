@@ -30,6 +30,42 @@ class Flix079Test {
     }
 
     @Test
+    fun namedArgumentsInSuperCalls() {
+        for (call in listOf("super(x = 1)", "super.method(x = 1)")) {
+            val source = "def f(): Unit = $call"
+            val parser = FlixParser(CommonTokenStream(FlixLexer(CharStreams.fromString(source))))
+            parser.removeErrorListeners()
+            parser.compilationUnit()
+            assertEquals(0, parser.numberOfSyntaxErrors, source)
+        }
+    }
+
+    @Test
+    fun callAlternativesKeepTheirRolesAndArgumentLists() {
+        val calls =
+            listOf(
+                "f(x = 1)" to "ApplyExprContext",
+                "obj.method(x = 1)" to "InvokeMethodExprContext",
+                "obj.field" to "GetFieldExprContext",
+                "new Foo(x = 1)" to "InvokeConstructorExprContext",
+                "super.method(x = 1)" to "InvokeSuperMethodExprContext",
+                "super(x = 1)" to "InvokeSuperConstructorExprContext",
+                "xvar Foo(x = 1)" to "ExtTagExprContext",
+            )
+        for ((source, role) in calls) {
+            val parser = FlixParser(CommonTokenStream(FlixLexer(CharStreams.fromString(source))))
+            val expression = parser.expr()
+            assertEquals(0, parser.numberOfSyntaxErrors, source)
+            assertEquals(role, expression.javaClass.simpleName, source)
+            val argumentLists =
+                (0 until expression.childCount).count {
+                    expression.getChild(it) is FlixParser.ArgumentListContext
+                }
+            assertEquals(if (role == "GetFieldExprContext") 0 else 1, argumentLists, source)
+        }
+    }
+
+    @Test
     fun tightConsHasItsOwnToken() {
         for ((source, expected) in listOf(
             "a::b" to FlixLexer.COLON_COLON_TIGHT,

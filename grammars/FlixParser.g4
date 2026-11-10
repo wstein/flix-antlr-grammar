@@ -352,9 +352,9 @@ statement
 
 expr
     // --- postfix chain, tighter than every operator ---------------------
-    : expr LPAREN ( argument ( COMMA argument )* )? RPAREN  # ApplyExpr
-    | expr dot nameLowercase
-      ( LPAREN ( argument ( COMMA argument )* )? RPAREN )?  # FieldOrMethodExpr
+    : expr argumentList                                     # ApplyExpr
+    | expr dot nameLowercase argumentList                   # InvokeMethodExpr
+    | expr dot nameLowercase                                # GetFieldExpr
     | expr HASH nameLowercase                               # RecordSelectExpr
     | expr ARROW_TIGHT nameLowercase ( EQUAL expr )?        # StructFieldExpr
     | expr LBRACK expr RBRACK ( EQUAL expr )?               # IndexExpr
@@ -385,7 +385,7 @@ expr
     | EMATCH pattern ARROW_WS expr                          # EMatchLambdaExpr
     | EMATCH expr LBRACE matchRule* RBRACE                  # EMatchExpr
     | ( CHOOSE | CHOOSE_STAR ) expr LBRACE matchRule* RBRACE # ChooseExpr
-    | XVAR qname ( LPAREN ( expr ( COMMA expr )* )? RPAREN )? # ExtTagExpr
+    | XVAR qname argumentList?                              # ExtTagExpr
     | ( OPEN_VARIANT | OPEN_VARIANT_AS ) qname expr?        # OpenVariantExpr
     | FOREACH forFragments expr                             # ForeachExpr
     | ( FORA | FORM ) forFragments YIELD expr               # ForYieldExpr
@@ -397,11 +397,13 @@ expr
     | SPAWN expr ( AT expr )?                               # SpawnExpr
     | PAR LPAREN parFragment ( SEMI parFragment )* RPAREN YIELD expr # ParYieldExpr
     | SELECT LBRACE selectRule* RBRACE                      # SelectExpr
-    | ( CHECKED_CAST | CHECKED_ECAST ) LPAREN expr RPAREN   # CheckedCastExpr
+    | CHECKED_CAST LPAREN expr RPAREN                       # CheckedCastExpr
+    | CHECKED_ECAST LPAREN expr RPAREN                      # CheckedEffectCastExpr
     | UNCHECKED_CAST LPAREN expr AS typeAndEffect RPAREN    # UncheckedCastExpr
-    | NEW qname typeArgs? ( AT expr )?
-      ( LBRACE newBody* RBRACE | LPAREN ( expr ( COMMA expr )* )? RPAREN )? # NewExpr
-    | SUPER ( dot nameLowercase )? LPAREN ( expr ( COMMA expr )* )? RPAREN # SuperExpr
+    | NEW qname typeArgs? ( AT expr )? argumentList         # InvokeConstructorExpr
+    | NEW qname typeArgs? ( AT expr )? ( LBRACE newBody* RBRACE )? # NewExpr
+    | SUPER dot nameLowercase argumentList                  # InvokeSuperMethodExpr
+    | SUPER argumentList                                    # InvokeSuperConstructorExpr
     | useClause SEMI expr                                   # UseExpr
     | fixpointExpr                                          # FixpointExpression
     | primaryExpr                                           # PrimaryExpression
@@ -410,6 +412,13 @@ expr
 lambdaParams
     : formalParams
     | variableName
+    ;
+
+// Parser2's arguments(), used alike by application, method and constructor calls, xvar and
+// super -- so every one of them takes named arguments, as it does here. A trailing comma is a
+// Parser2 error (TrailingSeparator) and a syntax error here.
+argumentList
+    : LPAREN ( argument ( COMMA argument )* )? RPAREN
     ;
 
 argument
@@ -523,31 +532,28 @@ predicateAtom
 // =====================================================================
 
 primaryExpr
-    : qname
-    | INT_LITERAL
-    | FLOAT_LITERAL
-    | HEX_LITERAL
-    | CHAR_LITERAL
-    | REGEX_LITERAL
-    | stringLiteral
-    | DEBUG_INTERPOLATOR stringLiteral
-    | HOLE_ANONYMOUS
-    | HOLE_NAMED
-    | HOLE_VARIABLE
-    | BUILT_IN
-    | TRUE
-    | FALSE
-    | NULL
-    | STATIC_UPPER
-    | STATIC_LOWER
-    | UNDERSCORE
-    | LPAREN ( argument ( COLON typeAndEffect )? ( COMMA argument )* )? RPAREN
-    | LPAREN genericOperator RPAREN
-    | constraintSet
-    | HASH_LPAREN ( predicateParam ( COMMA predicateParam )* )? RPAREN ARROW_WS expr
-    | collectionLiteral
-    | recordOperation
-    | block
+    : qname                                                      # NamePrimary
+    | ( INT_LITERAL | FLOAT_LITERAL | HEX_LITERAL | CHAR_LITERAL
+      | REGEX_LITERAL | TRUE | FALSE | NULL )                    # LiteralPrimary
+    | plainString                                                # StringPrimary
+    | interpolatedString                                         # InterpolationPrimary
+    | DEBUG_INTERPOLATOR stringLiteral                           # DebugPrimary
+    | HOLE_ANONYMOUS                                             # HolePrimary
+    | HOLE_NAMED                                                 # NamedHolePrimary
+    | HOLE_VARIABLE                                              # HoleVariablePrimary
+    | BUILT_IN                                                   # IntrinsicPrimary
+    | ( STATIC_UPPER | STATIC_LOWER )                            # StaticPrimary
+    | UNDERSCORE                                                 # WildcardPrimary
+    | LPAREN RPAREN                                              # UnitPrimary
+    | LPAREN argument RPAREN                                     # ParenPrimary
+    | LPAREN argument COLON typeAndEffect RPAREN                 # AscribePrimary
+    | LPAREN argument ( COLON typeAndEffect )? ( COMMA argument )+ RPAREN # TuplePrimary
+    | LPAREN genericOperator RPAREN                              # OperatorSectionPrimary
+    | constraintSet                                              # ConstraintSetPrimary
+    | HASH_LPAREN ( predicateParam ( COMMA predicateParam )* )? RPAREN ARROW_WS expr # PredicateLambdaPrimary
+    | collectionLiteral                                          # CollectionPrimary
+    | recordOperation                                            # RecordPrimary
+    | block                                                      # BlockPrimary
     ;
 
 predicateParam
@@ -577,7 +583,17 @@ recordOpField
     ;
 
 stringLiteral
-    : STRING_START ( STRING_CONTENT | INTERPOLATION_START expr INTERPOLATION_END )* STRING_END
+    : plainString
+    | interpolatedString
+    ;
+
+plainString
+    : STRING_START STRING_CONTENT* STRING_END
+    ;
+
+interpolatedString
+    : STRING_START STRING_CONTENT* INTERPOLATION_START expr INTERPOLATION_END
+      ( STRING_CONTENT | INTERPOLATION_START expr INTERPOLATION_END )* STRING_END
     ;
 
 // =====================================================================

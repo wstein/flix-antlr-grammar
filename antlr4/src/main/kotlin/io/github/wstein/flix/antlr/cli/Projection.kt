@@ -9,6 +9,7 @@ import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.RecognitionException
 import org.antlr.v4.runtime.Recognizer
 import org.antlr.v4.runtime.Token
+import org.antlr.v4.runtime.tree.TerminalNode
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -52,7 +53,7 @@ object Projection {
         return sb.toString()
     }
 
-    private data class Node(
+    internal data class Node(
         val kind: String,
         val start: Token,
         val stop: Token,
@@ -77,6 +78,90 @@ object Projection {
         return line to col
     }
 
+    /**
+     * The node kind the projection map is keyed by.
+     *
+     * A labelled alternative (`# AddExpr`) is a strict subclass of its rule's context class, and its
+     * label is the distinction the map needs: `ruleIndex` is shared by every alternative of a rule, so
+     * keying on it collapses all labelled alternatives of `expr` into the one string `expr`. An
+     * unlabelled rule's context extends [ParserRuleContext] directly and keeps its camelCase rule
+     * name, which is what every existing key in the map is.
+     */
+    internal fun kindOf(
+        ctx: ParserRuleContext,
+        ruleNames: Array<String>,
+    ): String =
+        if (ctx.javaClass.superclass != ParserRuleContext::class.java) {
+            ctx.javaClass.simpleName.removeSuffix("Context")
+        } else {
+            ruleNames[ctx.ruleIndex]
+        }
+
+    /**
+     * Labels whose operator the reference wraps in an `Operator` node.
+     *
+     * `Expr.Binary` and `Type.Binary` are (lhs, `Operator`, rhs) and the unary kinds are
+     * (`Operator`, operand), but the operator is a bare token here, and tokens are never emitted -- so without a synthetic node
+     * every binary would project with two children against the reference's three. Synthesising it
+     * in the projection keeps the grammar's precedence levels untouched: a shared `binaryOp` rule
+     * would have flattened them.
+     */
+    private val operatorLabels =
+        setOf(
+            "NotExpr",
+            "SignExpr",
+            "LazyForceExpr",
+            "DiscardExpr",
+            "UserOpExpr",
+            "InfixCallExpr",
+            "AngledPlusExpr",
+            "MultExpr",
+            "AddExpr",
+            "ConsExpr",
+            "CompareExpr",
+            "EqualityExpr",
+            "AndExpr",
+            "OrExpr",
+            "InstanceOfExpr",
+            "UnaryType",
+            "AndType",
+            "OrType",
+            "XorType",
+            "EffectIntersectionType",
+            "EffectSumType",
+            "RvAndType",
+            "RvAddSubType",
+            "ArrowType",
+        )
+
+    /** The native kind of a synthesised operator node; the map sends it to `Operator`. */
+    internal const val OPERATOR_KIND = "operator"
+
+    /**
+     * Whether [child] is part of an operator spelling rather than an operand.
+     *
+     * A token always is. So is `nameMath` in `UserOpExpr`, which the reference holds as a
+     * `NameMath` token inside the `Operator`, not as an `Ident`. A rule child between two tokens --
+     * the name in `` a `f` b `` -- is part of the operator too, which is where the reference puts
+     * its `Ident`. A rule child after the last operator token, as in `x instanceof T`, is an operand.
+     */
+    private fun isOperatorPart(
+        ctx: ParserRuleContext,
+        i: Int,
+    ): Boolean {
+        val child = ctx.getChild(i)
+        return child is TerminalNode ||
+            child is FlixParser.NameMathContext ||
+            (
+                child is ParserRuleContext &&
+                    child !is FlixParser.ExprContext &&
+                    i > 0 &&
+                    ctx.getChild(i - 1) is TerminalNode &&
+                    i + 1 < ctx.childCount &&
+                    ctx.getChild(i + 1) is TerminalNode
+            )
+    }
+
     private fun node(
         ctx: ParserRuleContext,
         names: Array<String>,
@@ -84,27 +169,8 @@ object Projection {
         val rule = names[ctx.ruleIndex]
         val kind =
             when {
-                ctx is FlixParser.PrimaryExprContext &&
-                    ctx.start.type in
-                    setOf(
-                        FlixLexer.INT_LITERAL,
-                        FlixLexer.FLOAT_LITERAL,
-                        FlixLexer.HEX_LITERAL,
-                        FlixLexer.CHAR_LITERAL,
-                        FlixLexer.REGEX_LITERAL,
-                        FlixLexer.TRUE,
-                        FlixLexer.FALSE,
-                        FlixLexer.NULL,
-                    )
-                -> "literalExpression"
-                ctx is FlixParser.PrimaryExprContext &&
-                    ctx.stringLiteral() != null &&
-                    ctx.DEBUG_INTERPOLATOR() == null &&
-                    ctx.stringLiteral().INTERPOLATION_START().isEmpty() -> "literalExpression"
-                ctx is FlixParser.PrimaryExprContext &&
-                    ctx.LPAREN() != null &&
-                    ctx.argument().isEmpty() &&
-                    ctx.genericOperator() == null -> "tupleExpression"
+                ctx is FlixParser.LiteralPrimaryContext || ctx is FlixParser.StringPrimaryContext -> "literalExpression"
+                ctx is FlixParser.UnitPrimaryContext -> "tupleExpression"
                 ctx is FlixParser.PrimaryTypeContext &&
                     ctx.start.type == FlixLexer.NAME_LOWERCASE &&
                     ctx.start.tokenIndex == ctx.stop?.tokenIndex -> "variableType"
@@ -119,7 +185,7 @@ object Projection {
                 ctx is FlixParser.AssocTypeDeclarationContext &&
                     ctx.parent is FlixParser.InstanceMemberContext -> "associatedTypeDefinition"
                 ctx is FlixParser.EnumDeclarationContext && ctx.RESTRICTABLE() != null -> "restrictableEnumDeclaration"
-                else -> rule
+                else -> kindOf(ctx, names)
             }
         val documentable =
             rule in
@@ -154,10 +220,42 @@ object Projection {
             }
         return Node(kind, start, stop, documentable = documentable).also { n ->
             // These reference nodes contain tokens directly, which this projection omits.
-            if (kind !in setOf("literalExpression", "variableType")) {
-                for (i in 0 until ctx.childCount) {
-                    val child = ctx.getChild(i)
-                    if (child is ParserRuleContext) n.children += node(child, names)
+            if (kind !in setOf("literalExpression", "variableType", "LiteralPrimary", "StringPrimary")) {
+                var i = 0
+                while (i < ctx.childCount) {
+                    if (kind in operatorLabels && isOperatorPart(ctx, i)) {
+                        var j = i
+                        while (j + 1 < ctx.childCount && isOperatorPart(ctx, j + 1)) j++
+                        val first = ctx.getChild(i)
+                        val last = ctx.getChild(j)
+                        val operatorStart =
+                            if (first is TerminalNode) {
+                                first.symbol
+                            } else {
+                                (first as ParserRuleContext)
+                                    .start
+                            }
+                        val operatorStop =
+                            if (last is TerminalNode) {
+                                last.symbol
+                            } else {
+                                (last as ParserRuleContext).stop
+                                    ?: operatorStart
+                            }
+                        val operator = Node(OPERATOR_KIND, operatorStart, operatorStop)
+                        for (k in i..j) {
+                            val part = ctx.getChild(k)
+                            if (part is ParserRuleContext && part !is FlixParser.NameMathContext) {
+                                operator.children += node(part, names)
+                            }
+                        }
+                        n.children += operator
+                        i = j + 1
+                    } else {
+                        val child = ctx.getChild(i)
+                        if (child is ParserRuleContext) n.children += node(child, names)
+                        i++
+                    }
                 }
             }
             if (ctx is FlixParser.SchemaTermContext && ctx.SEMI() != null && n.children.isNotEmpty()) {
@@ -171,8 +269,12 @@ object Projection {
                     else -> null to null
                 }
             if (payload.first != null && payload.second != null) {
-                val types = n.children.filter { it.kind == "type" }
-                val at = n.children.indexOfFirst { it.kind == "type" }
+                val types =
+                    n.children.filter {
+                        it.start.tokenIndex > payload.first!!.tokenIndex &&
+                            it.stop.tokenIndex < payload.second!!.tokenIndex
+                    }
+                val at = n.children.indexOfFirst { it in types }
                 n.children.removeAll(types.toSet())
                 n.children.add(
                     if (at < 0) n.children.size else at,
@@ -292,6 +394,12 @@ object Projection {
 
     /** Parses one file and returns its projected tree, or null when the parse produced no tree. */
     internal fun project(file: File): String? {
+        val root = projectTree(file) ?: return null
+        return StringBuilder().also { render(root, it) }.toString()
+    }
+
+    /** Keeps the structured projection available to source-level checks before serialization. */
+    internal fun projectTree(file: File): Node? {
         val stream = CharStreams.fromPath(file.toPath())
         val lexer = FlixLexer(stream)
         val tokens = CommonTokenStream(lexer)
@@ -317,12 +425,10 @@ object Projection {
         parser.addErrorListener(quiet)
 
         val tree = parser.compilationUnit() ?: return null
-        val sb = StringBuilder()
         val root = node(tree, parser.ruleNames)
         tokens.fill()
         placeComments(root, tokens.tokens)
-        render(root, sb)
-        return sb.toString()
+        return root
     }
 
     /**
