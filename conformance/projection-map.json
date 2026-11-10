@@ -17,6 +17,7 @@
     "CheckedEffectCastExpr": "Expr.CheckedEffectCast",
     "CompareExpr": "Expr.Binary",
     "ConsExpr": "Expr.Binary",
+    "DebugPrimary": "Expr.Expr",
     "DiscardExpr": "Expr.Unary",
     "EffectIntersectionType": "Type.Binary",
     "EffectSetType": "Type.EffectSet",
@@ -78,6 +79,7 @@
     "importClause": "UsesOrImports.Import",
     "importMany": "UsesOrImports.ImportMany",
     "instanceDeclaration": "Decl.Instance",
+    "interpolatedString": "Expr.StringInterpolation",
     "kind": "Kind",
     "lambdaParams": "ParameterList",
     "latticeTerm": "Predicate.LatticeTerm",
@@ -127,7 +129,6 @@
     "CollectionPrimary",
     "ConsPattern",
     "ConstraintSetPrimary",
-    "DebugPrimary",
     "EMatchExpr",
     "EMatchLambdaExpr",
     "FixpointExpression",
@@ -211,7 +212,8 @@
     "typeAndEffect": "A grammar grouping without a reference node; flatten it so types and effects remain siblings in enclosing declarations and casts.",
     "EffectAnnotatedType": "Flattened, not mapped: the reference has no node for `T \\ ef` and places the type and the effect side by side in the parent (Decl.Def, the cast forms). An arrow with an effect is the exception -- the reference folds the effect into the arrow`s Type.Binary -- which this flattening does not reproduce.",
     "variableType": "A lone lowercase token is Type.Variable; qualified and uppercase names retain their identifier children.",
-    "recordRowType": "Parser2 dispatches empty parentheses, a leading bar, and a leading field assignment to Type.RecordRow; other parenthesized types are Type.Tuple."
+    "recordRowType": "Parser2 dispatches empty parentheses, a leading bar, and a leading field assignment to Type.RecordRow; other parenthesized types are Type.Tuple.",
+    "DebugPrimary": "Flix 0.79 retains its Expr.Expr wrapper around the interpolated string; preserve that outer debug marker shape instead of collapsing it."
   },
   "elide": [
     "AnnotationList",
