@@ -69,12 +69,14 @@ its scratch map removes only the retired canonical `Decl.Law` and `CommentList` 
 | Fixed set / parser | Compared / canonical nodes | Canonical depth | Unmapped | Walk depth | Divergences |
 | --- | --- | --- | --- | --- | --- |
 | 166 / original | 1001 / 2412 | 42% | 127 | 89% | 121 |
-| 166 / migrated | 1207 / 2412 | 50% | 135 | 90% | 65 |
+| 166 / syntax migration | 1207 / 2412 | 50% | 135 | 90% | 65 |
 | 135 common paths / original | 792 / 2010 | 39% | 111 | 88% | 77 |
-| 135 common paths / migrated | 892 / 2010 | 44% | 122 | 88% | 50 |
+| 135 common paths / syntax migration | 892 / 2010 | 44% | 122 | 88% | 50 |
+| 166 / structure port | 1436 / 2412 | 60% | 133 | 92% | 60 |
+| 135 common paths / structure port | 1090 / 2010 | 54% | 123 | 90% | 46 |
 
-Both fixed sets now gate independently: structural limits 65 and 50, canonical-depth
-floors 50% and 44%, and new walk-depth floors 88% each. Denominators 2412 and 2010
+Both fixed sets now gate independently: structural limits 60 and 46, canonical-depth
+floors 60% and 54%, and walk-depth floors 92% and 90%. Denominators 2412 and 2010
 are bound separately, preventing denominator shrinkage from masquerading as improvement.
 `conformance/legacy-fixture-paths.json` records all 135 surviving paths and the one
 retired trait-law fixture out of the original 136, including its replacement.
@@ -82,7 +84,9 @@ retired trait-law fixture out of the original 136, including its replacement.
 
 ## Projection and claim boundaries
 
-The projection retains concrete literal/Unit nodes, type variables, schema forms,
+Labelled expression alternatives retain call roles, argument lists and synthetic
+operator groups, including math-name and backtick operators. The projection retains
+concrete literal/Unit nodes, type variables, schema forms,
 enum payloads, declaration roles and grouped uses/imports. Comments are reconstructed
 from native token positions. Leading docs attach to the outermost documentable node
 starting at the next token; same-line trailing and orphan docs remain plain comments.

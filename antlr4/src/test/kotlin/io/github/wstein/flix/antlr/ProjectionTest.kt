@@ -42,6 +42,76 @@ class ProjectionTest {
         assertTrue(tree.contains("\"kind\":\"defDeclaration\""), "the definition must appear: $tree")
     }
 
+    private fun descendants(node: Projection.Node): List<Projection.Node> =
+        listOf(node) + node.children.flatMap(::descendants)
+
+    private fun projected(source: String): Projection.Node =
+        assertNotNull(Projection.projectTree(write("structure.flix", source)))
+
+    private fun find(
+        node: Projection.Node,
+        kind: String,
+    ): Projection.Node = assertNotNull(descendants(node).find { it.kind == kind }, "$kind missing from $node")
+
+    @Test
+    fun `labelled alternatives are keyed by label, unlabelled rules by rule name`() {
+        val root = projected("def f(x: Int32): Int32 = x + 1")
+        val declaration =
+            root.children
+                .single()
+                .children
+                .single()
+        assertEquals("defDeclaration", declaration.kind)
+        assertEquals("AddExpr", find(declaration, "statement").children.single().kind)
+    }
+
+    @Test
+    fun `a binary expression carries a synthesised operator between its operands`() {
+        val add = find(projected("def f(x: Int32): Int32 = x + 1"), "AddExpr")
+        assertEquals(listOf("PrimaryExpression", "operator", "PrimaryExpression"), add.children.map { it.kind })
+        assertEquals(listOf("x", "+", "1"), add.children.map { it.start.text })
+        assertEquals("+", add.children[1].stop.text)
+        assertTrue(add.children[1].children.isEmpty())
+    }
+
+    @Test
+    fun `a math-name operator is the operator, not an operand name`() {
+        val source = "def f(a: Int32, b: Int32): Bool = a ⊆ b"
+        val binary = find(projected(source), "UserOpExpr")
+        assertEquals(listOf("PrimaryExpression", "operator", "PrimaryExpression"), binary.children.map { it.kind })
+        val operator = binary.children[1]
+        assertEquals("⊆", operator.start.text)
+        assertEquals(source.indexOf("⊆"), operator.start.charPositionInLine)
+        assertTrue(operator.children.isEmpty())
+        assertFalse(descendants(binary).any { it.kind == "nameMath" })
+    }
+
+    @Test
+    fun `backtick infix operator retains its qualified identifier`() {
+        val source = "def f(): Int32 = a `Ops.combine` b"
+        val binary = find(projected(source), "InfixCallExpr")
+        assertEquals(listOf("PrimaryExpression", "operator", "PrimaryExpression"), binary.children.map { it.kind })
+        val operator = binary.children[1]
+        assertEquals("`", operator.start.text)
+        assertEquals("`", operator.stop.text)
+        assertEquals(source.indexOf("`"), operator.start.charPositionInLine)
+        val name = operator.children.single()
+        assertEquals("qname", name.kind)
+        assertEquals(listOf("nameUppercase", "dot", "nameLowercase"), name.children.map { it.kind })
+        assertEquals(listOf("Ops", ".", "combine"), name.children.map { it.start.text })
+    }
+
+    @Test
+    fun `the root span ends at EOF rather than its displayed token text`() {
+        val tree = assertNotNull(Projection.project(write("eof.flix", "def f(): Unit = ()\n")))
+        assertTrue(
+            tree.startsWith(
+                "{\"kind\":\"compilationUnit\",\"span\":{\"start\":{\"line\":1,\"col\":1},\"end\":{\"line\":2,\"col\":1}}",
+            ),
+            tree,
+        )
+    }
+
     @Test
     fun `emits no token leaves`() {
         // Comment groups do not turn this rule-only projection into a token stream.
