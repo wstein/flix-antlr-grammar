@@ -171,12 +171,13 @@ object Projection {
             when {
                 ctx is FlixParser.LiteralPrimaryContext || ctx is FlixParser.StringPrimaryContext -> "literalExpression"
                 ctx is FlixParser.UnitPrimaryContext -> "tupleExpression"
-                ctx is FlixParser.PrimaryTypeContext &&
-                    ctx.start.type == FlixLexer.NAME_LOWERCASE &&
-                    ctx.start.tokenIndex == ctx.stop?.tokenIndex -> "variableType"
-                ctx is FlixParser.PrimaryTypeContext && ctx.HASH_LBRACE() != null -> "schemaType"
-                ctx is FlixParser.PrimaryTypeContext && ctx.HASH_LPAREN() != null -> "schemaRowType"
-                ctx is FlixParser.PrimaryTypeContext && ctx.HASH_BAR() != null -> "extensibleType"
+                ctx is FlixParser.TupleTypeContext &&
+                    (ctx.recordFieldOrType().isEmpty() || ctx.recordFieldOrType().first().EQUAL() != null)
+                -> "recordRowType"
+                ctx is FlixParser.VariableTypeContext -> "variableType"
+                ctx is FlixParser.SchemaTypeContext -> "schemaType"
+                ctx is FlixParser.SchemaRowTypeContext -> "schemaRowType"
+                ctx is FlixParser.ExtensibleTypeContext -> "extensibleType"
                 ctx is FlixParser.SchemaTermContext && ctx.typeArgs() == null -> "predicateTypes"
                 ctx is FlixParser.SchemaTermContext -> "predicateAlias"
                 ctx is FlixParser.DefDeclarationContext && ctx.REDEF() != null -> "redefDeclaration"

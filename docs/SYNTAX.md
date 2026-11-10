@@ -341,7 +341,8 @@ type
     | type ( RVADD | RVSUB ) type
     | <assoc=right> type ARROW_WS type
     | type BACKSLASH type
-    | primaryType typeArgs*
+    | primaryType typeArgs+
+    | primaryType
     ;
 ```
 
@@ -349,18 +350,17 @@ type
 
 ```antlr
 primaryType
-    : qname
-    | nameLowercase
+    : NAME_LOWERCASE
+    | qname
     | nameMath
     | UNDERSCORE
     | STATIC_UPPER
     | UNIV
-    | TRUE
-    | FALSE
+    | ( TRUE | FALSE )
     | LPAREN ( recordFieldOrType ( COMMA recordFieldOrType )* )? ( BAR type )? RPAREN
     | LBRACE BAR RBRACE
-    | LBRACE ( recordFieldType ( COMMA recordFieldType )* )? ( BAR type )? RBRACE
-    | LBRACE type ( COMMA type )* RBRACE
+    | LBRACE ( recordFieldType ( COMMA recordFieldType )* ( BAR type )? | BAR type ) RBRACE
+    | LBRACE ( type ( COMMA type )* )? RBRACE
     | HASH_LBRACE ( schemaTerm ( COMMA schemaTerm )* )? ( BAR type )? RBRACE
     | HASH_LPAREN ( schemaTerm ( COMMA schemaTerm )* )? ( BAR type )? RPAREN
     | HASH_BAR ( schemaTerm ( COMMA schemaTerm )* )? ( BAR type )? BAR_HASH

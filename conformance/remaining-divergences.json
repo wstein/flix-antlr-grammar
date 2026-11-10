@@ -42,34 +42,18 @@
   {
     "lane": "oracle_conformance",
     "fixture": "declarations__function-with-type-parameters-and-constraints.json",
-    "path": "fixtures/positive/declarations__function-with-type-parameters-and-constraints.flix.Root[0]",
-    "expected": "6 children",
-    "actual": "5 children",
+    "path": "fixtures/positive/declarations__function-with-type-parameters-and-constraints.flix.Root[0].Decl.Def[1].ParameterList[0]",
+    "expected": "2 children",
+    "actual": "3 children",
     "reason": "arity"
   },
   {
     "lane": "oracle_conformance",
     "fixture": "declarations__function-with-type-parameters-and-constraints.json",
-    "path": "fixtures/positive/declarations__function-with-type-parameters-and-constraints.flix.Root[0].Decl.Def[4]",
-    "expected": "Type.ConstraintList",
-    "actual": "Expr.Hole",
-    "reason": "kind"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "declarations__module-with-a-function.json",
-    "path": "fixtures/positive/declarations__module-with-a-function.flix.Root[0].Decl.Module[1]",
-    "expected": "5 children",
-    "actual": "4 children",
+    "path": "fixtures/positive/declarations__function-with-type-parameters-and-constraints.flix.Root[0].Decl.Def[1].ParameterList[0].Parameter[1]",
+    "expected": "4 children",
+    "actual": "3 children",
     "reason": "arity"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "declarations__module-with-a-function.json",
-    "path": "fixtures/positive/declarations__module-with-a-function.flix.Root[0].Decl.Module[1].Decl.Def[3]",
-    "expected": "Ident",
-    "actual": "Expr.Apply",
-    "reason": "kind"
   },
   {
     "lane": "oracle_conformance",
@@ -145,22 +129,6 @@
   },
   {
     "lane": "oracle_conformance",
-    "fixture": "expressions__ascribe-expression.json",
-    "path": "fixtures/positive/expressions__ascribe-expression.flix.Root[0].Decl.Def[3]",
-    "expected": "3 children",
-    "actual": "2 children",
-    "reason": "arity"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "expressions__casts.json",
-    "path": "fixtures/positive/expressions__casts.flix.Root[0].Decl.Def[3].Expr.Tuple[1]",
-    "expected": "3 children",
-    "actual": "2 children",
-    "reason": "arity"
-  },
-  {
-    "lane": "oracle_conformance",
     "fixture": "expressions__ematch-missing-body-at-eof.json",
     "path": "fixtures/negative/expressions__ematch-missing-body-at-eof.flix.Root[0]",
     "expected": "4 children",
@@ -213,22 +181,6 @@
     "path": "fixtures/negative/expressions__trailing-separator-in-argument-list.flix.Root[0].Decl.Def[3]",
     "expected": "Expr.Apply",
     "actual": "Ident",
-    "reason": "kind"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "hello.json",
-    "path": "fixtures/positive/hello.flix.Root[0]",
-    "expected": "5 children",
-    "actual": "4 children",
-    "reason": "arity"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "hello.json",
-    "path": "fixtures/positive/hello.flix.Root[0].Decl.Def[3]",
-    "expected": "Ident",
-    "actual": "Expr.Apply",
     "reason": "kind"
   },
   {
@@ -369,6 +321,30 @@
   },
   {
     "lane": "oracle_conformance",
+    "fixture": "types__effect-annotation-binds-to-the-arrow-result.json",
+    "path": "fixtures/positive/types__effect-annotation-binds-to-the-arrow-result.flix.Root[0]",
+    "expected": "4 children",
+    "actual": "5 children",
+    "reason": "arity"
+  },
+  {
+    "lane": "oracle_conformance",
+    "fixture": "types__effect-annotation-binds-to-the-arrow-result.json",
+    "path": "fixtures/positive/types__effect-annotation-binds-to-the-arrow-result.flix.Root[0].Decl.Def[2]",
+    "expected": "4 children",
+    "actual": "3 children",
+    "reason": "arity"
+  },
+  {
+    "lane": "oracle_conformance",
+    "fixture": "types__effect-annotation-binds-to-the-arrow-result.json",
+    "path": "fixtures/positive/types__effect-annotation-binds-to-the-arrow-result.flix.Root[0].Decl.Def[3]",
+    "expected": "Expr.Hole",
+    "actual": "Type.Variable",
+    "reason": "kind"
+  },
+  {
+    "lane": "oracle_conformance",
     "fixture": "types__effect-annotation-wrong-slash.json",
     "path": "fixtures/negative/types__effect-annotation-wrong-slash.flix.Root[0]",
     "expected": "5 children",
@@ -377,106 +353,34 @@
   },
   {
     "lane": "oracle_conformance",
-    "fixture": "types__effect-sets-and-formulas.json",
-    "path": "fixtures/positive/types__effect-sets-and-formulas.flix.Root[0]",
-    "expected": "5 children",
-    "actual": "4 children",
+    "fixture": "types__missing-extensible-tail.json",
+    "path": "fixtures/negative/types__missing-extensible-tail.flix.Root[0]",
+    "expected": "2 children",
+    "actual": "1 children",
     "reason": "arity"
   },
   {
     "lane": "oracle_conformance",
-    "fixture": "types__effect-sets-and-formulas.json",
-    "path": "fixtures/positive/types__effect-sets-and-formulas.flix.Root[0].Decl.Def[3]",
-    "expected": "Type.EffectSet",
-    "actual": "Expr.Hole",
-    "reason": "kind"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "types__effect-union-and-complement.json",
-    "path": "fixtures/positive/types__effect-union-and-complement.flix.Root[0]",
-    "expected": "5 children",
-    "actual": "4 children",
+    "fixture": "types__missing-schema-row-tail.json",
+    "path": "fixtures/negative/types__missing-schema-row-tail.flix.Root[0]",
+    "expected": "2 children",
+    "actual": "1 children",
     "reason": "arity"
   },
   {
     "lane": "oracle_conformance",
-    "fixture": "types__effect-union-and-complement.json",
-    "path": "fixtures/positive/types__effect-union-and-complement.flix.Root[0].Decl.Def[3]",
-    "expected": "Type.Binary",
-    "actual": "Expr.Hole",
-    "reason": "kind"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "types__pure-and-universal-effects.json",
-    "path": "fixtures/positive/types__pure-and-universal-effects.flix.Root[0]",
-    "expected": "5 children",
-    "actual": "4 children",
+    "fixture": "types__missing-schema-tail.json",
+    "path": "fixtures/negative/types__missing-schema-tail.flix.Root[0]",
+    "expected": "2 children",
+    "actual": "1 children",
     "reason": "arity"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "types__pure-and-universal-effects.json",
-    "path": "fixtures/positive/types__pure-and-universal-effects.flix.Root[0].Decl.Def[3]",
-    "expected": "Type.EffectSet",
-    "actual": "Expr.Hole",
-    "reason": "kind"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "types__rv-keyword-operators.json",
-    "path": "fixtures/positive/types__rv-keyword-operators.flix.Root[0]",
-    "expected": "5 children",
-    "actual": "4 children",
-    "reason": "arity"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "types__rv-keyword-operators.json",
-    "path": "fixtures/positive/types__rv-keyword-operators.flix.Root[0].Decl.Def[3]",
-    "expected": "Type.Binary",
-    "actual": "Expr.Hole",
-    "reason": "kind"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "types__unary-type-operators.json",
-    "path": "fixtures/positive/types__unary-type-operators.flix.Root[0]",
-    "expected": "5 children",
-    "actual": "4 children",
-    "reason": "arity"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "types__unary-type-operators.json",
-    "path": "fixtures/positive/types__unary-type-operators.flix.Root[0].Decl.Def[3]",
-    "expected": "Type.Unary",
-    "actual": "Expr.Hole",
-    "reason": "kind"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "types__universal-effect-constant.json",
-    "path": "fixtures/positive/types__universal-effect-constant.flix.Root[0]",
-    "expected": "5 children",
-    "actual": "4 children",
-    "reason": "arity"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "types__universal-effect-constant.json",
-    "path": "fixtures/positive/types__universal-effect-constant.flix.Root[0].Decl.Def[3]",
-    "expected": "Type.Constant",
-    "actual": "Expr.Hole",
-    "reason": "kind"
   },
   {
     "lane": "oracle_conformance",
     "fixture": "unclosed-paren.json",
-    "path": "fixtures/negative/unclosed-paren.flix.Root[0]",
-    "expected": "5 children",
-    "actual": "4 children",
-    "reason": "arity"
+    "path": "fixtures/negative/unclosed-paren.flix.Root[0].Decl.Def[4]",
+    "expected": "Expr.Apply",
+    "actual": "Ident",
+    "reason": "kind"
   }
 ]
