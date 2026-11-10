@@ -72,11 +72,11 @@ its scratch map removes only the retired canonical `Decl.Law` and `CommentList` 
 | 166 / syntax migration | 1207 / 2412 | 50% | 135 | 90% | 65 |
 | 135 common paths / original | 792 / 2010 | 39% | 111 | 88% | 77 |
 | 135 common paths / syntax migration | 892 / 2010 | 44% | 122 | 88% | 50 |
-| 166 / structure port | 1574 / 2412 | 65% | 108 | 94% | 48 |
-| 135 common paths / structure port | 1223 / 2010 | 61% | 102 | 92% | 31 |
+| 166 / structure port | 1588 / 2412 | 66% | 103 | 94% | 48 |
+| 135 common paths / structure port | 1234 / 2010 | 61% | 98 | 93% | 31 |
 
 Both fixed sets now gate independently: structural limits 48 and 31, canonical-depth
-floors 65% and 61%, and walk-depth floors 94% and 92%. Denominators 2412 and 2010
+floors 66% and 61%, and walk-depth floors 94% and 93%. Denominators 2412 and 2010
 are bound separately, preventing denominator shrinkage from masquerading as improvement.
 `conformance/legacy-fixture-paths.json` records all 135 surviving paths and the one
 retired trait-law fixture out of the original 136, including its replacement.
@@ -85,7 +85,8 @@ retired trait-law fixture out of the original 136, including its replacement.
 ## Projection and claim boundaries
 
 Labelled expression alternatives retain call roles, argument lists and synthetic
-operator groups, including math-name and backtick operators. The projection retains
+operator groups, including math-name and backtick operators. Interpolated strings
+retain embedded expressions; debug interpolation keeps its outer `Expr.Expr` wrapper. The projection retains
 concrete literal/Unit nodes, type applications, tuples, operators, constants,
 type variables, record rows and schema forms,
 enum payloads, declaration roles and grouped uses/imports. Comments are reconstructed

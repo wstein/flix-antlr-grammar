@@ -161,6 +161,41 @@ class ProjectionTest {
     }
 
     @Test
+    fun `multi-hop interpolation retains expression order and its native range`() {
+        val source = "def f(): String = \"a\${b}c\${d}e\""
+        val interpolation = find(projected(source), "interpolatedString")
+        assertEquals(listOf("PrimaryExpression", "PrimaryExpression"), interpolation.children.map { it.kind })
+        assertEquals(listOf("b", "d"), interpolation.children.map { it.start.text })
+        assertEquals(source.indexOf('"'), interpolation.start.charPositionInLine)
+        assertEquals(source.lastIndexOf('"'), interpolation.stop.charPositionInLine)
+        assertEquals(source.indexOf("{b}") + 1, interpolation.children[0].start.charPositionInLine)
+        assertEquals(source.indexOf("{d}") + 1, interpolation.children[1].start.charPositionInLine)
+    }
+
+    @Test
+    fun `debug interpolation retains its outer wrapper around the string`() {
+        val source = "def f(): String = d\"x = \${x}\""
+        val debug = find(projected(source), "DebugPrimary")
+        assertEquals(listOf("stringLiteral"), debug.children.map { it.kind })
+        val interpolation =
+            debug.children
+                .single()
+                .children
+                .single()
+        assertEquals("interpolatedString", interpolation.kind)
+        assertEquals(listOf("PrimaryExpression"), interpolation.children.map { it.kind })
+        assertEquals(
+            "x",
+            interpolation.children
+                .single()
+                .start.text,
+        )
+        assertEquals(source.indexOf("d\""), debug.start.charPositionInLine)
+        assertEquals(source.indexOf('"'), interpolation.start.charPositionInLine)
+        assertEquals(source.lastIndexOf('"'), debug.stop.charPositionInLine)
+    }
+
+    @Test
     fun `emits no token leaves`() {
         // Comment groups do not turn this rule-only projection into a token stream.
         // Ordinary terminals and hidden whitespace remain absent, so token accounting is N/A.

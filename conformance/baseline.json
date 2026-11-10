@@ -2,7 +2,7 @@
   "note": "Immutable Flix 0.79 inputs. Structure ratchets and exact remaining identities are binding. New walk-depth gates preserve the historical measured 88% using its definition: compared/(compared+unmapped), half-up rounded percent, separately on the full and surviving legacy fixture sets. The old shell gate enforced no depth floor. Schema-9 canonical depth is an additional new gate with a denominator fixed to the complete reference tree before consumer elision. Neither percentage means language coverage. See docs/CONFORMANCE.md for definitions and same-runner paired measurements.",
   "divergences": 48,
   "recoveryDivergences": 0,
-  "depthFloor": 65,
+  "depthFloor": 66,
   "legacyWalkDepthFloor": 94,
   "measuredAt": {
     "flixAntlrGrammar": "HEAD",
@@ -23,7 +23,7 @@
     "divergences": 31,
     "recoveryDivergences": 0,
     "depthFloor": 61,
-    "legacyWalkDepthFloor": 92,
+    "legacyWalkDepthFloor": 93,
     "measuredAt": {
       "reportSchemaVersion": 9,
       "fixtureRevision": "2028e3a14c3dac6ca9327d2350dcd9bdc284e27880e5e0b7f71184170b372175",
@@ -46,10 +46,10 @@
       "fixturesAgreeing": 139,
       "fixturesCompared": 166,
       "divergenceCount": 48,
-      "nodesCompared": 1574,
+      "nodesCompared": 1588,
       "nodesExpected": 2412,
-      "nodesUnmapped": 108,
-      "depthPercent": 65
+      "nodesUnmapped": 103,
+      "depthPercent": 66
     },
     "recovery_conformance": {
       "verdict": "not-applicable",
