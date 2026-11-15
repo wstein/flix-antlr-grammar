@@ -51,7 +51,7 @@ channels {
 // ---------------------------------------------------------------------
 // Keywords
 //
-// The 84 keywords of Flix 0.75.1, transcribed from Lexer.scala:49-139 and
+// The 83 keywords of Flix 0.80.0, transcribed from Lexer.scala and
 // pinned by fixtures/keywords.txt. Each carries a !isNameCharFollow() tail
 // guard because `!` and `$` are name characters, so `let!` is one identifier
 // rather than a keyword followed by an operator.
@@ -138,6 +138,7 @@ TYPE             : 'type' { !isNameCharFollow() }? ;
 UNCHECKED_CAST   : 'unchecked_cast' { !isNameCharFollow() }? ;
 UNSAFE           : 'unsafe' { !isNameCharFollow() }? ;
 USE              : 'use' { !isNameCharFollow() }? ;
+VAL              : 'val' { !isNameCharFollow() }? ;
 WHERE            : 'where' { !isNameCharFollow() }? ;
 WITH             : 'with' { !isNameCharFollow() }? ;
 XOR              : 'xor' { !isNameCharFollow() }? ;

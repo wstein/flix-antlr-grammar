@@ -54,6 +54,7 @@ useName
 declaration
     : modDeclaration
     | defDeclaration
+    | valDeclaration
     | enumDeclaration
     | structDeclaration
     | traitDeclaration
@@ -83,6 +84,11 @@ modDeclaration
 defDeclaration
     : declPrefix ( DEF | REDEF ) definitionName typeParams? formalParams
       ( COLON typeAndEffect )? withClause? whereClause? ( EQUAL statement )?
+    ;
+
+// Parser2 accepts module val declarations; later compiler stages may reject their use.
+valDeclaration
+    : declPrefix VAL nameLowercase COLON typeAndEffect EQUAL statement
     ;
 
 // A restrictable enum's index parameter (`Expr[_][t]`'s first `[_]`) is its own single-name

@@ -15,6 +15,7 @@ lowerCamelCase, and keep the group prefix only where a leaf collides across grou
 | `importClause` | `UsesOrImports.Import`, `.ImportMany` |
 | `modDeclaration` | `Decl.Module` |
 | `defDeclaration` | `Decl.Def`, `Decl.Redef`, `Decl.Signature` |
+| `valDeclaration` | `Decl.Val` |
 | `lawDeclaration` | `Decl.Law` |
 | `enumDeclaration` / `enumCase` | `Decl.Enum`, `Decl.RestrictableEnum`, `Case`, `CaseBody` |
 | `structDeclaration` / `structField` | `Decl.Struct`, `StructField` |

@@ -121,6 +121,22 @@
   },
   {
     "lane": "oracle_conformance",
+    "fixture": "identifier__reserved-val.json",
+    "path": "fixtures/negative/identifier__reserved-val.flix",
+    "expected": "2 children",
+    "actual": "1 children",
+    "reason": "arity"
+  },
+  {
+    "lane": "oracle_conformance",
+    "fixture": "identifier__reserved-val.json",
+    "path": "fixtures/negative/identifier__reserved-val.flix.Root[0]",
+    "expected": "1 children",
+    "actual": "3 children",
+    "reason": "arity"
+  },
+  {
+    "lane": "oracle_conformance",
     "fixture": "lexical__bang-caret-dollar-have-no-standalone-meaning.json",
     "path": "fixtures/negative/lexical__bang-caret-dollar-have-no-standalone-meaning.flix",
     "expected": "3 children",

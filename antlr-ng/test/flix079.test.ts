@@ -49,13 +49,13 @@ describe("Flix 0.79 syntax", () => {
             expect(parser.numberOfSyntaxErrors === 0, source).toBe(positive.includes(source));
         }
     });
-    it("has exactly the pinned 82 keywords", () => {
+    it("has exactly the pinned 83 keywords", () => {
         const actual = FlixLexer.literalNames.filter((s): s is string => Boolean(s))
             .map(s => s.slice(1, -1)).filter(s => /^[a-zA-Z][a-zA-Z0-9_#*]+$/.test(s));
         const expected = readFileSync(new URL("../../fixtures/keywords.txt", import.meta.url), "utf8")
             .trim().split(/\r?\n/);
         expect(actual.sort()).toEqual(expected.sort());
-        expect(expected).toHaveLength(82);
+        expect(expected).toHaveLength(83);
     });
 
     it("classifies tight and whitespace-separated cons tokens", () => {
