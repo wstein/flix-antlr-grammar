@@ -68,6 +68,7 @@
     "constraint": "Expr.FixpointConstraint",
     "constraintSet": "Expr.FixpointConstraintSet",
     "defDeclaration": "Decl.Def",
+    "valDeclaration": "Decl.Val",
     "derivations": "Type.DerivationList",
     "docComment": "DocComment",
     "effDeclaration": "Decl.Effect",

@@ -5,7 +5,7 @@
 [![ANTLR](https://img.shields.io/badge/ANTLR-4.13.2-c92a2a.svg)](https://www.antlr.org)
 [![Java](https://img.shields.io/badge/Java-21%2B-orange.svg)](https://adoptium.net)
 [![Gradle](https://img.shields.io/badge/Gradle-9.6.1-02303A.svg?logo=gradle&logoColor=white)](https://gradle.org)
-[![Flix](https://img.shields.io/badge/Flix-0.79.0-blueviolet.svg)](https://flix.dev)
+[![Flix](https://img.shields.io/badge/Flix-0.80.0%20candidate-blueviolet.svg)](https://flix.dev)
 [![Corpus](https://img.shields.io/badge/corpus%20parse%20rate-100%25-brightgreen.svg)](fixtures/corpus-baseline.json)
 
 An [ANTLR4](https://www.antlr.org) grammar for the [Flix](https://flix.dev) programming
@@ -13,6 +13,12 @@ language, derived from the reference compiler's `Lexer.scala` and `Parser2.scala
 from prose documentation.
 
 ## Status
+
+The current 0.80 candidate adds the `val` keyword and module-value syntax. The compiler
+front end recognizes the declaration, but field references can still fail later in the compiler;
+parsing is not a claim of usable static fields. The existing published conformance gate remains
+bound to 0.79 until the 0.80 spec data and runner are published; the local 0.80 qualification and
+the two specifically accepted recovery differences are described in [conformance](docs/CONFORMANCE.md).
 
 **Corpus parse rate: 100% of the syntactically valid corpus, the same on both targets.** The
 Flix repository ships deliberately-truncated fixtures for its own resiliency tests; those are
@@ -22,7 +28,7 @@ stale unnoticed. The rate is enforced by a ratcheting gate; see [Verification](#
 | Area | State |
 | --- | --- |
 | Build, CI, Dependabot, release | done |
-| Lexer: 82 keywords, operator runs, holes, interpolation modes | done |
+| Lexer: 83 keywords, operator runs, holes, interpolation modes | done |
 | Parser: declarations, types, expressions, patterns | done |
 | Parser: Datalog, fixpoint, effect handlers | done |
 | Validation CLI and corpus gate, JVM and TypeScript targets | done |
@@ -114,8 +120,8 @@ explicitly unmeasured by this rule-node projection.
 
 ## Source of truth
 
-All syntax decisions trace to the reference compiler
-([`flix/flix@36d923c`](https://github.com/flix/flix/tree/36d923ca325dc466b28c63419667e6026a80f920), Flix 0.79.0):
+Syntax decisions for the 0.80 candidate use the reference compiler
+([`flix/flix@0c641c7`](https://github.com/flix/flix/tree/0c641c73c4635dee992d01c4364f224ea56d9a46), Flix 0.80.0); the earlier 0.79 baseline is retained in the conformance history:
 
 | File | Authority for |
 | --- | --- |

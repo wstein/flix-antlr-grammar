@@ -1,6 +1,6 @@
 # Flix 0.79 conformance
 
-The grammar targets `flix/flix@36d923ca325dc466b28c63419667e6026a80f920`
+The historical published baseline targets `flix/flix@36d923ca325dc466b28c63419667e6026a80f920`
 (v0.79.0). Syntax decisions follow the pinned `Lexer.scala`, `Parser2.scala`,
 `TokenKind.scala` and `SyntaxTree.scala`, compared with the former 0.75.1 sources.
 The shared grammar serves both the JVM ANTLR4 and TypeScript antlr-ng customers.
@@ -9,6 +9,16 @@ The migration removes `law`/`lawful` from the 82-keyword inventory, distinguishe
 whitespace-sensitive `::`, parses package-qualified uses, and accepts full type tails
 in schema, schema-row and extensible types. The corpus also exposed a pre-existing
 comprehension omission: Parser2 accepts `pattern = expression` without `let`.
+
+## Flix 0.80 candidate: reserved `val`
+
+The 0.80 candidate adds two structural identities for `identifier__reserved-val` to
+`remaining-divergences.json`. The existing 40 identities are unchanged. On `def val(): Int32 = 42`,
+the reference rejects the keyword as a function name and recovers into separate `Decl.Def` and
+`Decl.Val` nodes; ANTLR also rejects it but recovers into one declaration. The owner accepted exactly
+these two recovery-shape differences on 15 November 2026. Both JVM and TypeScript targets test the
+rejection, independently of the projected shape. This does not accept other new differences.
+The 0.80 data and runner are local candidates; the published artifact gate remains to be qualified.
 
 ## Reproduce
 

@@ -74,6 +74,7 @@ unchecked_cast
 Univ
 unsafe
 use
+val
 Vector#
 where
 with

@@ -21,6 +21,7 @@ compilationUnit ::= usesOrImports* declaration* EOF ;
 railroad-ebnf-beta
 declaration ::= modDeclaration
     | defDeclaration
+    | valDeclaration
     | enumDeclaration
     | structDeclaration
     | traitDeclaration
