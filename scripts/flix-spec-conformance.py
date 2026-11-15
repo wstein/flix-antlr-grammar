@@ -119,7 +119,7 @@ def artifact(name, expected, configured, version):
         if configured:
             raise ValueError(f"artifact does not exist: {path}")
         path.parent.mkdir(parents=True, exist_ok=True)
-        url = f"{MAVEN}/{name}/0.79.0-SNAPSHOT/{name}-{version}.jar"
+        url = f"{MAVEN}/{name}/0.80.0-SNAPSHOT/{name}-{version}.jar"
         with urllib.request.urlopen(url) as response:
             data = response.read()
         if hashlib.sha256(data).hexdigest() != expected:

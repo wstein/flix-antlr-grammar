@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Compare with the digest-pinned published Flix 0.79 data and runner artifacts.
+# Compare with the digest-pinned published Flix 0.80 data and runner artifacts.
 # Optional argument: an extracted data bundle (pin, vocabulary and fixture revision still checked).
 # FLIX_SPEC_DATA and FLIX_SPEC_RUNNER select local JARs; their SHA-256 must match the recorded artifacts.
 set -euo pipefail

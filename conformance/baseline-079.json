@@ -1,0 +1,69 @@
+{
+  "note": "Immutable Flix 0.79 inputs. Structure ratchets and exact remaining identities are binding. New walk-depth gates preserve the historical measured 88% using its definition: compared/(compared+unmapped), half-up rounded percent, separately on the full and surviving legacy fixture sets. The old shell gate enforced no depth floor. Schema-9 canonical depth is an additional new gate with a denominator fixed to the complete reference tree before consumer elision. Neither percentage means language coverage. See docs/CONFORMANCE.md for definitions and same-runner paired measurements.",
+  "divergences": 40,
+  "recoveryDivergences": 0,
+  "depthFloor": 67,
+  "legacyWalkDepthFloor": 94,
+  "measuredAt": {
+    "flixAntlrGrammar": "HEAD",
+    "flixSpecArtifact": "0.79.0-20261109.125843-3",
+    "runnerVersion": "0.79.0-SNAPSHOT",
+    "reportSchemaVersion": 9,
+    "flixSpecPin": "v0.79.0",
+    "flixSpecPinCommit": "36d923ca325dc466b28c63419667e6026a80f920",
+    "fixtureRevision": "7e017bc8d4850fd293c6c97ddb3e4e5c4cb8cee0ed691d2750d461eccc236dd2",
+    "fixtures": 166,
+    "treeKindDigest": "92a8f27acd9eaa1b8f4b346d9a0059b5c67b13e264485b0df412cfc2b32b247b",
+    "tokenKindDigest": "d665b11181ef4639282ea5a32d180c0b445c2298fd0ab128c753ee0fd8026887",
+    "canonicalNodesExpected": 2412,
+    "dataSha256": "f58c987974501e22f6671511a4454458fb669511c140788d27a560ac09b03922",
+    "runnerSha256": "989d4117462ddd7b3a5d8de57e21e0ca5c82f121e9e5d2fdc239c7ccbfa0f1ed"
+  },
+  "legacyFixtureSet": {
+    "divergences": 31,
+    "recoveryDivergences": 0,
+    "depthFloor": 62,
+    "legacyWalkDepthFloor": 93,
+    "measuredAt": {
+      "reportSchemaVersion": 9,
+      "fixtureRevision": "2028e3a14c3dac6ca9327d2350dcd9bdc284e27880e5e0b7f71184170b372175",
+      "fixtures": 135,
+      "canonicalNodesExpected": 2010
+    }
+  },
+  "historicalMeasurement": {
+    "fixtureRevision": "4eccee6368ecb3c9235cc278b77f6596dffce1af19f63dfd578c3cefb60dde35",
+    "fixtures": 136,
+    "divergences": 75,
+    "nodesCompared": 818,
+    "nodesUnmapped": 113,
+    "walkDepthPercent": 88,
+    "definitionSource": "flix-spec v0.75.2 (02d8a2e7c2a9e2dac19d4c0b8513b356dc30c8c1), tools/project/src/main/scala/flix/spec/Conformance.scala:138-140, schema 6"
+  },
+  "lanes": {
+    "oracle_conformance": {
+      "verdict": "pass",
+      "fixturesAgreeing": 141,
+      "fixturesCompared": 166,
+      "divergenceCount": 40,
+      "nodesCompared": 1609,
+      "nodesExpected": 2412,
+      "nodesUnmapped": 103,
+      "depthPercent": 67
+    },
+    "recovery_conformance": {
+      "verdict": "not-applicable",
+      "comment": "Unchanged: no recoveryMarkers are declared; inserted ANTLR error nodes have no modeled recovery vocabulary."
+    },
+    "diagnostic_conformance": {
+      "verdict": "not-applicable",
+      "comment": "Unchanged behavior: all projected diagnostic arrays are empty; this adapter makes no diagnostic agreement claim."
+    },
+    "source_invariants": {
+      "verdict": "pass",
+      "checksEvaluated": 1,
+      "checksNotApplicable": 5,
+      "comment": "Document shape is checked. Comments are reconstructed as rule groups from native positions, but terminal token leaves and hidden whitespace are absent. Token accounting, token positions and lexical correctness remain unmeasured; vocabulary checks stand down with a projection map."
+    }
+  }
+}

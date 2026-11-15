@@ -1,4 +1,4 @@
-# Flix 0.79 conformance
+# Flix 0.80 conformance
 
 The historical published baseline targets `flix/flix@36d923ca325dc466b28c63419667e6026a80f920`
 (v0.79.0). Syntax decisions follow the pinned `Lexer.scala`, `Parser2.scala`,
@@ -10,15 +10,16 @@ whitespace-sensitive `::`, parses package-qualified uses, and accepts full type 
 in schema, schema-row and extensible types. The corpus also exposed a pre-existing
 comprehension omission: Parser2 accepts `pattern = expression` without `let`.
 
-## Flix 0.80 candidate: reserved `val`
+## Flix 0.80: reserved `val`
 
-The 0.80 candidate adds two structural identities for `identifier__reserved-val` to
+The 0.80 gate adds two structural identities for `identifier__reserved-val` to
 `remaining-divergences.json`. The existing 40 identities are unchanged. On `def val(): Int32 = 42`,
 the reference rejects the keyword as a function name and recovers into separate `Decl.Def` and
 `Decl.Val` nodes; ANTLR also rejects it but recovers into one declaration. The owner accepted exactly
 these two recovery-shape differences on 15 November 2026. Both JVM and TypeScript targets test the
 rejection, independently of the projected shape. This does not accept other new differences.
-The 0.80 data and runner are local candidates; the published artifact gate remains to be qualified.
+The published 0.80 data and runner were used for the gate below; the previous 0.79 baseline and
+identities remain in `baseline-079.json` and `remaining-divergences-079.json`.
 
 ## Reproduce
 
@@ -30,20 +31,20 @@ python3 -m unittest discover -s scripts -p test_conformance_binding.py
 The gate downloads these immutable timestamped artifacts from the public flix-spec
 Maven repository, or accepts local JARs through `FLIX_SPEC_DATA` and
 `FLIX_SPEC_RUNNER`. Every JAR is verified before extraction or execution.
-`0.79.0-20261109.125843-3` is the published version used here; this is not a claim
-that stable `0.79.0` is available. No mutable snapshot alias or Gradle plugin is resolved.
+`0.80.0-20261115.222714-1` is the published snapshot used here; this is not a claim
+that a stable `0.80.0` is available. No mutable snapshot alias or Gradle plugin is resolved.
 
 | Artifact | SHA-256 |
 | --- | --- |
-| Data | `f58c987974501e22f6671511a4454458fb669511c140788d27a560ac09b03922` |
-| Runner | `989d4117462ddd7b3a5d8de57e21e0ca5c82f121e9e5d2fdc239c7ccbfa0f1ed` |
+| Data | `27419d170de4af8a4a817ad48a04aa214808e8933ea23f040635357103f7c2b3` |
+| Runner | `467c7cf746799366dce795890b52dbb8f7423f98d800b1756fe8efcb3df4fa8a` |
 
 The data pin, tree/token vocabulary digests, schema, fixture revision, fixture count,
 canonical node denominator, divergence counts and remaining fixture/path/expected/
 actual/reason identities are binding. The full revision is
-`7e017bc8d4850fd293c6c97ddb3e4e5c4cb8cee0ed691d2750d461eccc236dd2`.
+`5d990939d513c1ef9add5285ec928ad8b222d42de6c198ec426a67992a237f51`.
 The fixed 135-path revision is
-`2028e3a14c3dac6ca9327d2350dcd9bdc284e27880e5e0b7f71184170b372175`.
+`2927884fb0600e2c955ceb9888578a644ff231ef1b2b8165ddf761e4109846da`.
 An optional extracted bundle argument is also compared byte for byte with all runtime
 files in the SHA-checked JAR, including source text, pin, vocabulary, profiles and corpus
 metadata; missing and extra runtime paths fail. The report checks remain additional.
@@ -88,9 +89,10 @@ same schema-9 runner, published fixture identities and canonical denominators.
 | 166 / structure port | 1609 / 2412 | 67% | 103 | 94% | 40 |
 | 135 common paths / structure port | 1244 / 2010 | 62% | 98 | 93% | 31 |
 
-Both fixed sets now gate independently: structural limits 40 and 31, canonical-depth
-floors 67% and 62%, and walk-depth floors 94% and 93%. Denominators 2412 and 2010
-are bound separately, preventing denominator shrinkage from masquerading as improvement.
+The current 0.80 sets gate independently: the 168-fixture set has exactly 42 structural
+identities (40 unchanged plus the two accepted above), canonical depth 67% and walk depth 94%;
+the 135 common paths retain all 31 identities and the 62% and 93% floors. Their current canonical
+denominators are 2434 and 2010. The table above records the historical 0.79 measurement.
 `conformance/legacy-fixture-paths.json` records all 135 surviving paths and the one
 retired trait-law fixture out of the original 136, including its replacement.
 `remaining-divergences.json` records every remaining full-set divergence identity.
@@ -128,9 +130,9 @@ leaves or hidden whitespace. Native comment groups do not establish those capabi
 
 ## Corpus evidence
 
-The active corpus is exactly the pinned compiler's `main/`: 717 regular `.flix`
-files, including one deliberately truncated resiliency fixture. Both targets move
-from 714/716 to 716/716 measured files; the existing 100% baseline is not lowered.
+The active 0.80 corpus is the pinned compiler's `main/`: 718 regular `.flix`
+files, including one deliberately truncated resiliency fixture. Both targets parse
+717/717 measured files; the existing 100% baseline is not lowered.
 The `dev.flix` directory is not counted as a source file.
 
 The former CI corpus `debf7df0fdd63f2b76b7a539ebbff5243070ca6e` is retained as

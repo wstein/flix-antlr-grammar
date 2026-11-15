@@ -4,6 +4,7 @@ import importlib.util
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 import zipfile
 
 spec = importlib.util.spec_from_file_location("binding", Path(__file__).with_name("flix-spec-conformance.py"))
@@ -12,6 +13,26 @@ spec.loader.exec_module(binding)
 
 
 class BindingTest(unittest.TestCase):
+    def test_snapshot_artifacts_use_the_080_coordinate(self):
+        payload = b"verified artifact"
+        with tempfile.TemporaryDirectory() as temporary:
+            class Response:
+                def __enter__(self):
+                    return self
+                def __exit__(self, *args):
+                    return False
+                def read(self):
+                    return payload
+            with patch.object(binding, "REPO", Path(temporary)), \
+                 patch.object(binding.urllib.request, "urlopen", return_value=Response()) as request:
+                binding.artifact("flix-spec-runner", binding.hashlib.sha256(payload).hexdigest(), None,
+                                 "0.80.0-20261115.222714-1")
+            self.assertEqual(
+                "https://wstein.github.io/flix-spec/maven/io/github/wstein/flix-spec-runner/"
+                "0.80.0-SNAPSHOT/flix-spec-runner-0.80.0-20261115.222714-1.jar",
+                request.call_args.args[0],
+            )
+
     def test_runner_bytes_must_match_exact_digest(self):
         with tempfile.TemporaryDirectory() as tmp:
             jar = Path(tmp) / "runner.jar"

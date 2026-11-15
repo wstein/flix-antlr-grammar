@@ -35,7 +35,7 @@ acceptance criterion. See [docs/DEFECTS.md](docs/DEFECTS.md).
 
 ## Source of truth
 
-Reference for the 0.80 candidate: `flix/flix@0c641c73c4635dee992d01c4364f224ea56d9a46` (Flix 0.80.0). The published conformance gate remains on 0.79 until 0.80 spec artifacts are published. Paths below are relative to
+Reference: `flix/flix@0c641c73c4635dee992d01c4364f224ea56d9a46` (Flix 0.80.0). The published 0.80 snapshot conformance gate is recorded in docs/CONFORMANCE.md. Paths below are relative to
 `main/src/ca/uwaterloo/flix/language/`.
 
 | File | Authority for |
