@@ -52,6 +52,32 @@ that accepts more recovers better in an editor and produces far better diagnosti
 grammar that encodes every rule as a syntax error. This grammar follows the parser, not the
 weeder: `pub pub sealed def` parses, and reporting it is a validation concern.
 
+## Use from npm projects
+
+The repository root is also an npm package (`@wstein/flix-antlr-grammar`) that ships only the grammar
+sources and the antlr-ng lexer base class, so other tools can generate their own parser without
+copying files. Each release tag `v<version>` is published to GitHub Pages as an immutable tarball:
+
+```sh
+npm install https://wstein.github.io/flix-antlr-grammar/wstein-flix-antlr-grammar-<version>.tgz
+```
+
+`index.json` lists every version with its integrity hash, and `latest.json` names the newest one.
+The lockfile pins the integrity, so a consumer detects any change to a published version. (Not
+published to the npm registry or GitHub Packages.) Before the first tag exists, a git dependency
+works too: `npm install "@wstein/flix-antlr-grammar@git+https://github.com/wstein/flix-antlr-grammar.git#<commit>"`.
+
+| Export | File |
+| --- | --- |
+| `@wstein/flix-antlr-grammar/grammars/FlixLexer.g4` | lexer grammar |
+| `@wstein/flix-antlr-grammar/grammars/FlixParser.g4` | parser grammar |
+| `@wstein/flix-antlr-grammar/FlixLexerBase.ts` | lexer base class for the antlr-ng target |
+
+The grammars carry Java actions; see `tools/gen-antlr-ng.mjs` for the TypeScript conversion.
+
+To release: bump `version` in `package.json`, merge, then push the tag `v<version>`. The Pages
+workflow refuses a tag that differs from `package.json`, and refuses to change a published version.
+
 ## Layout
 
 ```
