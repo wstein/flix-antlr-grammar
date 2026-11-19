@@ -1,0 +1,19 @@
+{
+  "name": "@wstein/flix-antlr-grammar",
+  "version": "0.80.0",
+  "description": "ANTLR4 grammar for Flix 0.80: lexer and parser sources plus the antlr-ng lexer base class, for tools that generate their own parser",
+  "license": "Apache-2.0",
+  "repository": "github:wstein/flix-antlr-grammar",
+  "files": [
+    "grammars/FlixLexer.g4",
+    "grammars/FlixParser.g4",
+    "antlr-ng/src/FlixLexerBase.ts",
+    "LICENSE.md"
+  ],
+  "exports": {
+    "./grammars/FlixLexer.g4": "./grammars/FlixLexer.g4",
+    "./grammars/FlixParser.g4": "./grammars/FlixParser.g4",
+    "./FlixLexerBase.ts": "./antlr-ng/src/FlixLexerBase.ts",
+    "./package.json": "./package.json"
+  }
+}
