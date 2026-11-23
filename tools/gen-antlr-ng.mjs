@@ -27,6 +27,7 @@ const out = join(pkg, "src", "generated");
 const HELPERS = [
     "isNameCharFollow", "classifyColonColon", "classifyArrow", "classifyDot", "classifyOperator",
     "enterBrace", "exitBrace", "openInterpolation", "stripEscape", "popMode",
+    "acceptHexNumber", "acceptNumber", "acceptBlockComment",
 ];
 
 function toTypeScript(grammar) {
