@@ -89,9 +89,9 @@ same schema-9 runner, published fixture identities and canonical denominators.
 | 166 / structure port | 1609 / 2412 | 67% | 103 | 94% | 40 |
 | 135 common paths / structure port | 1244 / 2010 | 62% | 98 | 93% | 31 |
 
-The current 0.80 sets gate independently. The 168-fixture set has 35 remaining structural
+The current 0.80 sets gate independently. The 168-fixture set has 33 remaining structural
 identities, including the two accepted above, with canonical depth 67% and walk depth 94%.
-The 135 common paths have 24 remaining identities and retain the 62% and 93% floors. Their current canonical
+The 135 common paths have 22 remaining identities and retain the 62% and 93% floors. Their current canonical
 denominators are 2434 and 2010. The table above records the historical 0.79 measurement.
 `conformance/legacy-fixture-paths.json` records all 135 surviving paths and the one
 retired trait-law fixture out of the original 136, including its replacement.

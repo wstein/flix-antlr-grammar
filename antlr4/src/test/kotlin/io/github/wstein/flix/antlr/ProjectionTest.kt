@@ -54,6 +54,22 @@ class ProjectionTest {
     ): Projection.Node = assertNotNull(descendants(node).find { it.kind == kind }, "$kind missing from $node")
 
     @Test
+    fun `only named and variable holes project a full-token identifier`() {
+        val source = "def f(): Unit = (???, ?Named, _value?)"
+        val tree = projected(source)
+        assertTrue(find(tree, "HolePrimary").children.isEmpty())
+
+        for ((kind, spelling) in listOf("NamedHolePrimary" to "?Named", "HoleVariablePrimary" to "_value?")) {
+            val identifier = find(tree, kind).children.single()
+            assertEquals("holeIdentifier", identifier.kind)
+            assertEquals(spelling, identifier.start.text)
+            assertEquals(source.indexOf(spelling), identifier.start.charPositionInLine)
+            assertEquals(identifier.start, identifier.stop)
+            assertTrue(identifier.children.isEmpty())
+        }
+    }
+
+    @Test
     fun `trailing effects bind to the last unparenthesized arrow`() {
         val outer = find(projected("type alias F = a -> b -> c \\ IO"), "ArrowType")
         assertEquals(3, outer.children.size)
