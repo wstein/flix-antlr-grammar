@@ -8,7 +8,7 @@ Constraints such as duplicate modifiers, non-linear patterns and unknown annotat
 parse here and are rejected by a later validation pass, mirroring how the reference
 compiler separates `Parser2` from `Weeder2`.
 
-Parser rules: 92 · lexer rules: 135
+Parser rules: 93 · lexer rules: 135
 
 ## Parser rules
 

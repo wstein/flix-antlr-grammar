@@ -93,7 +93,10 @@ export abstract class FlixLexerBase extends Lexer {
                 level--;
                 if (level === 0) {
                     this.type = L.BLOCK_COMMENT;
-                    this.channel = L.COMMENTS;
+                    // antlr-ng does not emit static COMMENTS/DOC_COMMENTS channel
+                    // constants (unlike the Java target); resolve by name.
+                    const comments = (L.channelNames as string[] | undefined)?.indexOf("COMMENTS") ?? -1;
+                    this.channel = comments >= 0 ? comments : 2;
                     return;
                 }
                 continue;
