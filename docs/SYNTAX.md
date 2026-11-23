@@ -8,7 +8,7 @@ Constraints such as duplicate modifiers, non-linear patterns and unknown annotat
 parse here and are rejected by a later validation pass, mirroring how the reference
 compiler separates `Parser2` from `Weeder2`.
 
-Parser rules: 91 · lexer rules: 135
+Parser rules: 92 · lexer rules: 135
 
 ## Parser rules
 
@@ -356,18 +356,26 @@ typeAndEffect
 
 ```antlr
 type
-    : ( NOT | TILDE | RVNOT ) type
-    | type AND type
-    | type OR type
-    | type XOR type
-    | type AMPERSAND type
-    | type ( PLUS | MINUS ) type
-    | type RVAND type
-    | type ( RVADD | RVSUB ) type
-    | <assoc=right> type ARROW_WS type
-    | type BACKSLASH type
+    : typeOperators COLON kind
+    | typeOperators
+    ;
+```
+
+### `typeOperators`
+
+```antlr
+typeOperators
+    : ( NOT | TILDE | RVNOT ) typeOperators
+    | typeOperators AND typeOperators
+    | typeOperators OR typeOperators
+    | typeOperators XOR typeOperators
+    | typeOperators AMPERSAND typeOperators
+    | typeOperators ( PLUS | MINUS ) typeOperators
+    | typeOperators RVAND typeOperators
+    | typeOperators ( RVADD | RVSUB ) typeOperators
+    | <assoc=right> typeOperators ARROW_WS typeOperators
+    | typeOperators BACKSLASH typeOperators
     | primaryType typeArgs+
-    | type COLON kind
     | primaryType
     ;
 ```

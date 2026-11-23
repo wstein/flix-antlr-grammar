@@ -12,8 +12,8 @@ comprehension omission: Parser2 accepts `pattern = expression` without `let`.
 
 ## Flix 0.80: reserved `val`
 
-The 0.80 gate adds two structural identities for `identifier__reserved-val` to
-`remaining-divergences.json`. The existing 40 identities are unchanged. On `def val(): Int32 = 42`,
+The initial 0.80 gate carried forward 40 structural identities and added two for
+`identifier__reserved-val` to `remaining-divergences.json`. On `def val(): Int32 = 42`,
 the reference rejects the keyword as a function name and recovers into separate `Decl.Def` and
 `Decl.Val` nodes; ANTLR also rejects it but recovers into one declaration. The owner accepted exactly
 these two recovery-shape differences on 15 November 2026. Both JVM and TypeScript targets test the
@@ -89,9 +89,9 @@ same schema-9 runner, published fixture identities and canonical denominators.
 | 166 / structure port | 1609 / 2412 | 67% | 103 | 94% | 40 |
 | 135 common paths / structure port | 1244 / 2010 | 62% | 98 | 93% | 31 |
 
-The current 0.80 sets gate independently: the 168-fixture set has exactly 42 structural
-identities (40 unchanged plus the two accepted above), canonical depth 67% and walk depth 94%;
-the 135 common paths retain all 31 identities and the 62% and 93% floors. Their current canonical
+The current 0.80 sets gate independently. The 168-fixture set has 35 remaining structural
+identities, including the two accepted above, with canonical depth 67% and walk depth 94%.
+The 135 common paths have 24 remaining identities and retain the 62% and 93% floors. Their current canonical
 denominators are 2434 and 2010. The table above records the historical 0.79 measurement.
 `conformance/legacy-fixture-paths.json` records all 135 surviving paths and the one
 retired trait-law fixture out of the original 136, including its replacement.
