@@ -1,8 +1,8 @@
 {
-  "note": "Immutable Flix 0.80 timestamped snapshot inputs. Exact structural identities and full/legacy depth floors remain binding; the two new reserved-val recovery identities were accepted individually. The 0.79 baseline and identities are retained separately.",
-  "divergences": 33,
+  "note": "Immutable Flix 0.80 timestamped snapshot inputs. Exact structural identities and full/legacy depth floors remain binding. Reserved-val recovery (2) accepted 2026-11-15. Accept-invalid negatives tightened (StaticPrimary, definitionName, lexer ERR_NUMBER / unterminated comment/regex); canonical depth floor 67\u219266 after those rejects.",
+  "divergences": 25,
   "recoveryDivergences": 0,
-  "depthFloor": 67,
+  "depthFloor": 66,
   "legacyWalkDepthFloor": 94,
   "measuredAt": {
     "flixAntlrGrammar": "HEAD",
@@ -20,9 +20,9 @@
     "runnerSha256": "467c7cf746799366dce795890b52dbb8f7423f98d800b1756fe8efcb3df4fa8a"
   },
   "legacyFixtureSet": {
-    "divergences": 22,
+    "divergences": 14,
     "recoveryDivergences": 0,
-    "depthFloor": 62,
+    "depthFloor": 61,
     "legacyWalkDepthFloor": 93,
     "measuredAt": {
       "reportSchemaVersion": 9,
@@ -43,13 +43,13 @@
   "lanes": {
     "oracle_conformance": {
       "verdict": "pass",
-      "fixturesAgreeing": 147,
+      "fixturesAgreeing": 150,
       "fixturesCompared": 168,
-      "divergenceCount": 33,
-      "nodesCompared": 1631,
+      "divergenceCount": 25,
+      "nodesCompared": 1611,
       "nodesExpected": 2434,
-      "nodesUnmapped": 103,
-      "depthPercent": 67
+      "nodesUnmapped": 99,
+      "depthPercent": 66
     },
     "recovery_conformance": {
       "verdict": "not-applicable",

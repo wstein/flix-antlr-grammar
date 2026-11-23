@@ -76,6 +76,197 @@ export abstract class FlixLexerBase extends Lexer {
         }
     }
 
+    /** Finishes a block comment after `/*`; unterminated → UNTERMINATED_BLOCK_COMMENT. */
+    protected acceptBlockComment(): void {
+        const L = this.constructor as any;
+        let level = 1;
+        while (this.inputStream.LA(1) !== -1) {
+            if (this.inputStream.LA(1) === 0x2f && this.inputStream.LA(2) === 0x2a) {
+                this.inputStream.consume();
+                this.inputStream.consume();
+                level++;
+                continue;
+            }
+            if (this.inputStream.LA(1) === 0x2a && this.inputStream.LA(2) === 0x2f) {
+                this.inputStream.consume();
+                this.inputStream.consume();
+                level--;
+                if (level === 0) {
+                    this.type = L.BLOCK_COMMENT;
+                    this.channel = L.COMMENTS;
+                    return;
+                }
+                continue;
+            }
+            this.inputStream.consume();
+        }
+        this.type = L.UNTERMINATED_BLOCK_COMMENT;
+    }
+
+    /** Finishes a number after the first digit; trailing junk → ERR_NUMBER. */
+    protected acceptNumber(): void {
+        const L = this.constructor as any;
+        let mustBeFloat = false;
+        try {
+            this.acceptDigits(true);
+            if (this.matchChar(".")) {
+                mustBeFloat = true;
+                this.acceptDigits(false);
+            }
+            if (this.matchChar("e")) {
+                mustBeFloat = true;
+                if (!this.matchChar("+")) {
+                    this.matchChar("-");
+                }
+                this.acceptDigits(false);
+                if (this.matchChar(".")) {
+                    this.acceptDigits(false);
+                }
+            }
+        } catch {
+            this.type = L.ERR_NUMBER;
+            return;
+        }
+
+        const c = this.inputStream.LA(1);
+        if (c === "i".charCodeAt(0)) {
+            if (this.matchSuffix("i8") || this.matchSuffix("i16") || this.matchSuffix("i32")
+                || this.matchSuffix("i64") || this.matchSuffix("ii")) {
+                this.type = this.finishNumber(mustBeFloat, true);
+            } else {
+                this.consumeNumberLike();
+                this.type = L.ERR_NUMBER;
+            }
+        } else if (c === "f".charCodeAt(0)) {
+            if (this.matchSuffix("f32") || this.matchSuffix("f64") || this.matchSuffix("ff")) {
+                this.type = this.finishNumber(mustBeFloat, false);
+            } else {
+                this.consumeNumberLike();
+                this.type = L.ERR_NUMBER;
+            }
+        } else if (this.isNumberLike(c)) {
+            this.consumeNumberLike();
+            this.type = L.ERR_NUMBER;
+        } else {
+            this.type = mustBeFloat ? L.FLOAT_LITERAL : L.INT_LITERAL;
+        }
+    }
+
+    /** Finishes a hex literal after `0x`. */
+    protected acceptHexNumber(): void {
+        const L = this.constructor as any;
+        if (this.consumeWhile((ch) => this.isHexDigit(ch)) === 0) {
+            this.consumeNumberLike();
+            this.type = L.ERR_NUMBER;
+            return;
+        }
+        while (this.matchChar("_")) {
+            if (this.consumeWhile((ch) => this.isHexDigit(ch)) === 0) {
+                this.consumeNumberLike();
+                this.type = L.ERR_NUMBER;
+                return;
+            }
+        }
+        const c = this.inputStream.LA(1);
+        if (c === "i".charCodeAt(0)) {
+            if (this.matchSuffix("i8") || this.matchSuffix("i16") || this.matchSuffix("i32")
+                || this.matchSuffix("i64") || this.matchSuffix("ii")) {
+                if (this.isNumberLike(this.inputStream.LA(1))) {
+                    this.consumeNumberLike();
+                    this.type = L.ERR_NUMBER;
+                } else {
+                    this.type = L.HEX_LITERAL;
+                }
+            } else {
+                this.consumeNumberLike();
+                this.type = L.ERR_NUMBER;
+            }
+        } else if (this.isNumberLike(c)) {
+            this.consumeNumberLike();
+            this.type = L.ERR_NUMBER;
+        } else {
+            this.type = L.HEX_LITERAL;
+        }
+    }
+
+    private finishNumber(mustBeFloat: boolean, intSuffix: boolean): number {
+        const L = this.constructor as any;
+        if (this.isNumberLike(this.inputStream.LA(1))) {
+            this.consumeNumberLike();
+            return L.ERR_NUMBER;
+        }
+        if (mustBeFloat && intSuffix) {
+            return L.ERR_NUMBER;
+        }
+        return mustBeFloat ? L.FLOAT_LITERAL : L.INT_LITERAL;
+    }
+
+    private acceptDigits(soft: boolean): void {
+        if (this.consumeWhile((ch) => this.isDigit(ch)) === 0 && !soft) {
+            this.consumeNumberLike();
+            throw new Error("number-lex");
+        }
+        while (this.matchChar("_")) {
+            if (this.consumeWhile((ch) => this.isDigit(ch)) === 0) {
+                this.consumeNumberLike();
+                throw new Error("number-lex");
+            }
+        }
+    }
+
+    private matchSuffix(suffix: string): boolean {
+        for (let i = 0; i < suffix.length; i++) {
+            if (this.inputStream.LA(i + 1) !== suffix.charCodeAt(i)) {
+                return false;
+            }
+        }
+        for (let i = 0; i < suffix.length; i++) {
+            this.inputStream.consume();
+        }
+        return true;
+    }
+
+    private matchChar(ch: string): boolean {
+        if (this.inputStream.LA(1) !== ch.charCodeAt(0)) {
+            return false;
+        }
+        this.inputStream.consume();
+        return true;
+    }
+
+    private consumeWhile(pred: (c: number) => boolean): number {
+        let n = 0;
+        while (pred(this.inputStream.LA(1))) {
+            this.inputStream.consume();
+            n++;
+        }
+        return n;
+    }
+
+    private consumeNumberLike(): void {
+        while (this.isNumberLike(this.inputStream.LA(1))) {
+            this.inputStream.consume();
+        }
+    }
+
+    private isDigit(c: number): boolean {
+        return c >= 0x30 && c <= 0x39;
+    }
+
+    private isHexDigit(c: number): boolean {
+        return this.isDigit(c)
+            || (c >= 0x61 && c <= 0x66)
+            || (c >= 0x41 && c <= 0x46);
+    }
+
+    private isLetter(c: number): boolean {
+        return (c >= 0x61 && c <= 0x7a) || (c >= 0x41 && c <= 0x5a);
+    }
+
+    private isNumberLike(c: number): boolean {
+        return this.isDigit(c) || this.isLetter(c) || c === 0x2e || c === 0x5f;
+    }
+
     protected openInterpolation(): void {
         this.interpolationBraceDepth.push(0);
     }

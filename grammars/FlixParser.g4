@@ -336,11 +336,19 @@ variableName
     | UNDERSCORE
     ;
 
+// Parser2's NAME_DEFINITION = NameLowercase | NameUppercase | NameMath | GenericOperator —
+// not reserved operator tokens (`<=>`, `+`, …). Those stay on genericOperator for infix use
+// and operator sections `(+)`. userDefinedOperator wraps GENERIC_OPERATOR so projection can
+// map it to Ident (bare tokens are never emitted).
 definitionName
     : nameLowercase
     | nameUppercase
     | nameMath
-    | genericOperator
+    | userDefinedOperator
+    ;
+
+userDefinedOperator
+    : GENERIC_OPERATOR
     ;
 
 nameLowercase : NAME_LOWERCASE ;
@@ -554,10 +562,11 @@ predicateAtom
 // Primary expressions
 // =====================================================================
 
-// `Static` / `static` before `qname`: nameUppercase also accepts STATIC_UPPER for
-// declaration names, so NamePrimary would otherwise steal Expr.Static.
+// `Static` before `qname`: nameUppercase also accepts STATIC_UPPER for declaration names,
+// so NamePrimary would otherwise steal Expr.Static. Lowercase `static` is reserved but
+// unused — it must not parse as Expr.Static (lexical__static-lowercase-is-reserved-but-unused).
 primaryExpr
-    : ( STATIC_UPPER | STATIC_LOWER )                            # StaticPrimary
+    : STATIC_UPPER                                               # StaticPrimary
     | qname                                                      # NamePrimary
     | ( INT_LITERAL | FLOAT_LITERAL | HEX_LITERAL | CHAR_LITERAL
       | REGEX_LITERAL | TRUE | FALSE | NULL )                    # LiteralPrimary

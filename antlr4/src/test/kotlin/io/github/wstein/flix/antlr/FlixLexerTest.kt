@@ -343,4 +343,35 @@ class FlixLexerTest {
             )
         assertEquals(expected, tokens.map { it.type })
     }
+
+    @Test
+    fun testNumberErrorTokens() {
+        val cases =
+            listOf(
+                "1_" to "1_",
+                "0xZ" to "0xZ",
+                "0x1i99" to "0x1i99",
+                "1i99" to "1i99",
+                "1.5i32" to "1.5i32",
+                "0x1g" to "0x1g",
+                "1x" to "1x",
+            )
+        for ((input, text) in cases) {
+            val tokens = lexDefaultChannel(input)
+            assertEquals(listOf(FlixLexer.ERR_NUMBER), tokens.map { it.type }, input)
+            assertEquals(text, tokens.single().text, input)
+        }
+    }
+
+    @Test
+    fun testUnterminatedBlockCommentAndRegex() {
+        val comment = lexAllChannels("1 /* unterminated").filter { it.type != FlixLexer.WS }
+        assertEquals(FlixLexer.INT_LITERAL, comment[0].type)
+        assertEquals(FlixLexer.UNTERMINATED_BLOCK_COMMENT, comment[1].type)
+        assertEquals("/* unterminated", comment[1].text)
+
+        val regex = lexDefaultChannel("regex\"unterminated")
+        assertEquals(listOf(FlixLexer.UNTERMINATED_REGEX), regex.map { it.type })
+        assertEquals("regex\"unterminated", regex.single().text)
+    }
 }
