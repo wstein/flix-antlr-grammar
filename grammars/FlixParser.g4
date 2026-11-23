@@ -248,6 +248,8 @@ type
     | <assoc=right> type ARROW_WS type    # ArrowType
     | type BACKSLASH type                 # EffectAnnotatedType
     | primaryType typeArgs+               # ApplyType
+    // `a : Type` — Type.Ascribe (kind ascription). Later alternative = lower precedence than Apply.
+    | type COLON kind                     # AscribeType
     | primaryType                         # SimpleType
     ;
 
@@ -547,8 +549,11 @@ predicateAtom
 // Primary expressions
 // =====================================================================
 
+// `Static` / `static` before `qname`: nameUppercase also accepts STATIC_UPPER for
+// declaration names, so NamePrimary would otherwise steal Expr.Static.
 primaryExpr
-    : qname                                                      # NamePrimary
+    : ( STATIC_UPPER | STATIC_LOWER )                            # StaticPrimary
+    | qname                                                      # NamePrimary
     | ( INT_LITERAL | FLOAT_LITERAL | HEX_LITERAL | CHAR_LITERAL
       | REGEX_LITERAL | TRUE | FALSE | NULL )                    # LiteralPrimary
     | plainString                                                # StringPrimary
@@ -558,7 +563,6 @@ primaryExpr
     | HOLE_NAMED                                                 # NamedHolePrimary
     | HOLE_VARIABLE                                              # HoleVariablePrimary
     | BUILT_IN                                                   # IntrinsicPrimary
-    | ( STATIC_UPPER | STATIC_LOWER )                            # StaticPrimary
     | UNDERSCORE                                                 # WildcardPrimary
     | LPAREN RPAREN                                              # UnitPrimary
     | LPAREN argument RPAREN                                     # ParenPrimary

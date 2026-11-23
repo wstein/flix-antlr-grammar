@@ -1,22 +1,6 @@
 [
   {
     "lane": "oracle_conformance",
-    "fixture": "declarations__function-with-type-parameters-and-constraints.json",
-    "path": "fixtures/positive/declarations__function-with-type-parameters-and-constraints.flix.Root[0].Decl.Def[2].ParameterList[0]",
-    "expected": "2 children",
-    "actual": "3 children",
-    "reason": "arity"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "declarations__function-with-type-parameters-and-constraints.json",
-    "path": "fixtures/positive/declarations__function-with-type-parameters-and-constraints.flix.Root[0].Decl.Def[2].ParameterList[0].Parameter[1]",
-    "expected": "4 children",
-    "actual": "3 children",
-    "reason": "arity"
-  },
-  {
-    "lane": "oracle_conformance",
     "fixture": "declarations__package-path-separator-must-be-tight.json",
     "path": "fixtures/negative/declarations__package-path-separator-must-be-tight.flix.Root[0]",
     "expected": "2 children",
@@ -78,14 +62,6 @@
     "expected": "4 children",
     "actual": "3 children",
     "reason": "arity"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "expressions__intrinsic-and-static-region.json",
-    "path": "fixtures/positive/expressions__intrinsic-and-static-region.flix.Root[0].Decl.Def[3].Expr.Tuple[1]",
-    "expected": "Expr.Static",
-    "actual": "Ident",
-    "reason": "kind"
   },
   {
     "lane": "oracle_conformance",
@@ -261,38 +237,6 @@
     "path": "fixtures/negative/trailing-dot.flix.Root[0].Decl.Def[3]",
     "expected": "QName",
     "actual": "Ident",
-    "reason": "kind"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "type-kind-ascription.json",
-    "path": "fixtures/positive/type-kind-ascription.flix.Root[0].Decl.TypeAlias[2]",
-    "expected": "Type.Ascribe",
-    "actual": "Type.Variable",
-    "reason": "kind"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "types__effect-annotation-binds-to-the-arrow-result.json",
-    "path": "fixtures/positive/types__effect-annotation-binds-to-the-arrow-result.flix.Root[0]",
-    "expected": "4 children",
-    "actual": "5 children",
-    "reason": "arity"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "types__effect-annotation-binds-to-the-arrow-result.json",
-    "path": "fixtures/positive/types__effect-annotation-binds-to-the-arrow-result.flix.Root[0].Decl.Def[2]",
-    "expected": "4 children",
-    "actual": "3 children",
-    "reason": "arity"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "types__effect-annotation-binds-to-the-arrow-result.json",
-    "path": "fixtures/positive/types__effect-annotation-binds-to-the-arrow-result.flix.Root[0].Decl.Def[3]",
-    "expected": "Expr.Hole",
-    "actual": "Type.Variable",
     "reason": "kind"
   },
   {

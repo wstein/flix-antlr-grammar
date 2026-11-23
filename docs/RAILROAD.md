@@ -74,6 +74,7 @@ type ::= ( NOT | TILDE | RVNOT ) type
     | <assoc=right> type ARROW_WS type
     | type BACKSLASH type
     | primaryType typeArgs+
+    | type COLON kind
     | primaryType ;
 ```
 
