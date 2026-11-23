@@ -40,7 +40,16 @@ tokens {
     INTERPOLATION_END,
 
     // Emitted when a raw newline terminates a string, which the reference rejects
-    UNTERMINATED_STRING
+    UNTERMINATED_STRING,
+
+    // Lexer error tokens: no parser rule accepts these, so they surface as syntax errors
+    // while still consuming the bad span (mirroring TokenKind.Err in Lexer.scala).
+    ERR_NUMBER,
+    UNTERMINATED_BLOCK_COMMENT,
+    UNTERMINATED_REGEX,
+
+    // Set by acceptNumber() when the literal is a float (INT_LITERAL is the rule name).
+    FLOAT_LITERAL
 }
 
 channels {
@@ -222,21 +231,18 @@ DOLLAR           : '$' ;
 
 // ---------------------------------------------------------------------
 // Literals
+//
+// Numbers are recognised by a digit / `0x` prefix and finished in FlixLexerBase
+// (`acceptNumber` / `acceptHexNumber`), mirroring Lexer.scala: trailing junk in
+// `[0-9a-zA-Z_.]` becomes one ERR_NUMBER token instead of a valid literal plus a name.
 // ---------------------------------------------------------------------
 
-HEX_LITERAL      : '0x' HEXDIGITS INT_SUFFIX? ;
-FLOAT_LITERAL    : DIGITS ( '.' DIGITS EXPONENT? | EXPONENT ) FLOAT_SUFFIX?
-                 | DIGITS FLOAT_SUFFIX
-                 ;
-INT_LITERAL      : DIGITS INT_SUFFIX? ;
+HEX_LITERAL      : '0x' { acceptHexNumber(); } ;
+INT_LITERAL      : [0-9] { acceptNumber(); } ;
 CHAR_LITERAL     : '\'' ( '\\' . | ~['\\] )*? '\'' ;
-REGEX_LITERAL    : 'regex"' ( '\\' . | ~["\\\r\n] )* '"' ;
-
-fragment DIGITS       : [0-9]+ ( '_' [0-9]+ )* ;
-fragment HEXDIGITS    : [0-9a-fA-F]+ ( '_' [0-9a-fA-F]+ )* ;
-fragment INT_SUFFIX   : 'i8' | 'i16' | 'i32' | 'i64' | 'ii' ;
-fragment FLOAT_SUFFIX : 'f32' | 'f64' | 'ff' ;
-fragment EXPONENT     : 'e' [+-]? DIGITS ( '.' DIGITS )? ;
+REGEX_LITERAL    : 'regex"' ( '\\' . | ~["\\] )* '"' ;
+// No closing quote (EOF): consume the rest as one error token so `regex` is not a name.
+UNTERMINATED_REGEX : 'regex"' ( '\\' . | ~["\\] )* ;
 
 // ---------------------------------------------------------------------
 // Strings & interpolations
@@ -254,7 +260,8 @@ STRING_START     : '"' -> pushMode(STRING_MODE) ;
 
 DOC_COMMENT      : '///' ( ~[/\r\n] ~[\r\n]* )? -> channel(DOC_COMMENTS) ;
 LINE_COMMENT     : '//' '/'* ~[\r\n]* -> channel(COMMENTS) ;
-BLOCK_COMMENT    : '/*' ( BLOCK_COMMENT | . )*? '*/' -> channel(COMMENTS) ;
+// Nested block comments; unterminated ones become UNTERMINATED_BLOCK_COMMENT (Lexer.scala).
+BLOCK_COMMENT    : '/*' { acceptBlockComment(); } ;
 WS               : [ \t\r\n\u000B\f\u001C-\u001F\u1680\u2000-\u2006\u2008-\u200A\u2028\u2029\u205F\u3000]+ -> channel(HIDDEN) ;
 
 // =====================================================================

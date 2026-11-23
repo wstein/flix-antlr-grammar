@@ -479,7 +479,15 @@ definitionName
     : nameLowercase
     | nameUppercase
     | nameMath
-    | genericOperator
+    | userDefinedOperator
+    ;
+```
+
+### `userDefinedOperator`
+
+```antlr
+userDefinedOperator
+    : GENERIC_OPERATOR
     ;
 ```
 
@@ -712,7 +720,7 @@ predicateAtom
 
 ```antlr
 primaryExpr
-    : ( STATIC_UPPER | STATIC_LOWER )
+    : STATIC_UPPER
     | qname
     | ( INT_LITERAL | FLOAT_LITERAL | HEX_LITERAL | CHAR_LITERAL
     | REGEX_LITERAL | TRUE | FALSE | NULL )
@@ -1157,16 +1165,7 @@ DOLLAR
 
 ```antlr
 HEX_LITERAL
-    : '0x' HEXDIGITS INT_SUFFIX?
-    ;
-```
-
-### `FLOAT_LITERAL`
-
-```antlr
-FLOAT_LITERAL
-    : DIGITS ( '.' DIGITS EXPONENT? | EXPONENT ) FLOAT_SUFFIX?
-    | DIGITS FLOAT_SUFFIX
+    : '0x'
     ;
 ```
 
@@ -1174,7 +1173,7 @@ FLOAT_LITERAL
 
 ```antlr
 INT_LITERAL
-    : DIGITS INT_SUFFIX?
+    : [0-9]
     ;
 ```
 
@@ -1190,7 +1189,15 @@ CHAR_LITERAL
 
 ```antlr
 REGEX_LITERAL
-    : 'regex"' ( '\\' . | ~["\\\r\n] )* '"'
+    : 'regex"' ( '\\' . | ~["\\] )* '"'
+    ;
+```
+
+### `UNTERMINATED_REGEX`
+
+```antlr
+UNTERMINATED_REGEX
+    : 'regex"' ( '\\' . | ~["\\] )*
     ;
 ```
 
@@ -1222,7 +1229,7 @@ LINE_COMMENT
 
 ```antlr
 BLOCK_COMMENT
-    : '/*' ( BLOCK_COMMENT | . )*? '*/'
+    : '/*'
     ;
 ```
 

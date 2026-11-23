@@ -180,6 +180,225 @@ public abstract class FlixLexerBase extends Lexer {
         setType(reserved != null ? reserved : FlixLexer.GENERIC_OPERATOR);
     }
 
+    // ---------------------------------------------------------------------
+    // Block comments (Lexer.scala acceptBlockComment)
+    // ---------------------------------------------------------------------
+
+    /**
+     * Finishes a block comment after the opening delimiter has been matched. Nested openings
+     * are counted; reaching EOF with nesting left open yields
+     * {@link FlixLexer#UNTERMINATED_BLOCK_COMMENT} on the default channel.
+     */
+    protected void acceptBlockComment() {
+        int level = 1;
+        while (_input.LA(1) != CharStream.EOF) {
+            if (_input.LA(1) == '/' && _input.LA(2) == '*') {
+                _input.consume();
+                _input.consume();
+                level++;
+                continue;
+            }
+            if (_input.LA(1) == '*' && _input.LA(2) == '/') {
+                _input.consume();
+                _input.consume();
+                level--;
+                if (level == 0) {
+                    setType(FlixLexer.BLOCK_COMMENT);
+                    setChannel(FlixLexer.COMMENTS);
+                    return;
+                }
+                continue;
+            }
+            _input.consume();
+        }
+        setType(FlixLexer.UNTERMINATED_BLOCK_COMMENT);
+    }
+
+    // ---------------------------------------------------------------------
+    // Number literals (Lexer.scala acceptNumber / acceptHexNumber)
+    // ---------------------------------------------------------------------
+
+    /**
+     * Finishes a number after the first digit has been matched. Trailing junk in
+     * {@code [0-9a-zA-Z_.]} becomes {@link FlixLexer#ERR_NUMBER}.
+     */
+    protected void acceptNumber() {
+        boolean mustBeFloat = false;
+        try {
+            acceptDigits(true);
+            if (match('.')) {
+                mustBeFloat = true;
+                acceptDigits(false);
+            }
+            if (match('e')) {
+                mustBeFloat = true;
+                if (!match('+')) {
+                    match('-');
+                }
+                acceptDigits(false);
+                if (match('.')) {
+                    acceptDigits(false);
+                }
+            }
+        } catch (NumberLexError e) {
+            setType(FlixLexer.ERR_NUMBER);
+            return;
+        }
+
+        int c = _input.LA(1);
+        if (c == 'i') {
+            if (matchSuffix("i8")) {
+                setType(finishNumber(mustBeFloat, true));
+            } else if (matchSuffix("i16")) {
+                setType(finishNumber(mustBeFloat, true));
+            } else if (matchSuffix("i32")) {
+                setType(finishNumber(mustBeFloat, true));
+            } else if (matchSuffix("i64")) {
+                setType(finishNumber(mustBeFloat, true));
+            } else if (matchSuffix("ii")) {
+                setType(finishNumber(mustBeFloat, true));
+            } else {
+                consumeNumberLike();
+                setType(FlixLexer.ERR_NUMBER);
+            }
+        } else if (c == 'f') {
+            if (matchSuffix("f32")) {
+                setType(finishNumber(mustBeFloat, false));
+            } else if (matchSuffix("f64")) {
+                setType(finishNumber(mustBeFloat, false));
+            } else if (matchSuffix("ff")) {
+                setType(finishNumber(mustBeFloat, false));
+            } else {
+                consumeNumberLike();
+                setType(FlixLexer.ERR_NUMBER);
+            }
+        } else if (isNumberLike(c)) {
+            consumeNumberLike();
+            setType(FlixLexer.ERR_NUMBER);
+        } else {
+            setType(mustBeFloat ? FlixLexer.FLOAT_LITERAL : FlixLexer.INT_LITERAL);
+        }
+    }
+
+    /**
+     * Finishes a hex literal after {@code 0x} has been matched.
+     */
+    protected void acceptHexNumber() {
+        if (consumeWhile(this::isHexDigit) == 0) {
+            consumeNumberLike();
+            setType(FlixLexer.ERR_NUMBER);
+            return;
+        }
+        while (match('_')) {
+            if (consumeWhile(this::isHexDigit) == 0) {
+                consumeNumberLike();
+                setType(FlixLexer.ERR_NUMBER);
+                return;
+            }
+        }
+        int c = _input.LA(1);
+        if (c == 'i') {
+            if (matchSuffix("i8") || matchSuffix("i16") || matchSuffix("i32") || matchSuffix("i64")
+                    || matchSuffix("ii")) {
+                if (isNumberLike(_input.LA(1))) {
+                    consumeNumberLike();
+                    setType(FlixLexer.ERR_NUMBER);
+                } else {
+                    setType(FlixLexer.HEX_LITERAL);
+                }
+            } else {
+                consumeNumberLike();
+                setType(FlixLexer.ERR_NUMBER);
+            }
+        } else if (isNumberLike(c)) {
+            consumeNumberLike();
+            setType(FlixLexer.ERR_NUMBER);
+        } else {
+            setType(FlixLexer.HEX_LITERAL);
+        }
+    }
+
+    private int finishNumber(boolean mustBeFloat, boolean intSuffix) {
+        if (isNumberLike(_input.LA(1))) {
+            consumeNumberLike();
+            return FlixLexer.ERR_NUMBER;
+        }
+        if (mustBeFloat && intSuffix) {
+            return FlixLexer.ERR_NUMBER;
+        }
+        return mustBeFloat ? FlixLexer.FLOAT_LITERAL : FlixLexer.INT_LITERAL;
+    }
+
+    /** Consumes {@code [0-9]+(_[0-9]+)*}; soft allows zero leading digits. */
+    private void acceptDigits(boolean soft) {
+        if (consumeWhile(this::isDigit) == 0 && !soft) {
+            consumeNumberLike();
+            throw new NumberLexError();
+        }
+        while (match('_')) {
+            if (consumeWhile(this::isDigit) == 0) {
+                consumeNumberLike();
+                throw new NumberLexError();
+            }
+        }
+    }
+
+    private boolean matchSuffix(String suffix) {
+        for (int i = 0; i < suffix.length(); i++) {
+            if (_input.LA(i + 1) != suffix.charAt(i)) {
+                return false;
+            }
+        }
+        for (int i = 0; i < suffix.length(); i++) {
+            _input.consume();
+        }
+        return true;
+    }
+
+    private boolean match(char ch) {
+        if (_input.LA(1) != ch) {
+            return false;
+        }
+        _input.consume();
+        return true;
+    }
+
+    private int consumeWhile(java.util.function.IntPredicate pred) {
+        int n = 0;
+        while (pred.test(_input.LA(1))) {
+            _input.consume();
+            n++;
+        }
+        return n;
+    }
+
+    private void consumeNumberLike() {
+        while (isNumberLike(_input.LA(1))) {
+            _input.consume();
+        }
+    }
+
+    private boolean isDigit(int c) {
+        return c >= '0' && c <= '9';
+    }
+
+    private boolean isHexDigit(int c) {
+        return isDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+    }
+
+    private boolean isLetter(int c) {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+    }
+
+    /** Reference {@code isNumberLikeChar}: {@code [0-9a-zA-Z_.]}. */
+    private boolean isNumberLike(int c) {
+        return isDigit(c) || isLetter(c) || c == '.' || c == '_';
+    }
+
+    private static final class NumberLexError extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+    }
+
     /**
      * Guards the keywords whose spelling ends in a non-name character: {@code Array#}, {@code List#},
      * {@code Map#}, {@code Set#}, {@code Vector#} and {@code choose*}.
