@@ -14,7 +14,7 @@ Also cleared with those fixes (bonus): constrained-def ParameterList arity (2), 
 
 ## 2. Positive `arity` — this PR
 
-- [x] `lexical__holes.json` · Decl.Def / Expr.Tuple (2 identities) — projection-map: synthesise `nameLowercase` (→ Ident) from `HOLE_NAMED` / `HOLE_VARIABLE` in Projection.kt (`NamedHolePrimary`, `HoleVariablePrimary`)
+- [x] `lexical__holes.json` · Decl.Def / Expr.Tuple (2 identities) — project an `Ident` spanning the full named or variable hole token.
 
 ## 3. Already accepted
 

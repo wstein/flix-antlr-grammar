@@ -79,6 +79,7 @@
     "extensibleType": "Type.Extensible",
     "formalParam": "Parameter",
     "formalParams": "ParameterList",
+    "holeIdentifier": "Ident",
     "importClause": "UsesOrImports.Import",
     "importMany": "UsesOrImports.ImportMany",
     "instanceDeclaration": "Decl.Instance",
@@ -218,8 +219,8 @@
     "variableType": "A lone lowercase token is Type.Variable; qualified and uppercase names retain their identifier children.",
     "recordRowType": "Parser2 dispatches empty parentheses, a leading bar, and a leading field assignment to Type.RecordRow; other parenthesized types are Type.Tuple.",
     "DebugPrimary": "Flix 0.79 retains its Expr.Expr wrapper around the interpolated string; preserve that outer debug marker shape instead of collapsing it.",
-    "NamedHolePrimary": "Lexer emits one HOLE_NAMED token; Projection.kt synthesises an Ident child from the name text, matching the reference.",
-    "HoleVariablePrimary": "Ignored wrapper: Projection.kt synthesises Ident from HOLE_VARIABLE so `x?` appears as Ident in the parent, matching the reference.",
+    "holeIdentifier": "Synthetic identifier for a named or variable hole. Its span covers the entire native token including the question mark, as in the reference.",
+    "HoleVariablePrimary": "Transparent wrapper: the projected holeIdentifier appears as Ident under the parent.",
     "annotationList": "Optional nonempty annotations are explicit list nodes; absent lists create no node. Annotation names remain unconstrained parser input.",
     "modifierList": "Optional nonempty modifiers are explicit list nodes. Individual modifier tokens remain unprojected, so a present list stays even when its ignored modifier children disappear."
   },
