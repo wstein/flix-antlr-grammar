@@ -1,0 +1,1 @@
+(compilationUnit (declaration (aliasDeclaration declPrefix type alias (nameUppercase R) = (type (primaryType { (type (type (primaryType a)) : (kind (nameUppercase Int32))) })))) (declaration (aliasDeclaration declPrefix type alias (nameUppercase T) (typeParams [ (typeParam (name (nameLowercase a))) ]) = (type (type (primaryType a)) : (kind (nameUppercase Type))))) <EOF>)

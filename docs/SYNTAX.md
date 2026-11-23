@@ -367,6 +367,7 @@ type
     | <assoc=right> type ARROW_WS type
     | type BACKSLASH type
     | primaryType typeArgs+
+    | type COLON kind
     | primaryType
     ;
 ```
@@ -703,7 +704,8 @@ predicateAtom
 
 ```antlr
 primaryExpr
-    : qname
+    : ( STATIC_UPPER | STATIC_LOWER )
+    | qname
     | ( INT_LITERAL | FLOAT_LITERAL | HEX_LITERAL | CHAR_LITERAL
     | REGEX_LITERAL | TRUE | FALSE | NULL )
     | plainString
@@ -713,7 +715,6 @@ primaryExpr
     | HOLE_NAMED
     | HOLE_VARIABLE
     | BUILT_IN
-    | ( STATIC_UPPER | STATIC_LOWER )
     | UNDERSCORE
     | LPAREN RPAREN
     | LPAREN argument RPAREN

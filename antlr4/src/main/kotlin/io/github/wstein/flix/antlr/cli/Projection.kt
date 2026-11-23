@@ -263,6 +263,23 @@ object Projection {
                 val term = n.children.removeAt(n.children.lastIndex)
                 n.children += Node("latticeTerm", term.start, term.stop, mutableListOf(term))
             }
+            // `a -> b \\ ef`: the reference folds the effect into Type.Binary; flatten alone
+            // would place the effect beside the arrow in the parent. Return the arrow so
+            // EffectAnnotatedType never reaches the flatten pass.
+            if (ctx is FlixParser.EffectAnnotatedTypeContext &&
+                n.children.size == 2 &&
+                n.children[0].kind == "ArrowType"
+            ) {
+                val arrow = n.children[0]
+                val effect = n.children[1]
+                return Node(
+                    arrow.kind,
+                    arrow.start,
+                    effect.stop,
+                    (arrow.children + effect).toMutableList(),
+                    arrow.documentable,
+                )
+            }
             val payload =
                 when (ctx) {
                     is FlixParser.EnumCaseContext -> ctx.LPAREN()?.symbol to ctx.RPAREN()?.symbol

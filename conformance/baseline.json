@@ -1,6 +1,6 @@
 {
   "note": "Immutable Flix 0.80 timestamped snapshot inputs. Exact structural identities and full/legacy depth floors remain binding; the two new reserved-val recovery identities were accepted individually. The 0.79 baseline and identities are retained separately.",
-  "divergences": 42,
+  "divergences": 35,
   "recoveryDivergences": 0,
   "depthFloor": 67,
   "legacyWalkDepthFloor": 94,
@@ -20,7 +20,7 @@
     "runnerSha256": "467c7cf746799366dce795890b52dbb8f7423f98d800b1756fe8efcb3df4fa8a"
   },
   "legacyFixtureSet": {
-    "divergences": 31,
+    "divergences": 24,
     "recoveryDivergences": 0,
     "depthFloor": 62,
     "legacyWalkDepthFloor": 93,
@@ -43,10 +43,10 @@
   "lanes": {
     "oracle_conformance": {
       "verdict": "pass",
-      "fixturesAgreeing": 142,
+      "fixturesAgreeing": 146,
       "fixturesCompared": 168,
-      "divergenceCount": 42,
-      "nodesCompared": 1624,
+      "divergenceCount": 35,
+      "nodesCompared": 1629,
       "nodesExpected": 2434,
       "nodesUnmapped": 103,
       "depthPercent": 67
