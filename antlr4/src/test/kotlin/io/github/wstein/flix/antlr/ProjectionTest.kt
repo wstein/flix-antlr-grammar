@@ -54,6 +54,26 @@ class ProjectionTest {
     ): Projection.Node = assertNotNull(descendants(node).find { it.kind == kind }, "$kind missing from $node")
 
     @Test
+    fun `trailing effects bind to the last unparenthesized arrow`() {
+        val outer = find(projected("type alias F = a -> b -> c \\ IO"), "ArrowType")
+        assertEquals(3, outer.children.size)
+        val inner = outer.children.last()
+        assertEquals("ArrowType", inner.kind)
+        assertEquals(4, inner.children.size)
+        val innerEffect = inner.children.last()
+        assertEquals("IO", innerEffect.start.text)
+        assertEquals("IO", inner.stop.text)
+
+        val groupedOuter = find(projected("type alias F = a -> (b -> c) \\ IO"), "ArrowType")
+        assertEquals(4, groupedOuter.children.size)
+        val outerEffect = groupedOuter.children.last()
+        assertEquals("IO", outerEffect.start.text)
+        val groupedInner = find(groupedOuter.children[2], "ArrowType")
+        assertEquals(3, groupedInner.children.size)
+        assertEquals("c", groupedInner.stop.text)
+    }
+
+    @Test
     fun `labelled alternatives are keyed by label, unlabelled rules by rule name`() {
         val root = projected("def f(x: Int32): Int32 = x + 1")
         val declaration =

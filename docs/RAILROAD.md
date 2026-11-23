@@ -63,18 +63,25 @@ effDeclaration ::= declPrefix EFF nameUppercase typeParams? ( LBRACE opDeclarati
 
 ```mermaid
 railroad-ebnf-beta
-type ::= ( NOT | TILDE | RVNOT ) type
-    | type AND type
-    | type OR type
-    | type XOR type
-    | type AMPERSAND type
-    | type ( PLUS | MINUS ) type
-    | type RVAND type
-    | type ( RVADD | RVSUB ) type
-    | <assoc=right> type ARROW_WS type
-    | type BACKSLASH type
+type ::= typeOperators COLON kind
+    | typeOperators ;
+```
+
+## `typeOperators`
+
+```mermaid
+railroad-ebnf-beta
+typeOperators ::= ( NOT | TILDE | RVNOT ) typeOperators
+    | typeOperators AND typeOperators
+    | typeOperators OR typeOperators
+    | typeOperators XOR typeOperators
+    | typeOperators AMPERSAND typeOperators
+    | typeOperators ( PLUS | MINUS ) typeOperators
+    | typeOperators RVAND typeOperators
+    | typeOperators ( RVADD | RVSUB ) typeOperators
+    | <assoc=right> typeOperators ARROW_WS typeOperators
+    | typeOperators BACKSLASH typeOperators
     | primaryType typeArgs+
-    | type COLON kind
     | primaryType ;
 ```
 

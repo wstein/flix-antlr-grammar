@@ -162,10 +162,28 @@ object Projection {
             )
     }
 
+    /** An unparenthesized chain's last arrow owns the trailing effect. */
+    private fun attachArrowEffect(
+        arrow: Node,
+        effect: Node,
+    ): Node {
+        val children = arrow.children.toMutableList()
+        val result = children.lastOrNull()
+        if (result?.kind == "ArrowType") {
+            children[children.lastIndex] = attachArrowEffect(result, effect)
+        } else {
+            children += effect
+        }
+        return arrow.copy(stop = effect.stop, children = children)
+    }
+
     private fun node(
         ctx: ParserRuleContext,
         names: Array<String>,
     ): Node {
+        if (ctx is FlixParser.UnascribedTypeContext) {
+            return node(ctx.typeOperators(), names)
+        }
         val rule = names[ctx.ruleIndex]
         val kind =
             when {
@@ -270,15 +288,7 @@ object Projection {
                 n.children.size == 2 &&
                 n.children[0].kind == "ArrowType"
             ) {
-                val arrow = n.children[0]
-                val effect = n.children[1]
-                return Node(
-                    arrow.kind,
-                    arrow.start,
-                    effect.stop,
-                    (arrow.children + effect).toMutableList(),
-                    arrow.documentable,
-                )
+                return attachArrowEffect(n.children[0], n.children[1])
             }
             val payload =
                 when (ctx) {

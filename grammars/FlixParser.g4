@@ -228,29 +228,34 @@ formalParam
 // does the expression table's; both are inverted.
 // =====================================================================
 
-// The effect annotation binds looser than everything, including the arrow:
-// in `a -> b \ ef` the effect belongs to the arrow type as a whole.
+// The CST stores a trailing effect outside the arrow chain. The reference
+// attaches it to the last unparenthesized arrow, or to the enclosing signature
+// when the type is not an arrow.
 typeAndEffect
     : type
     ;
 
+type
+    : typeOperators COLON kind            # AscribeType
+    | typeOperators                       # UnascribedType
+    ;
+
 // ANTLR assigns precedence by alternative order, earliest tightest, so this
 // table is the reverse of TYPE_OP_PRECEDENCE, whose index 0 is the LOOSEST.
-type
-    : ( NOT | TILDE | RVNOT ) type        # UnaryType
-    | type AND type                       # AndType
-    | type OR type                        # OrType
-    | type XOR type                       # XorType
-    | type AMPERSAND type                 # EffectIntersectionType
-    | type ( PLUS | MINUS ) type          # EffectSumType
-    | type RVAND type                     # RvAndType
-    | type ( RVADD | RVSUB ) type         # RvAddSubType
-    | <assoc=right> type ARROW_WS type    # ArrowType
-    | type BACKSLASH type                 # EffectAnnotatedType
-    | primaryType typeArgs+               # ApplyType
-    // `a : Type` — Type.Ascribe (kind ascription). Later alternative = lower precedence than Apply.
-    | type COLON kind                     # AscribeType
-    | primaryType                         # SimpleType
+// The enclosing type rule permits one kind ascription at this level.
+typeOperators
+    : ( NOT | TILDE | RVNOT ) typeOperators                              # UnaryType
+    | typeOperators AND typeOperators                                    # AndType
+    | typeOperators OR typeOperators                                     # OrType
+    | typeOperators XOR typeOperators                                    # XorType
+    | typeOperators AMPERSAND typeOperators                              # EffectIntersectionType
+    | typeOperators ( PLUS | MINUS ) typeOperators                       # EffectSumType
+    | typeOperators RVAND typeOperators                                  # RvAndType
+    | typeOperators ( RVADD | RVSUB ) typeOperators                       # RvAddSubType
+    | <assoc=right> typeOperators ARROW_WS typeOperators                 # ArrowType
+    | typeOperators BACKSLASH typeOperators                              # EffectAnnotatedType
+    | primaryType typeArgs+                                              # ApplyType
+    | primaryType                                                        # SimpleType
     ;
 
 primaryType

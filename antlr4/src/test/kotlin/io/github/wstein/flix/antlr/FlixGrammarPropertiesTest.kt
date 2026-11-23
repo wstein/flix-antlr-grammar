@@ -169,7 +169,7 @@ class FlixGrammarPropertiesTest {
         parser.addErrorListener(listener)
         val tree = parser.type()
         assertTrue(listener.messages.isEmpty(), "'$source' should parse as a type: ${listener.messages}")
-        return tree
+        return if (tree is FlixParser.UnascribedTypeContext) tree.typeOperators() else tree
     }
 
     private fun shape(tree: ParseTree): String = tree.javaClass.simpleName.removeSuffix("Context")

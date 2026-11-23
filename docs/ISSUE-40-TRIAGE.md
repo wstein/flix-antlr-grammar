@@ -7,8 +7,8 @@ Order: positive *kind* → positive *arity* → negative recovery.
 ## 1. Positive `kind` — grammar / projection (this PR)
 
 - [x] `expressions__intrinsic-and-static-region.json` · `Expr.Static` (StaticPrimary before NamePrimary)
-- [x] `type-kind-ascription.json` · `Type.Ascribe` (`type COLON kind` / AscribeType)
-- [x] `types__effect-annotation-binds-to-the-arrow-result.json` · fold `\\ ef` into ArrowType in Projection.kt
+- [x] `type-kind-ascription.json` · `Type.Ascribe` (one optional kind ascription at each type level)
+- [x] `types__effect-annotation-binds-to-the-arrow-result.json` · attach the trailing effect to the last unparenthesized arrow in Projection.kt
 
 Also cleared with those fixes (bonus): constrained-def ParameterList arity (2), effect-annotation Root/Def arity (2).
 

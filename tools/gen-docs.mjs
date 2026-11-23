@@ -90,7 +90,7 @@ writeFileSync(join(root, "docs", "SYNTAX.md"), syntax.join("\n").trimEnd() + "\n
 // and the interesting shapes are the ones with real alternation.
 const FEATURED = [
     "compilationUnit", "declaration", "defDeclaration", "enumDeclaration", "traitDeclaration",
-    "effDeclaration", "type", "primaryType", "expr", "pattern", "primaryPattern",
+    "effDeclaration", "type", "typeOperators", "primaryType", "expr", "pattern", "primaryPattern",
     "datalogConstraint", "predicateBody", "fixpointExpr", "matchRule", "forFragment",
 ];
 const byName = new Map(parserRules);
