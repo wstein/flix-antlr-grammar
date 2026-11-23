@@ -477,7 +477,6 @@ variableName
 ```antlr
 definitionName
     : nameLowercase
-    | nameUppercase
     | nameMath
     | userDefinedOperator
     ;
@@ -1197,7 +1196,7 @@ REGEX_LITERAL
 
 ```antlr
 UNTERMINATED_REGEX
-    : 'regex"' ( '\\' . | ~["\\] )*
+    : 'regex"' ( '\\' . | ~["\\] )* '\\'?
     ;
 ```
 

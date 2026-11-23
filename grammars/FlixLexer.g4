@@ -242,7 +242,8 @@ INT_LITERAL      : [0-9] { acceptNumber(); } ;
 CHAR_LITERAL     : '\'' ( '\\' . | ~['\\] )*? '\'' ;
 REGEX_LITERAL    : 'regex"' ( '\\' . | ~["\\] )* '"' ;
 // No closing quote (EOF): consume the rest as one error token so `regex` is not a name.
-UNTERMINATED_REGEX : 'regex"' ( '\\' . | ~["\\] )* ;
+// A lone trailing `\` (escape cut off by EOF) must stay inside this token, not a BACKSLASH.
+UNTERMINATED_REGEX : 'regex"' ( '\\' . | ~["\\] )* '\\'? ;
 
 // ---------------------------------------------------------------------
 // Strings & interpolations

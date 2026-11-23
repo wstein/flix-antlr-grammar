@@ -328,7 +328,7 @@ class FlixLexerTest {
 
     @Test
     fun testLiterals() {
-        val tokens = lexDefaultChannel("123 123i8 123i64 123ii 0x1A 123.45 123.45f32 'a' '\\n'")
+        val tokens = lexDefaultChannel("123 123i8 123i64 123ii 0x1A 123.45 123.45f32 42f32 42f64 42ff 'a' '\\n'")
         val expected =
             listOf(
                 FlixLexer.INT_LITERAL,
@@ -338,10 +338,26 @@ class FlixLexerTest {
                 FlixLexer.HEX_LITERAL,
                 FlixLexer.FLOAT_LITERAL,
                 FlixLexer.FLOAT_LITERAL,
+                FlixLexer.FLOAT_LITERAL,
+                FlixLexer.FLOAT_LITERAL,
+                FlixLexer.FLOAT_LITERAL,
                 FlixLexer.CHAR_LITERAL,
                 FlixLexer.CHAR_LITERAL,
             )
         assertEquals(expected, tokens.map { it.type })
+    }
+
+    @Test
+    fun testPositionsAfterNumbersAndBlockComments() {
+        // 0-based columns: "10 + 20" → '+' at column 3
+        val plus = lexDefaultChannel("10 + 20").single { it.type == FlixLexer.PLUS }
+        assertEquals(1, plus.line)
+        assertEquals(3, plus.charPositionInLine)
+
+        // After a multi-line block comment, the next token is on the line after the closer.
+        val after = lexDefaultChannel("/* a\n b */\ndef").single { it.type == FlixLexer.DEF }
+        assertEquals(3, after.line)
+        assertEquals(0, after.charPositionInLine)
     }
 
     @Test
@@ -373,5 +389,9 @@ class FlixLexerTest {
         val regex = lexDefaultChannel("regex\"unterminated")
         assertEquals(listOf(FlixLexer.UNTERMINATED_REGEX), regex.map { it.type })
         assertEquals("regex\"unterminated", regex.single().text)
+
+        val trailingSlash = lexDefaultChannel("regex\"tail\\")
+        assertEquals(listOf(FlixLexer.UNTERMINATED_REGEX), trailingSlash.map { it.type })
+        assertEquals("regex\"tail\\", trailingSlash.single().text)
     }
 }

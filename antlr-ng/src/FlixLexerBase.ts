@@ -82,14 +82,14 @@ export abstract class FlixLexerBase extends Lexer {
         let level = 1;
         while (this.inputStream.LA(1) !== -1) {
             if (this.inputStream.LA(1) === 0x2f && this.inputStream.LA(2) === 0x2a) {
-                this.inputStream.consume();
-                this.inputStream.consume();
+                this.advance();
+                this.advance();
                 level++;
                 continue;
             }
             if (this.inputStream.LA(1) === 0x2a && this.inputStream.LA(2) === 0x2f) {
-                this.inputStream.consume();
-                this.inputStream.consume();
+                this.advance();
+                this.advance();
                 level--;
                 if (level === 0) {
                     this.type = L.BLOCK_COMMENT;
@@ -101,7 +101,7 @@ export abstract class FlixLexerBase extends Lexer {
                 }
                 continue;
             }
-            this.inputStream.consume();
+            this.advance();
         }
         this.type = L.UNTERMINATED_BLOCK_COMMENT;
     }
@@ -141,8 +141,9 @@ export abstract class FlixLexerBase extends Lexer {
                 this.type = L.ERR_NUMBER;
             }
         } else if (c === "f".charCodeAt(0)) {
+            // Float suffixes force FLOAT_LITERAL even without '.' / exponent (`42f32`).
             if (this.matchSuffix("f32") || this.matchSuffix("f64") || this.matchSuffix("ff")) {
-                this.type = this.finishNumber(mustBeFloat, false);
+                this.type = this.finishNumber(true, false);
             } else {
                 this.consumeNumberLike();
                 this.type = L.ERR_NUMBER;
@@ -224,7 +225,7 @@ export abstract class FlixLexerBase extends Lexer {
             }
         }
         for (let i = 0; i < suffix.length; i++) {
-            this.inputStream.consume();
+            this.advance();
         }
         return true;
     }
@@ -233,14 +234,14 @@ export abstract class FlixLexerBase extends Lexer {
         if (this.inputStream.LA(1) !== ch.charCodeAt(0)) {
             return false;
         }
-        this.inputStream.consume();
+        this.advance();
         return true;
     }
 
     private consumeWhile(pred: (c: number) => boolean): number {
         let n = 0;
         while (pred(this.inputStream.LA(1))) {
-            this.inputStream.consume();
+            this.advance();
             n++;
         }
         return n;
@@ -248,8 +249,17 @@ export abstract class FlixLexerBase extends Lexer {
 
     private consumeNumberLike(): void {
         while (this.isNumberLike(this.inputStream.LA(1))) {
-            this.inputStream.consume();
+            this.advance();
         }
+    }
+
+    /**
+     * Consume one character through the ATN simulator so line/column stay in sync.
+     * `inputStream.consume()` alone advances the stream but leaves the position counters
+     * behind, which shifts every later token's diagnostics.
+     */
+    private advance(): void {
+        (this.interpreter as { consume(input: CharStream): void }).consume(this.inputStream);
     }
 
     private isDigit(c: number): boolean {
