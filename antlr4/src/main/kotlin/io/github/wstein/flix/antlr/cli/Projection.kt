@@ -281,6 +281,17 @@ object Projection {
                 val term = n.children.removeAt(n.children.lastIndex)
                 n.children += Node("latticeTerm", term.start, term.stop, mutableListOf(term))
             }
+            // Holes are single lexer tokens (`?name`, `name?`); the reference still holds an
+            // Ident for the name. Synthesise nameLowercase (→ Ident) so NamedHole keeps a
+            // child and ignored HoleVariablePrimary exposes Ident in the parent.
+            if (ctx is FlixParser.NamedHolePrimaryContext) {
+                val tok = ctx.HOLE_NAMED().symbol
+                n.children += Node("nameLowercase", tok, tok)
+            }
+            if (ctx is FlixParser.HoleVariablePrimaryContext) {
+                val tok = ctx.HOLE_VARIABLE().symbol
+                n.children += Node("nameLowercase", tok, tok)
+            }
             // `a -> b \\ ef`: the reference folds the effect into Type.Binary; flatten alone
             // would place the effect beside the arrow in the parent. Return the arrow so
             // EffectAnnotatedType never reaches the flatten pass.

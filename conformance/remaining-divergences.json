@@ -129,22 +129,6 @@
   },
   {
     "lane": "oracle_conformance",
-    "fixture": "lexical__holes.json",
-    "path": "fixtures/positive/lexical__holes.flix.Root[0].Decl.Def[3]",
-    "expected": "3 children",
-    "actual": "2 children",
-    "reason": "arity"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "lexical__holes.json",
-    "path": "fixtures/positive/lexical__holes.flix.Root[0].Decl.Def[3].Expr.Tuple[1]",
-    "expected": "1 children",
-    "actual": "0 children",
-    "reason": "arity"
-  },
-  {
-    "lane": "oracle_conformance",
     "fixture": "lexical__numeric-literal-errors.json",
     "path": "fixtures/negative/lexical__numeric-literal-errors.flix.Root[0]",
     "expected": "3 children",

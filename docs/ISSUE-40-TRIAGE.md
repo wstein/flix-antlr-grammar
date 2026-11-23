@@ -1,10 +1,10 @@
 # Issue #40 triage checklist
 
 Tracking: [#40](https://github.com/wstein/flix-antlr-grammar/issues/40).
-Source: `conformance/remaining-divergences.json` (was 42, now **35** identities; 168 fixtures).
+Source: `conformance/remaining-divergences.json` (was 42 → 35 after kind fixes, now **33** identities; 168 fixtures).
 Order: positive *kind* → positive *arity* → negative recovery.
 
-## 1. Positive `kind` — grammar / projection (this PR)
+## 1. Positive `kind` — grammar / projection (PR #41)
 
 - [x] `expressions__intrinsic-and-static-region.json` · `Expr.Static` (StaticPrimary before NamePrimary)
 - [x] `type-kind-ascription.json` · `Type.Ascribe` (one optional kind ascription at each type level)
@@ -12,9 +12,9 @@ Order: positive *kind* → positive *arity* → negative recovery.
 
 Also cleared with those fixes (bonus): constrained-def ParameterList arity (2), effect-annotation Root/Def arity (2).
 
-## 2. Positive `arity` — follow-up PR
+## 2. Positive `arity` — this PR
 
-- [ ] `lexical__holes.json` · Decl.Def / Expr.Tuple (2 identities) — still open
+- [x] `lexical__holes.json` · Decl.Def / Expr.Tuple (2 identities) — projection-map: synthesise `nameLowercase` (→ Ident) from `HOLE_NAMED` / `HOLE_VARIABLE` in Projection.kt (`NamedHolePrimary`, `HoleVariablePrimary`)
 
 ## 3. Already accepted
 
@@ -30,4 +30,4 @@ Also cleared with those fixes (bonus): constrained-def ParameterList arity (2), 
 - [ ] `lexical__numeric-literal-errors.json` (7×)
 - [ ] other negatives listed in `remaining-divergences.json`
 
-_Sum after this PR: 0 open positive kind · 2 positive arity · 2 accepted · 31 negative-review = 35._
+_Sum after this PR: 0 open positive kind · 0 positive arity · 2 accepted · 31 negative-review = 33._
