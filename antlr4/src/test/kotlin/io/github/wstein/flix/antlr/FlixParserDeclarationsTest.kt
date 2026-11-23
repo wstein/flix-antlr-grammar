@@ -5,6 +5,7 @@ import org.antlr.v4.runtime.CommonTokenStream
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class FlixParserDeclarationsTest {
@@ -151,5 +152,14 @@ class FlixParserDeclarationsTest {
         val eff = cu.declaration(0).effDeclaration()
         assertNotNull(eff)
         assertEquals("Logger", eff.nameUppercase().text)
+    }
+
+    @Test
+    fun uppercaseFunctionNameIsRejected() {
+        // Parser2 NAME_FUNCTION excludes NameUppercase (Flix E6629).
+        val parser = FlixParser(CommonTokenStream(FlixLexer(CharStreams.fromString("pub def Upper(): Int32 = 0"))))
+        parser.removeErrorListeners()
+        parser.compilationUnit()
+        assertTrue(parser.numberOfSyntaxErrors > 0)
     }
 }

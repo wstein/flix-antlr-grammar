@@ -7,6 +7,7 @@ import java.util.Map;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.atn.LexerATNSimulator;
 
 /**
  * Lexer helpers for the parts of Flix tokenization that a context-free lexer rule cannot express.
@@ -193,14 +194,14 @@ public abstract class FlixLexerBase extends Lexer {
         int level = 1;
         while (_input.LA(1) != CharStream.EOF) {
             if (_input.LA(1) == '/' && _input.LA(2) == '*') {
-                _input.consume();
-                _input.consume();
+                advance();
+                advance();
                 level++;
                 continue;
             }
             if (_input.LA(1) == '*' && _input.LA(2) == '/') {
-                _input.consume();
-                _input.consume();
+                advance();
+                advance();
                 level--;
                 if (level == 0) {
                     setType(FlixLexer.BLOCK_COMMENT);
@@ -209,7 +210,7 @@ public abstract class FlixLexerBase extends Lexer {
                 }
                 continue;
             }
-            _input.consume();
+            advance();
         }
         setType(FlixLexer.UNTERMINATED_BLOCK_COMMENT);
     }
@@ -262,12 +263,13 @@ public abstract class FlixLexerBase extends Lexer {
                 setType(FlixLexer.ERR_NUMBER);
             }
         } else if (c == 'f') {
+            // Float suffixes force FLOAT_LITERAL even without '.' / exponent (`42f32`).
             if (matchSuffix("f32")) {
-                setType(finishNumber(mustBeFloat, false));
+                setType(finishNumber(true, false));
             } else if (matchSuffix("f64")) {
-                setType(finishNumber(mustBeFloat, false));
+                setType(finishNumber(true, false));
             } else if (matchSuffix("ff")) {
-                setType(finishNumber(mustBeFloat, false));
+                setType(finishNumber(true, false));
             } else {
                 consumeNumberLike();
                 setType(FlixLexer.ERR_NUMBER);
@@ -350,7 +352,7 @@ public abstract class FlixLexerBase extends Lexer {
             }
         }
         for (int i = 0; i < suffix.length(); i++) {
-            _input.consume();
+            advance();
         }
         return true;
     }
@@ -359,14 +361,14 @@ public abstract class FlixLexerBase extends Lexer {
         if (_input.LA(1) != ch) {
             return false;
         }
-        _input.consume();
+        advance();
         return true;
     }
 
     private int consumeWhile(java.util.function.IntPredicate pred) {
         int n = 0;
         while (pred.test(_input.LA(1))) {
-            _input.consume();
+            advance();
             n++;
         }
         return n;
@@ -374,8 +376,18 @@ public abstract class FlixLexerBase extends Lexer {
 
     private void consumeNumberLike() {
         while (isNumberLike(_input.LA(1))) {
-            _input.consume();
+            advance();
         }
+    }
+
+    /**
+     * Consume one character through {@link LexerATNSimulator#consume(CharStream)} so
+     * line/column stay in sync. Calling {@code _input.consume()} alone advances the stream
+     * but leaves the simulator's position counters behind, which shifts every later token's
+     * diagnostics.
+     */
+    private void advance() {
+        ((LexerATNSimulator) getInterpreter()).consume(_input);
     }
 
     private boolean isDigit(int c) {

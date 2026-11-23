@@ -336,13 +336,13 @@ variableName
     | UNDERSCORE
     ;
 
-// Parser2's NAME_DEFINITION = NameLowercase | NameUppercase | NameMath | GenericOperator —
-// not reserved operator tokens (`<=>`, `+`, …). Those stay on genericOperator for infix use
-// and operator sections `(+)`. userDefinedOperator wraps GENERIC_OPERATOR so projection can
-// map it to Ident (bare tokens are never emitted).
+// Parser2's NAME_FUNCTION = NameLowercase | NameMath | GenericOperator — used for `def` /
+// `redef`, signatures, ops, local defs, handlers, and JVM methods. NameUppercase is rejected
+// (E6629). Reserved operator tokens (`<=>`, `+`, …) stay on genericOperator for infix use and
+// operator sections `(+)`. userDefinedOperator wraps GENERIC_OPERATOR so projection can map it
+// to Ident (bare tokens are never emitted).
 definitionName
     : nameLowercase
-    | nameUppercase
     | nameMath
     | userDefinedOperator
     ;

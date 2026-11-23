@@ -27,7 +27,7 @@ Compare the reject/accept result separately from the recovered tree.
 ### Fixed (accept-invalid / lexer sync)
 
 - [x] **fix acceptance** · `STATIC_LOWER` removed from `StaticPrimary` — `lexical__static-lowercase-is-reserved-but-unused`
-- [x] **fix acceptance** · `definitionName` narrowed to names + `userDefinedOperator` (`GENERIC_OPERATOR`); reserved ops stay on `genericOperator` — trait/instance `<=>` signatures
+- [x] **fix acceptance** · `definitionName` = Parser2 `NAME_FUNCTION` (lowercase / math / `userDefinedOperator`); reserved ops stay on `genericOperator`; uppercase def names rejected (E6629)
 - [x] **align lexer** · `ERR_NUMBER` via `acceptNumber` / `acceptHexNumber` — `lexical__numeric-literal-errors`
 - [x] **align lexer** · `UNTERMINATED_BLOCK_COMMENT` via `acceptBlockComment` — `lexical__unterminated-block-comment`
 - [x] **align lexer** · `UNTERMINATED_REGEX` — `lexical__unterminated-regex`
