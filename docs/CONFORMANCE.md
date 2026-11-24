@@ -111,6 +111,9 @@ from native token positions. Leading docs attach to the outermost documentable n
 starting at the next token; same-line trailing and orphan docs remain plain comments.
 Enum commas remain outside the documentable case boundary. Multiline, CRLF and EOF
 positions follow native token positions and code points.
+On CRLF input, the grammar excludes `\r` from line and doc comment token text.
+Flix 0.80.0 includes it. This raw-token difference is tracked in
+[#50](https://github.com/wstein/flix-antlr-grammar/issues/50).
 
 The consumer has no additional canonical `elide` classes. The pinned transparency
 contract handles reference wrappers; raw `useList` retains Main's empty/singular

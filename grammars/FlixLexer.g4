@@ -259,6 +259,7 @@ STRING_START     : '"' -> pushMode(STRING_MODE) ;
 // prefix wins over a whole four-slash line.
 // ---------------------------------------------------------------------
 
+// With CRLF, both comment rules exclude '\r' from comment text. Flix 0.80.0 includes it (issue #50).
 DOC_COMMENT      : '///' ( ~[/\r\n] ~[\r\n]* )? -> channel(DOC_COMMENTS) ;
 LINE_COMMENT     : '//' '/'* ~[\r\n]* -> channel(COMMENTS) ;
 // Nested block comments; unterminated ones become UNTERMINATED_BLOCK_COMMENT (Lexer.scala).

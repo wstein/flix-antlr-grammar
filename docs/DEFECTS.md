@@ -1,6 +1,6 @@
 # Known defects
 
-Findings from measuring the grammar against the real Flix corpus (the revision pinned in
+Findings from review and from measuring the grammar against the real Flix corpus (the revision pinned in
 `.github/workflows/ci.yml`; corpus size drifts with the local checkout, see
 `fixtures/corpus-baseline.json`). Ordered by impact.
 
@@ -266,8 +266,19 @@ can manufacture a defect that survives three rounds of investigation into the wr
 
 ---
 
+## D15 — CRLF comment token text differs from Flix 0.80.0
+
+On CRLF input, `DOC_COMMENT` and `LINE_COMMENT` exclude `\r` from the comment token.
+The grammar consumes the CRLF as hidden whitespace. Flix 0.80.0's `acceptLineOrDocComment`
+in `Lexer.scala` consumes through `\r` and stops at `\n`, so its comment token includes
+the trailing `\r`. The difference affects consumers of raw comment text and leaves the
+parse tree unchanged. The slash-comment tests on both targets pin the grammar's behavior.
+Tracked in [#50](https://github.com/wstein/flix-antlr-grammar/issues/50).
+
+---
+
 ## How these were found
 
-Every defect above came from one measurement — parsing a real Flix checkout — rather than from
-review. None was visible in a passing test suite. When adding a construct, re-measure; when a
-number does not move, the construct was not the problem.
+Parsing a real Flix checkout exposed D1–D14. D15 came from comparing comment token text
+with the compiler during review. When adding a construct, re-measure its behavior against
+the corpus and compare the relevant tokens with the compiler.
