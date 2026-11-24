@@ -298,6 +298,33 @@ class FlixLexerTest {
     }
 
     @Test
+    fun testSlashCommentBoundaries() {
+        val cases =
+            listOf(
+                Triple("//", FlixLexer.LINE_COMMENT, FlixLexer.COMMENTS),
+                Triple("// text", FlixLexer.LINE_COMMENT, FlixLexer.COMMENTS),
+                Triple("///", FlixLexer.DOC_COMMENT, FlixLexer.DOC_COMMENTS),
+                Triple("/// text", FlixLexer.DOC_COMMENT, FlixLexer.DOC_COMMENTS),
+                Triple("///x", FlixLexer.DOC_COMMENT, FlixLexer.DOC_COMMENTS),
+                Triple("////", FlixLexer.LINE_COMMENT, FlixLexer.COMMENTS),
+                Triple("//// banner", FlixLexer.LINE_COMMENT, FlixLexer.COMMENTS),
+                Triple("/////", FlixLexer.LINE_COMMENT, FlixLexer.COMMENTS),
+            )
+        for (newline in listOf("\n", "\r\n")) {
+            for ((source, kind, channel) in cases) {
+                val tokens =
+                    lexAllChannels("${source}${newline}def f(): Unit = ()")
+                        .filter { it.channel != Token.HIDDEN_CHANNEL }
+                val comment = tokens.first()
+                // With CRLF, the grammar excludes '\r' from comment text. Flix 0.80.0 includes it (issue #50).
+                assertEquals(Triple(source, kind, channel), Triple(comment.text, comment.type, comment.channel), source)
+                assertEquals(FlixLexer.DEF, tokens[1].type, source)
+                assertEquals(Token.DEFAULT_CHANNEL, tokens[1].channel, source)
+            }
+        }
+    }
+
+    @Test
     fun testCommentsAndChannels() {
         val input =
             """
