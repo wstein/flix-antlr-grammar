@@ -129,22 +129,6 @@
   },
   {
     "lane": "oracle_conformance",
-    "fixture": "lexical__numeric-literal-errors.json",
-    "path": "fixtures/negative/lexical__numeric-literal-errors.flix",
-    "expected": "7 children",
-    "actual": "1 children",
-    "reason": "arity"
-  },
-  {
-    "lane": "oracle_conformance",
-    "fixture": "lexical__numeric-literal-errors.json",
-    "path": "fixtures/negative/lexical__numeric-literal-errors.flix.Root[0]",
-    "expected": "3 children",
-    "actual": "4 children",
-    "reason": "arity"
-  },
-  {
-    "lane": "oracle_conformance",
     "fixture": "operator-error.json",
     "path": "fixtures/negative/operator-error.flix.Root[0].Decl.Def[3].Expr.Block[0]",
     "expected": "Expr.Binary",

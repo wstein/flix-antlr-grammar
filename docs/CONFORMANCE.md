@@ -90,10 +90,9 @@ same schema-9 runner, published fixture identities and canonical denominators.
 | 135 common paths / structure port | 1244 / 2010 | 62% | 98 | 93% | 31 |
 
 The current 0.80 sets gate independently: the 168-fixture set records the remaining structural
-identities in `remaining-divergences.json` (25 after accept-invalid tightening of `StaticPrimary`,
-`definitionName`, and lexer error tokens for bad numbers / unterminated comment / regex), with
-canonical depth floor 66% and walk depth 94%; the 135 common paths use depth floor 61% and walk
-93%. Their current canonical denominators are 2434 and 2010. The table above records the
+identities in `remaining-divergences.json` (23 after preserving declarations following invalid
+numeric bodies), with canonical depth floor 67% and walk depth 94%. The 135 common paths record
+12 divergences, canonical depth floor 62% and walk depth 93%. Their current canonical denominators are 2434 and 2010. The table above records the
 historical 0.79 measurement. The two reserved-`val` recovery identities remain accepted.
 `conformance/legacy-fixture-paths.json` records all 135 surviving paths and the one
 retired trait-law fixture out of the original 136, including its replacement.

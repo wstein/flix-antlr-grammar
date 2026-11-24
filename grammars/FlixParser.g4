@@ -83,7 +83,12 @@ modDeclaration
 
 defDeclaration
     : declPrefix ( DEF | REDEF ) definitionName typeParams? formalParams
-      ( COLON typeAndEffect )? withClause? whereClause? ( EQUAL statement )?
+      ( COLON typeAndEffect )? withClause? whereClause?
+      ( EQUAL ( statement
+                // Defer the predicate until this branch is selected. Fail at the bad token
+                // so single-token deletion cannot turn the next declaration into a local def.
+              | {} {false}?<fail='Invalid numeric literal.'> ERR_NUMBER
+              ) )?
     ;
 
 // Parser2 accepts module val declarations; later compiler stages may reject their use.
