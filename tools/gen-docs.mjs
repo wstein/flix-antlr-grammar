@@ -20,7 +20,7 @@ const RULE = /^([A-Za-z_][A-Za-z0-9_]*)\s*\n?\s*:(.*?);[ \t]*$/gms;
 /** Actions, predicates and labels are implementation, not syntax. */
 function stripActions(body) {
     return body
-        .replace(/\{[^{}]*\}\?/g, "")
+        .replace(/\{[^{}]*\}\?(?:\s*<[^>\r\n]*>)?/g, "")
         .replace(/\{[^{}]*\}/g, "")
         .replace(/\s*#\s*[A-Za-z_][A-Za-z0-9_]*/g, "")
         .replace(/->\s*(channel|type|skip|pushMode|popMode)\([^)]*\)/g, "")

@@ -1,7 +1,11 @@
 package io.github.wstein.flix.antlr
 
+import org.antlr.v4.runtime.BaseErrorListener
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
+import org.antlr.v4.runtime.RecognitionException
+import org.antlr.v4.runtime.Recognizer
+import org.antlr.v4.runtime.Token
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -38,6 +42,36 @@ class FlixParserDeclarationsTest {
         val def = mod.declaration(0).defDeclaration()
         assertNotNull(def)
         assertEquals("add", def.definitionName().text)
+    }
+
+    @Test
+    fun testMalformedNumericBodyKeepsFollowingDeclaration() {
+        val source = "def broken(): Int32 = 1_\ndef good(): Int32 = 42"
+        val tokens = CommonTokenStream(FlixLexer(CharStreams.fromString(source)))
+        tokens.fill()
+        assertEquals(listOf("1_"), tokens.tokens.filter { it.type == FlixLexer.ERR_NUMBER }.map { it.text })
+        val parser = FlixParser(tokens)
+        val badTokens = mutableListOf<String?>()
+        parser.removeErrorListeners()
+        parser.addErrorListener(
+            object : BaseErrorListener() {
+                override fun syntaxError(
+                    recognizer: Recognizer<*, *>?,
+                    offendingSymbol: Any?,
+                    line: Int,
+                    charPositionInLine: Int,
+                    msg: String?,
+                    e: RecognitionException?,
+                ) {
+                    badTokens.add((offendingSymbol as? Token)?.text)
+                    assertTrue(msg?.contains("Invalid numeric literal.") == true)
+                }
+            },
+        )
+        val declarations = parser.compilationUnit().declaration()
+        assertEquals(1, parser.numberOfSyntaxErrors)
+        assertEquals(listOf("1_"), badTokens)
+        assertEquals(listOf("broken", "good"), declarations.map { it.defDeclaration()?.definitionName()?.text })
     }
 
     @Test

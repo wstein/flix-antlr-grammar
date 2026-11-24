@@ -115,7 +115,10 @@ modDeclaration
 ```antlr
 defDeclaration
     : declPrefix ( DEF | REDEF ) definitionName typeParams? formalParams
-( COLON typeAndEffect )? withClause? whereClause? ( EQUAL statement )?
+( COLON typeAndEffect )? withClause? whereClause?
+( EQUAL ( statement
+    | ERR_NUMBER
+) )?
     ;
 ```
 

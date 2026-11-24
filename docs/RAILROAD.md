@@ -34,7 +34,8 @@ declaration ::= modDeclaration
 
 ```mermaid
 railroad-ebnf-beta
-defDeclaration ::= declPrefix ( DEF | REDEF ) definitionName typeParams? formalParams ( COLON typeAndEffect )? withClause? whereClause? ( EQUAL statement )? ;
+defDeclaration ::= declPrefix ( DEF | REDEF ) definitionName typeParams? formalParams ( COLON typeAndEffect )? withClause? whereClause? ( EQUAL ( statement
+    | ERR_NUMBER ) )? ;
 ```
 
 ## `enumDeclaration`
